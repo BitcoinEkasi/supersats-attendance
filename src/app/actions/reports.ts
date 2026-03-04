@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { calculateRewardSats } from "@/lib/rewards";
 import { revalidatePath } from "next/cache";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 
 export async function generateMonthlyReport(month: string) {
   const session = await auth();
@@ -74,7 +74,7 @@ export async function generateMonthlyReport(month: string) {
           participantId: participant.id,
           totalSessions,
           attended: stats.present,
-          percentage: new Decimal(percentage.toFixed(2)),
+          percentage: new Prisma.Decimal(percentage.toFixed(2)),
           rewardSats,
         },
       });
