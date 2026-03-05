@@ -1,5 +1,48 @@
 import Papa from "papaparse";
 
+export interface ParsedParticipant {
+  csvName: string;
+  displayName: string;
+}
+
+export function parseParticipantsCSV(csvText: string): {
+  participants: ParsedParticipant[];
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+
+  const result = Papa.parse<string[]>(csvText, {
+    header: false,
+    skipEmptyLines: true,
+    quoteChar: '"',
+  });
+
+  const participants: ParsedParticipant[] = [];
+
+  for (let i = 0; i < result.data.length; i++) {
+    const row = result.data[i];
+    // Each row is a single quoted cell: "Surname, FirstName, [Gender], [Age]"
+    const rawCell = row[0]?.trim();
+    if (!rawCell) continue;
+
+    const parts = rawCell.split(",").map((p) => p.trim());
+    const surname = parts[0];
+    const firstName = parts[1];
+
+    if (!surname || !firstName) {
+      warnings.push(`Row ${i + 1}: Could not parse name from "${rawCell}", skipping`);
+      continue;
+    }
+
+    participants.push({
+      csvName: rawCell,
+      displayName: `${firstName} ${surname}`,
+    });
+  }
+
+  return { participants, warnings };
+}
+
 export interface ParsedAttendanceRow {
   rawName: string;
   attendance: Record<string, number>; // date string -> 1 or -1

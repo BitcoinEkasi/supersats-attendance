@@ -2,6 +2,33 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { parseParticipantsCSV } from "@/lib/csv-parser";
+
+export async function previewParticipantImport(csvText: string) {
+  const { participants, warnings } = parseParticipantsCSV(csvText);
+
+  const existing = await prisma.participant.findMany({ select: { csvName: true } });
+  const existingNames = new Set(existing.map((p) => p.csvName));
+
+  const toImport = participants.filter((p) => !existingNames.has(p.csvName));
+  const duplicates = participants.filter((p) => existingNames.has(p.csvName));
+
+  return { toImport, duplicates, warnings };
+}
+
+export async function commitParticipantImport(
+  participants: { csvName: string; displayName: string }[],
+) {
+  if (participants.length === 0) return { added: 0 };
+
+  const result = await prisma.participant.createMany({
+    data: participants,
+    skipDuplicates: true,
+  });
+
+  revalidatePath("/participants");
+  return { added: result.count };
+}
 
 export async function getParticipants(search?: string) {
   const where = search

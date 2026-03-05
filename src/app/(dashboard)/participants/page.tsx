@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import ParticipantSearch from "./participant-search";
 import AddParticipantForm from "./add-participant-form";
+import ParticipantImportForm from "./participant-import-form";
 
 export default async function ParticipantsPage({
   searchParams,
@@ -96,7 +97,8 @@ export default async function ParticipantsPage({
           </p>
         </div>
 
-        <div className="w-full lg:w-80">
+        <div className="flex w-full flex-col gap-4 lg:w-80">
+          <ParticipantImportForm />
           <AddParticipantForm />
         </div>
       </div>
