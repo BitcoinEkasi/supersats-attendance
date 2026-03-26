@@ -4,10 +4,19 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+const DEV_ACCOUNTS = [
+  { label: "Administrator", email: "admin@tsk.local", password: "admin123", color: "bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200" },
+  { label: "Gatekeeper",    email: "gatekeeper@tsk.local", password: "gatekeeper123", color: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200" },
+  { label: "Supervisor",    email: "supervisor@tsk.local", password: "supervisor123", color: "bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200" },
+];
+
+const isDev = process.env.NODE_ENV === "development";
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [devLoading, setDevLoading] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,14 +38,24 @@ export default function LoginPage() {
     }
   }
 
+  async function devLogin(email: string, password: string, label: string) {
+    setDevLoading(label);
+    setError("");
+    const result = await signIn("credentials", { email, password, redirect: false });
+    if (result?.error) {
+      setError("Dev login failed");
+      setDevLoading(null);
+    } else {
+      router.push("/dashboard");
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-gray-900">TSK Rewards</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Attendance & Rewards Management
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Attendance & Rewards Management</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -47,10 +66,7 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
@@ -63,10 +79,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
@@ -86,6 +99,30 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        {isDev && (
+          <div className="mt-6">
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-gray-200" />
+              <span className="mx-3 shrink-0 rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                DEV SWITCH
+              </span>
+              <div className="flex-grow border-t border-gray-200" />
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {DEV_ACCOUNTS.map((account) => (
+                <button
+                  key={account.label}
+                  onClick={() => devLogin(account.email, account.password, account.label)}
+                  disabled={!!devLoading}
+                  className={`rounded-md border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 ${account.color}`}
+                >
+                  {devLoading === account.label ? "..." : account.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

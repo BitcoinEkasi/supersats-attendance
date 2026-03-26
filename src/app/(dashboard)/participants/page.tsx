@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
 import ParticipantSearch from "./participant-search";
 import AddParticipantForm from "./add-participant-form";
-import ParticipantImportForm from "./participant-import-form";
+import Image from "next/image";
+
+const statusColors: Record<string, string> = {
+  ACTIVE: "bg-green-100 text-green-700",
+  RETIRED: "bg-gray-100 text-gray-600",
+  SUSPENDED: "bg-red-100 text-red-700",
+};
 
 export default async function ParticipantsPage({
   searchParams,
@@ -10,19 +17,23 @@ export default async function ParticipantsPage({
   searchParams: Promise<{ search?: string }>;
 }) {
   const { search } = await searchParams;
+  const session = await auth();
+  const role = session?.user?.role;
 
   const where = search
     ? {
         OR: [
-          { csvName: { contains: search, mode: "insensitive" as const } },
-          { displayName: { contains: search, mode: "insensitive" as const } },
+          { tskId: { contains: search, mode: "insensitive" as const } },
+          { surname: { contains: search, mode: "insensitive" as const } },
+          { fullNames: { contains: search, mode: "insensitive" as const } },
+          { knownAs: { contains: search, mode: "insensitive" as const } },
         ],
       }
     : {};
 
   const participants = await prisma.participant.findMany({
     where,
-    orderBy: { displayName: "asc" },
+    orderBy: [{ surname: "asc" }, { fullNames: "asc" }],
   });
 
   return (
@@ -39,24 +50,17 @@ export default async function ParticipantsPage({
             <table className="w-full text-sm">
               <thead className="border-b bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Display Name
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    CSV Name
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">
-                    Actions
-                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">TSK ID</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Photo</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {participants.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                       {search
                         ? "No participants match your search."
                         : "No participants yet. Add one using the form."}
@@ -65,17 +69,35 @@ export default async function ParticipantsPage({
                 ) : (
                   participants.map((p) => (
                     <tr key={p.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">{p.displayName}</td>
-                      <td className="px-4 py-3 text-gray-600">{p.csvName}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{p.tskId}</td>
+                      <td className="px-4 py-3">
+                        {p.profilePicture ? (
+                          <Image
+                            src={p.profilePicture}
+                            alt={p.knownAs || p.surname}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-medium text-orange-600">
+                            {(p.knownAs || p.surname).charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{p.knownAs || `${p.surname} ${p.fullNames}`}</div>
+                        {p.knownAs && (
+                          <div className="text-xs text-gray-500">{p.surname}, {p.fullNames}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                            p.isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
+                            statusColors[p.status] || "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          {p.isActive ? "Active" : "Inactive"}
+                          {p.status.charAt(0) + p.status.slice(1).toLowerCase()}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -83,7 +105,7 @@ export default async function ParticipantsPage({
                           href={`/participants/${p.id}`}
                           className="text-orange-600 hover:text-orange-800"
                         >
-                          Edit
+                          View
                         </Link>
                       </td>
                     </tr>
@@ -97,10 +119,11 @@ export default async function ParticipantsPage({
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-4 lg:w-80">
-          <ParticipantImportForm />
-          <AddParticipantForm />
-        </div>
+        {role === "ADMINISTRATOR" && (
+          <div className="w-full lg:w-96">
+            <AddParticipantForm />
+          </div>
+        )}
       </div>
     </div>
   );

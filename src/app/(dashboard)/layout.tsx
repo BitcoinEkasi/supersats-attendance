@@ -1,16 +1,21 @@
 import SessionProvider from "@/components/session-provider";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import { auth } from "@/lib/auth";
+import type { UserRole } from "@prisma/client";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  const role = session?.user?.role as UserRole | undefined;
+
   return (
     <SessionProvider>
       <div className="flex h-screen">
-        <Sidebar />
+        <Sidebar role={role} />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
           <main className="flex-1 overflow-y-auto p-6">{children}</main>

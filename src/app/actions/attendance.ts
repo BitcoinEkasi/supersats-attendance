@@ -1,147 +1,107 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { auth } from "@/lib/auth";
-import { parsePresliCSV, detectMonth } from "@/lib/csv-parser";
 import { revalidatePath } from "next/cache";
+import { requireRole } from "@/lib/role-guard";
+import type { EventCategory } from "@prisma/client";
 
-export interface ImportPreview {
-  dates: string[];
-  month: string;
-  matched: { csvName: string; participantId: string; displayName: string; attendance: Record<string, number> }[];
-  unmatched: { csvName: string; attendance: Record<string, number> }[];
-  warnings: string[];
-}
+export async function createEvent(formData: FormData) {
+  const user = await requireRole(["ADMINISTRATOR", "GATEKEEPER"]);
 
-export async function previewCSVImport(csvText: string, filename: string): Promise<ImportPreview> {
-  const parsed = parsePresliCSV(csvText);
-  const month = detectMonth(parsed.dates);
+  const date = formData.get("date") as string;
+  const category = formData.get("category") as EventCategory;
+  const note = (formData.get("note") as string)?.trim() || null;
 
-  const participants = await prisma.participant.findMany({
-    where: { isActive: true },
-  });
-
-  // Build lookup by csv_name (case-insensitive)
-  const nameMap = new Map<string, { id: string; displayName: string }>();
-  for (const p of participants) {
-    nameMap.set(p.csvName.toLowerCase().trim(), {
-      id: p.id,
-      displayName: p.displayName,
-    });
+  if (!date || !category) {
+    return { error: "Date and category are required" };
   }
 
-  const matched: ImportPreview["matched"] = [];
-  const unmatched: ImportPreview["unmatched"] = [];
-
-  for (const row of parsed.rows) {
-    const key = row.rawName.toLowerCase().trim();
-    const participant = nameMap.get(key);
-
-    if (participant) {
-      matched.push({
-        csvName: row.rawName,
-        participantId: participant.id,
-        displayName: participant.displayName,
-        attendance: row.attendance,
-      });
-    } else {
-      unmatched.push({
-        csvName: row.rawName,
-        attendance: row.attendance,
-      });
-    }
-  }
-
-  return {
-    dates: parsed.dates,
-    month,
-    matched,
-    unmatched,
-    warnings: parsed.warnings,
-  };
-}
-
-export async function commitCSVImport(
-  csvText: string,
-  filename: string,
-) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { error: "Not authenticated" };
-  }
-
-  const parsed = parsePresliCSV(csvText);
-  const month = detectMonth(parsed.dates);
-
-  const participants = await prisma.participant.findMany({
-    where: { isActive: true },
-  });
-
-  const nameMap = new Map<string, string>();
-  for (const p of participants) {
-    nameMap.set(p.csvName.toLowerCase().trim(), p.id);
-  }
-
-  const matchedRows: { participantId: string; attendance: Record<string, number> }[] = [];
-  const unmatchedNames: string[] = [];
-
-  for (const row of parsed.rows) {
-    const key = row.rawName.toLowerCase().trim();
-    const participantId = nameMap.get(key);
-
-    if (participantId) {
-      matchedRows.push({ participantId, attendance: row.attendance });
-    } else {
-      unmatchedNames.push(row.rawName);
-    }
-  }
-
-  // Create import batch and attendance records in a transaction
-  const result = await prisma.$transaction(async (tx) => {
-    const batch = await tx.importBatch.create({
+  try {
+    const event = await prisma.event.create({
       data: {
-        filename,
-        month,
-        importedBy: session.user!.id!,
-        recordCount: 0,
-        matchedCount: matchedRows.length,
-        unmatchedNames,
+        date: new Date(date + "T00:00:00Z"),
+        category,
+        note,
+        createdBy: user.id,
       },
     });
+    revalidatePath("/attendance");
+    return { success: true, id: event.id };
+  } catch {
+    return { error: "Failed to create event" };
+  }
+}
 
-    let recordCount = 0;
+export async function getEvents(month?: string) {
+  const where = month
+    ? {
+        date: {
+          gte: new Date(`${month}-01T00:00:00Z`),
+          lte: new Date(
+            new Date(`${month}-01T00:00:00Z`).getFullYear(),
+            new Date(`${month}-01T00:00:00Z`).getMonth() + 1,
+            0,
+          ),
+        },
+      }
+    : {};
 
-    for (const row of matchedRows) {
-      for (const [dateStr, status] of Object.entries(row.attendance)) {
-        const date = new Date(dateStr + "T00:00:00Z");
-        await tx.attendanceRecord.upsert({
+  return prisma.event.findMany({
+    where,
+    orderBy: { date: "desc" },
+    include: {
+      _count: { select: { attendanceRecords: true } },
+      creator: { select: { name: true } },
+    },
+  });
+}
+
+export async function getEvent(id: string) {
+  return prisma.event.findUnique({
+    where: { id },
+    include: {
+      attendanceRecords: {
+        include: {
+          participant: {
+            select: { id: true, surname: true, fullNames: true, knownAs: true },
+          },
+        },
+      },
+      creator: { select: { name: true } },
+    },
+  });
+}
+
+export async function saveAttendance(
+  eventId: string,
+  records: { participantId: string; present: boolean }[],
+) {
+  await requireRole(["ADMINISTRATOR", "GATEKEEPER"]);
+
+  try {
+    await prisma.$transaction(
+      records.map((r) =>
+        prisma.attendanceRecord.upsert({
           where: {
-            participantId_date: {
-              participantId: row.participantId,
-              date,
+            participantId_eventId: {
+              participantId: r.participantId,
+              eventId,
             },
           },
-          update: { status, importBatchId: batch.id },
+          update: { present: r.present },
           create: {
-            participantId: row.participantId,
-            date,
-            status,
-            importBatchId: batch.id,
+            participantId: r.participantId,
+            eventId,
+            present: r.present,
           },
-        });
-        recordCount++;
-      }
-    }
+        }),
+      ),
+    );
 
-    await tx.importBatch.update({
-      where: { id: batch.id },
-      data: { recordCount },
-    });
-
-    return { batchId: batch.id, recordCount, matchedCount: matchedRows.length, unmatchedCount: unmatchedNames.length };
-  });
-
-  revalidatePath("/attendance");
-  revalidatePath("/dashboard");
-  return { success: true, ...result };
+    revalidatePath(`/attendance/${eventId}`);
+    revalidatePath("/attendance");
+    return { success: true };
+  } catch {
+    return { error: "Failed to save attendance" };
+  }
 }

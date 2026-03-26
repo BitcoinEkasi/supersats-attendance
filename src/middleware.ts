@@ -1,24 +1,54 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest) {
-  const sessionToken =
-    request.cookies.get("authjs.session-token") ||
-    request.cookies.get("__Secure-authjs.session-token");
+export async function middleware(request: NextRequest) {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
-  const isLoginPage = request.nextUrl.pathname === "/login";
+  const { pathname } = request.nextUrl;
+  const isLoginPage = pathname === "/login";
 
-  if (!sessionToken && !isLoginPage) {
+  if (!token && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (sessionToken && isLoginPage) {
+  if (token && isLoginPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (token) {
+    const role = token.role as string;
+
+    // Participants section: ADMINISTRATOR only
+    if (pathname.startsWith("/participants") && role !== "ADMINISTRATOR") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Attendance section: ADMINISTRATOR or GATEKEEPER
+    if (
+      pathname.startsWith("/attendance") &&
+      role !== "ADMINISTRATOR" &&
+      role !== "GATEKEEPER"
+    ) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Reports section: ADMINISTRATOR or SUPERVISOR
+    if (
+      pathname.startsWith("/reports") &&
+      role !== "ADMINISTRATOR" &&
+      role !== "SUPERVISOR"
+    ) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|api/upload|_next/static|_next/image|favicon.ico|uploads).*)"],
 };
