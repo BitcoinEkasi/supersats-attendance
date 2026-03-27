@@ -6,7 +6,7 @@ import { requireRole } from "@/lib/role-guard";
 import type { EventCategory } from "@prisma/client";
 
 export async function createEvent(formData: FormData) {
-  const user = await requireRole(["ADMINISTRATOR", "GATEKEEPER"]);
+  const user = await requireRole(["ADMINISTRATOR", "MARSHALL"]);
 
   const date = formData.get("date") as string;
   const category = formData.get("category") as EventCategory;
@@ -76,7 +76,7 @@ export async function saveAttendance(
   eventId: string,
   records: { participantId: string; present: boolean }[],
 ) {
-  await requireRole(["ADMINISTRATOR", "GATEKEEPER"]);
+  await requireRole(["ADMINISTRATOR", "MARSHALL"]);
 
   try {
     await prisma.$transaction(

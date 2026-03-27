@@ -25,20 +25,20 @@ async function main() {
   });
   console.log(`Seeded administrator: ${admin.email}`);
 
-  const gatekeeperEmail = process.env.GATEKEEPER_EMAIL || "gatekeeper@tsk.local";
-  const gatekeeperPassword = process.env.GATEKEEPER_PASSWORD || "gatekeeper123";
-  const gatekeeperHash = await bcrypt.hash(gatekeeperPassword, 12);
-  const gatekeeper = await prisma.user.upsert({
-    where: { email: gatekeeperEmail },
+  const marshallEmail = process.env.MARSHALL_EMAIL || "marshall@tsk.local";
+  const marshallPassword = process.env.MARSHALL_PASSWORD || "marshall123";
+  const marshallHash = await bcrypt.hash(marshallPassword, 12);
+  const marshall = await prisma.user.upsert({
+    where: { email: marshallEmail },
     update: {},
     create: {
-      email: gatekeeperEmail,
-      name: "Gatekeeper",
-      passwordHash: gatekeeperHash,
-      role: "GATEKEEPER",
+      email: marshallEmail,
+      name: "Marshall",
+      passwordHash: marshallHash,
+      role: "MARSHALL",
     },
   });
-  console.log(`Seeded gatekeeper: ${gatekeeper.email}`);
+  console.log(`Seeded marshall: ${marshall.email}`);
 
   const supervisorEmail = process.env.SUPERVISOR_EMAIL || "supervisor@tsk.local";
   const supervisorPassword = process.env.SUPERVISOR_PASSWORD || "supervisor123";

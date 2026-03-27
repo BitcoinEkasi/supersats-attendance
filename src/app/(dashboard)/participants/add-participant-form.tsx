@@ -72,11 +72,7 @@ export default function AddParticipantForm() {
     if (result.error) {
       setError(result.error);
     } else {
-      router.refresh();
-      (e.target as HTMLFormElement).reset();
-      setIdDerived(null);
-      setPhotoPreview(null);
-      setUploadedPath("");
+      router.push("/participants");
     }
     setLoading(false);
   }
@@ -142,15 +138,97 @@ export default function AddParticipantForm() {
           <select name="status" defaultValue="ACTIVE" className={inputCls}>
             <option value="ACTIVE">Active</option>
             <option value="RETIRED">Retired</option>
-            <option value="SUSPENDED">Suspended</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Bolt Card Payment URL
-          </label>
-          <input name="boltCardUrl" type="url" className={inputCls} placeholder="https://..." />
+          <label className="block text-sm font-medium text-gray-700">Registration Date</label>
+          <input
+            name="registrationDate"
+            type="date"
+            defaultValue={new Date().toISOString().split("T")[0]}
+            className={inputCls}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Ethnicity</label>
+            <input name="ethnicity" className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Language</label>
+            <input name="language" className={inputCls} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">School</label>
+            <input name="school" className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Grade</label>
+            <input name="grade" className={inputCls} />
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Guardian</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Guardian</label>
+                <input name="guardian" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Guardian ID</label>
+                <input name="guardianId" className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Relationship</label>
+              <input name="guardianRelationship" className={inputCls} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Contact</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <input name="address" className={inputCls} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">1st Contact</label>
+                <input name="contact1" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">2nd Contact</label>
+                <input name="contact2" className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Housing Type</label>
+              <input name="housingType" className={inputCls} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Membership</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Card Number</label>
+              <input name="cardNumber" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
+              <input name="boltCardUrl" type="url" className={inputCls} placeholder="https://..." />
+            </div>
+          </div>
         </div>
 
         <div>

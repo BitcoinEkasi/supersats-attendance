@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import EditParticipantForm from "./edit-participant-form";
+import ProfilePictureUpload from "./profile-picture-upload";
 import ChangeRequestForm from "../change-request-form";
 import { resolveChangeRequest } from "@/app/actions/participants";
-import { formatTenure } from "@/lib/sa-id";
+import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
 import Image from "next/image";
 
 const categoryLabels: Record<string, string> = {
@@ -51,22 +52,27 @@ export default async function ParticipantDetailPage({
   const statusColors: Record<string, string> = {
     ACTIVE: "bg-green-100 text-green-700",
     RETIRED: "bg-gray-100 text-gray-600",
-    SUSPENDED: "bg-red-100 text-red-700",
   };
 
   return (
     <div>
-      <div className="flex items-center gap-4">
-        {participant.profilePicture ? (
+      <div className="flex items-start gap-4">
+        {role === "ADMINISTRATOR" ? (
+          <ProfilePictureUpload
+            participantId={participant.id}
+            profilePicture={participant.profilePicture}
+            initial={(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
+          />
+        ) : participant.profilePicture ? (
           <Image
             src={participant.profilePicture}
             alt={participant.knownAs || participant.surname}
-            width={64}
-            height={64}
-            className="h-16 w-16 rounded-full object-cover"
+            width={80}
+            height={112}
+            className="h-28 w-20 rounded-xl object-cover"
           />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-xl font-bold text-orange-600">
+          <div className="flex h-28 w-20 items-center justify-center rounded-xl bg-orange-100 text-2xl font-bold text-orange-600">
             {(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
           </div>
         )}
@@ -86,34 +92,21 @@ export default async function ParticipantDetailPage({
               {participant.status.charAt(0) + participant.status.slice(1).toLowerCase()}
             </span>
           </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+            <span>DoB {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+            <span className="text-gray-300">·</span>
+            <span>Age {calculateAge(participant.dateOfBirth)}</span>
+            <span className="text-gray-300">·</span>
+            <span>Division {getDivision(participant.dateOfBirth)}</span>
+            <span className="text-gray-300">·</span>
+            <span>{participant.gender.charAt(0) + participant.gender.slice(1).toLowerCase()}</span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+            <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>
+          </div>
         </div>
       </div>
 
-      {/* Key info strip */}
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs text-gray-500">Date of Birth</p>
-          <p className="mt-1 text-sm font-medium">
-            {participant.dateOfBirth.toISOString().split("T")[0]}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs text-gray-500">Gender</p>
-          <p className="mt-1 text-sm font-medium">
-            {participant.gender.charAt(0) + participant.gender.slice(1).toLowerCase()}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs text-gray-500">Member Since</p>
-          <p className="mt-1 text-sm font-medium">
-            {formatTenure(participant.registrationDate)}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
-          <p className="text-xs text-gray-500">Overall Attendance</p>
-          <p className="mt-1 text-sm font-medium">{percentage.toFixed(1)}%</p>
-        </div>
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {role === "ADMINISTRATOR" ? (
@@ -136,10 +129,100 @@ export default async function ParticipantDetailPage({
                   <dd className="font-medium">{participant.knownAs}</dd>
                 </div>
               )}
+              <div className="flex justify-between">
+                <dt className="text-gray-500">SA ID Number</dt>
+                <dd className="font-mono font-medium">{participant.idNumber}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">Date From</dt>
+                <dd className="font-medium">{participant.registrationDate.toISOString().split("T")[0]}</dd>
+              </div>
+              {participant.ethnicity && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Ethnicity</dt>
+                  <dd className="font-medium">{participant.ethnicity}</dd>
+                </div>
+              )}
+              {participant.language && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Language</dt>
+                  <dd className="font-medium">{participant.language}</dd>
+                </div>
+              )}
+              {participant.school && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">School</dt>
+                  <dd className="font-medium">{participant.school}</dd>
+                </div>
+              )}
+              {participant.grade && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Grade</dt>
+                  <dd className="font-medium">{participant.grade}</dd>
+                </div>
+              )}
+              {participant.guardian && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Guardian</dt>
+                  <dd className="font-medium">{participant.guardian}</dd>
+                </div>
+              )}
+              {participant.guardianId && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Guardian ID</dt>
+                  <dd className="font-mono font-medium">{participant.guardianId}</dd>
+                </div>
+              )}
+              {participant.guardianRelationship && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Relationship</dt>
+                  <dd className="font-medium">{participant.guardianRelationship}</dd>
+                </div>
+              )}
+              {participant.address && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Address</dt>
+                  <dd className="font-medium text-right max-w-48">{participant.address}</dd>
+                </div>
+              )}
+              {participant.contact1 && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">1st Contact</dt>
+                  <dd className="font-medium">{participant.contact1}</dd>
+                </div>
+              )}
+              {participant.contact2 && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">2nd Contact</dt>
+                  <dd className="font-medium">{participant.contact2}</dd>
+                </div>
+              )}
+              {participant.housingType && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Housing Type</dt>
+                  <dd className="font-medium">{participant.housingType}</dd>
+                </div>
+              )}
+              {participant.cardNumber && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Card Number</dt>
+                  <dd className="font-mono font-medium">{participant.cardNumber}</dd>
+                </div>
+              )}
               {participant.boltCardUrl && (
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Bolt Card URL</dt>
+                  <dt className="text-gray-500">Pull Payment Link</dt>
                   <dd className="font-medium truncate max-w-48">{participant.boltCardUrl}</dd>
+                </div>
+              )}
+              {participant.profilePicture && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Profile Link</dt>
+                  <dd className="truncate max-w-48">
+                    <a href={participant.profilePicture} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+                      View
+                    </a>
+                  </dd>
                 </div>
               )}
             </dl>
@@ -192,7 +275,7 @@ export default async function ParticipantDetailPage({
               </div>
               <div>
                 <p className="text-2xl font-bold text-orange-600">{percentage.toFixed(1)}%</p>
-                <p className="text-sm text-gray-500">Rate</p>
+                <p className="text-sm text-gray-500">Overall Attendance</p>
               </div>
             </div>
           </div>

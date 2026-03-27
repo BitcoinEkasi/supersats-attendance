@@ -8,14 +8,13 @@ datasource db {
 
 enum UserRole {
   ADMINISTRATOR
-  GATEKEEPER
+  MARSHALL
   SUPERVISOR
 }
 
 enum ParticipantStatus {
   ACTIVE
   RETIRED
-  SUSPENDED
 }
 
 enum Gender {
@@ -41,7 +40,7 @@ model User {
   email        String   @unique
   name         String
   passwordHash String   @map("password_hash")
-  role         UserRole @default(GATEKEEPER)
+  role         UserRole @default(MARSHALL)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -65,6 +64,18 @@ model Participant {
   idNumber         String            @unique @map("id_number")
   dateOfBirth      DateTime          @map("date_of_birth") @db.Date
   boltCardUrl      String?           @map("bolt_card_url")
+  cardNumber       String?           @map("card_number")
+  ethnicity        String?
+  language         String?
+  school           String?
+  grade            String?
+  guardian         String?
+  guardianId       String?           @map("guardian_id")
+  guardianRelationship String?       @map("guardian_relationship")
+  address          String?
+  contact1         String?           @map("contact_1")
+  contact2         String?           @map("contact_2")
+  housingType      String?           @map("housing_type")
   status           ParticipantStatus @default(ACTIVE)
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")

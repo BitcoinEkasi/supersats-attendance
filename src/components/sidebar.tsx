@@ -8,7 +8,7 @@ const allNavItems = [
   {
     href: "/dashboard",
     label: "Dashboard",
-    roles: ["ADMINISTRATOR", "GATEKEEPER", "SUPERVISOR"] as UserRole[],
+    roles: ["ADMINISTRATOR", "MARSHALL", "SUPERVISOR"] as UserRole[],
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
   },
   {
@@ -18,9 +18,21 @@ const allNavItems = [
     icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
   },
   {
+    href: "/participants/add",
+    label: "Add Participant",
+    roles: ["ADMINISTRATOR"] as UserRole[],
+    icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z",
+  },
+  {
+    href: "/participants/import",
+    label: "Import Participants",
+    roles: ["ADMINISTRATOR"] as UserRole[],
+    icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12",
+  },
+  {
     href: "/attendance",
     label: "Attendance",
-    roles: ["ADMINISTRATOR", "GATEKEEPER"] as UserRole[],
+    roles: ["ADMINISTRATOR", "MARSHALL"] as UserRole[],
     icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
   },
   {
@@ -45,7 +57,10 @@ export default function Sidebar({ role }: { role?: UserRole }) {
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive =
+            item.href === "/participants"
+              ? pathname === "/participants" || (pathname.startsWith("/participants/") && !pathname.startsWith("/participants/add") && !pathname.startsWith("/participants/import"))
+              : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

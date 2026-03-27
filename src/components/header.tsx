@@ -4,13 +4,13 @@ import { signOut, useSession } from "next-auth/react";
 
 const roleLabels: Record<string, string> = {
   ADMINISTRATOR: "Administrator",
-  GATEKEEPER: "Gatekeeper",
+  MARSHALL: "Marshall",
   SUPERVISOR: "Supervisor",
 };
 
 const roleColors: Record<string, string> = {
   ADMINISTRATOR: "bg-orange-100 text-orange-700",
-  GATEKEEPER: "bg-blue-100 text-blue-700",
+  MARSHALL: "bg-blue-100 text-blue-700",
   SUPERVISOR: "bg-purple-100 text-purple-700",
 };
 
@@ -22,7 +22,7 @@ export default function Header() {
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
       <div />
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-600">{session?.user?.name || session?.user?.email}</span>
+        <span className="text-sm text-gray-600">{session?.user?.email}</span>
         {role && (
           <span
             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${

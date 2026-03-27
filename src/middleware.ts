@@ -27,11 +27,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Attendance section: ADMINISTRATOR or GATEKEEPER
+    // Attendance section: ADMINISTRATOR or MARSHALL
     if (
       pathname.startsWith("/attendance") &&
       role !== "ADMINISTRATOR" &&
-      role !== "GATEKEEPER"
+      role !== "MARSHALL"
     ) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }

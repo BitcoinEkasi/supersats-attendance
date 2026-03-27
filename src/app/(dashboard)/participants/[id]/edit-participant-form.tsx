@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateParticipant } from "@/app/actions/participants";
 import type { Participant } from "@prisma/client";
-import Image from "next/image";
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   if (!/^\d{13}$/.test(id)) return null;
@@ -26,14 +25,11 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadedPath, setUploadedPath] = useState<string>("");
-  const [uploading, setUploading] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [idError, setIdError] = useState("");
   const [idDerived, setIdDerived] = useState<{ dob: string; gender: string } | null>(() =>
     parseSaIdClient(participant.idNumber)
   );
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleIdBlur(e: React.FocusEvent<HTMLInputElement>) {
     const val = e.target.value.trim();
@@ -42,27 +38,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
     else { setIdDerived(null); setIdError("Enter a valid 13-digit SA ID number"); }
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setPhotoPreview(URL.createObjectURL(file));
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const data = await res.json();
-    if (data.path) setUploadedPath(data.path);
-    else setError(data.error || "Photo upload failed");
-    setUploading(false);
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
     setMessage("");
     const formData = new FormData(e.currentTarget);
-    if (uploadedPath) formData.set("profilePicture", uploadedPath);
     const result = await updateParticipant(participant.id, formData);
     if (result.error) {
       setError(result.error);
@@ -77,12 +58,10 @@ export default function EditParticipantForm({ participant }: { participant: Part
     "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
   const readonlyCls =
     "mt-1 block w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600";
-  const currentPhoto = photoPreview || participant.profilePicture;
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-gray-900">Edit Participant</h3>
-
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         {error && (
           <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
@@ -90,11 +69,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
         {message && (
           <div className="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-600">{message}</div>
         )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">TSK ID</label>
-          <div className={readonlyCls}>{participant.tskId}</div>
-        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -141,52 +115,115 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <select name="status" defaultValue={participant.status} className={inputCls}>
             <option value="ACTIVE">Active</option>
             <option value="RETIRED">Retired</option>
-            <option value="SUSPENDED">Suspended</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
-          <input name="boltCardUrl" type="url" defaultValue={participant.boltCardUrl || ""} className={inputCls} />
+          <label className="block text-sm font-medium text-gray-700">Registration Date</label>
+          <input
+            name="registrationDate"
+            type="date"
+            defaultValue={participant.registrationDate.toISOString().split("T")[0]}
+            className={inputCls}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Ethnicity</label>
+            <input name="ethnicity" defaultValue={participant.ethnicity || ""} className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Language</label>
+            <input name="language" defaultValue={participant.language || ""} className={inputCls} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">School</label>
+            <input name="school" defaultValue={participant.school || ""} className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Grade</label>
+            <input name="grade" defaultValue={participant.grade || ""} className={inputCls} />
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Guardian</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Guardian</label>
+                <input name="guardian" defaultValue={participant.guardian || ""} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Guardian ID</label>
+                <input name="guardianId" defaultValue={participant.guardianId || ""} className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Relationship</label>
+              <input name="guardianRelationship" defaultValue={participant.guardianRelationship || ""} className={inputCls} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Contact</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <input name="address" defaultValue={participant.address || ""} className={inputCls} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">1st Contact</label>
+                <input name="contact1" defaultValue={participant.contact1 || ""} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">2nd Contact</label>
+                <input name="contact2" defaultValue={participant.contact2 || ""} className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Housing Type</label>
+              <input name="housingType" defaultValue={participant.housingType || ""} className={inputCls} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Membership</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Card Number</label>
+              <input name="cardNumber" defaultValue={participant.cardNumber || ""} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
+              <input name="boltCardUrl" type="url" defaultValue={participant.boltCardUrl || ""} className={inputCls} />
+            </div>
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
-          <div className="mt-1 flex items-center gap-3">
-            {currentPhoto ? (
-              <Image
-                src={currentPhoto}
-                alt="Profile"
-                width={48}
-                height={48}
-                className="h-12 w-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-sm font-medium text-orange-600">
-                {(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-            >
-              {uploading ? "Uploading..." : "Change photo"}
-            </button>
-          </div>
+          <label className="block text-sm font-medium text-gray-700">Profile Link</label>
           <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileChange}
-            className="hidden"
+            type="url"
+            value={profileLinkUrl}
+            onChange={(e) => { setProfileLinkUrl(e.target.value); }}
+            placeholder="https://..."
+            className={inputCls}
           />
-          <input type="hidden" name="profilePicture" value={uploadedPath || participant.profilePicture || ""} />
         </div>
+
+        <input type="hidden" name="profilePicture" value={profileLinkUrl} />
 
         <button
           type="submit"
-          disabled={loading || uploading}
+          disabled={loading}
           className="w-full rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
         >
           {loading ? "Saving..." : "Save Changes"}

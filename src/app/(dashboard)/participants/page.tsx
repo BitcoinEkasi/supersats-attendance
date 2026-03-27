@@ -1,14 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import ParticipantSearch from "./participant-search";
-import AddParticipantForm from "./add-participant-form";
-import Image from "next/image";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
   RETIRED: "bg-gray-100 text-gray-600",
-  SUSPENDED: "bg-red-100 text-red-700",
 };
 
 export default async function ParticipantsPage({
@@ -17,8 +13,6 @@ export default async function ParticipantsPage({
   searchParams: Promise<{ search?: string }>;
 }) {
   const { search } = await searchParams;
-  const session = await auth();
-  const role = session?.user?.role;
 
   const where = search
     ? {
@@ -42,8 +36,7 @@ export default async function ParticipantsPage({
         <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
-        <div className="flex-1">
+      <div className="mt-6">
           <ParticipantSearch initialSearch={search || ""} />
 
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -63,7 +56,7 @@ export default async function ParticipantsPage({
                     <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                       {search
                         ? "No participants match your search."
-                        : "No participants yet. Add one using the form."}
+                        : "No participants yet. Use \"Add Participant\" in the menu."}
                     </td>
                   </tr>
                 ) : (
@@ -72,11 +65,10 @@ export default async function ParticipantsPage({
                       <td className="px-4 py-3 font-mono text-xs text-gray-600">{p.tskId}</td>
                       <td className="px-4 py-3">
                         {p.profilePicture ? (
-                          <Image
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
                             src={p.profilePicture}
                             alt={p.knownAs || p.surname}
-                            width={32}
-                            height={32}
                             className="h-8 w-8 rounded-full object-cover"
                           />
                         ) : (
@@ -117,13 +109,6 @@ export default async function ParticipantsPage({
           <p className="mt-2 text-sm text-gray-500">
             {participants.length} participant{participants.length !== 1 ? "s" : ""}
           </p>
-        </div>
-
-        {role === "ADMINISTRATOR" && (
-          <div className="w-full lg:w-96">
-            <AddParticipantForm />
-          </div>
-        )}
       </div>
     </div>
   );

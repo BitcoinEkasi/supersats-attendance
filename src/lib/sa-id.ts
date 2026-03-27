@@ -59,6 +59,27 @@ export function parseSaId(id: string): SaIdResult {
   return { dob, gender };
 }
 
+export function calculateAge(dob: Date): number {
+  const now = new Date();
+  let age = now.getFullYear() - dob.getUTCFullYear();
+  const monthDiff = now.getMonth() - dob.getUTCMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getUTCDate())) {
+    age--;
+  }
+  return age;
+}
+
+export function getDivision(dob: Date): string {
+  const ageThisYear = new Date().getFullYear() - dob.getUTCFullYear();
+  if (ageThisYear <= 8)  return "U/8";
+  if (ageThisYear <= 10) return "U/10";
+  if (ageThisYear <= 12) return "U/12";
+  if (ageThisYear <= 14) return "U/14";
+  if (ageThisYear <= 16) return "U/16";
+  if (ageThisYear <= 18) return "U/18";
+  return "Open";
+}
+
 export function formatTenure(registrationDate: Date): string {
   const now = new Date();
   let years = now.getFullYear() - registrationDate.getFullYear();
