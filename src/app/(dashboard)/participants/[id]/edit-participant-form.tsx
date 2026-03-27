@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { updateParticipant } from "@/app/actions/participants";
+import { getExpectedGrade } from "@/lib/sa-id";
 import type { Participant } from "@prisma/client";
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
@@ -26,16 +27,36 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
+  const [selectedGrade, setSelectedGrade] = useState<string>(participant.grade || "");
   const [idError, setIdError] = useState("");
   const [idDerived, setIdDerived] = useState<{ dob: string; gender: string } | null>(() =>
     parseSaIdClient(participant.idNumber)
   );
+  const [idDocumentUrl, setIdDocumentUrl] = useState<string>(participant.idDocumentUrl || "");
+  const [idDocUploading, setIdDocUploading] = useState(false);
+  const idDocInputRef = useRef<HTMLInputElement>(null);
 
   function handleIdBlur(e: React.FocusEvent<HTMLInputElement>) {
     const val = e.target.value.trim();
     const result = parseSaIdClient(val);
     if (result) { setIdDerived(result); setIdError(""); }
     else { setIdDerived(null); setIdError("Enter a valid 13-digit SA ID number"); }
+  }
+
+  async function handleIdDocChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIdDocUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.path) {
+      setIdDocumentUrl(data.path);
+    } else {
+      setError(data.error || "Upload failed");
+    }
+    setIdDocUploading(false);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -99,6 +120,27 @@ export default function EditParticipantForm({ participant }: { participant: Part
           {idError && <p className="mt-1 text-xs text-red-500">{idError}</p>}
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700">ID / Birth Certificate</label>
+          <div className="mt-1 flex items-center gap-3">
+            {idDocumentUrl && (
+              <a href={idDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
+                View document
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => idDocInputRef.current?.click()}
+              disabled={idDocUploading}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {idDocUploading ? "Uploading..." : idDocumentUrl ? "Replace" : "Upload"}
+            </button>
+          </div>
+          <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
+          <input type="hidden" name="idDocumentUrl" value={idDocumentUrl} />
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
@@ -108,14 +150,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
             <label className="block text-sm font-medium text-gray-700">Gender</label>
             <div className={readonlyCls}>{idDerived?.gender || participant.gender}</div>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select name="status" defaultValue={participant.status} className={inputCls}>
-            <option value="ACTIVE">Active</option>
-            <option value="RETIRED">Retired</option>
-          </select>
         </div>
 
         <div>
@@ -131,22 +165,67 @@ export default function EditParticipantForm({ participant }: { participant: Part
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Ethnicity</label>
-            <input name="ethnicity" defaultValue={participant.ethnicity || ""} className={inputCls} />
+            <select name="ethnicity" defaultValue={participant.ethnicity || ""} className={inputCls}>
+              <option value="">— select —</option>
+              <option>Black</option>
+              <option>Coloured</option>
+              <option>White</option>
+              <option>Indian</option>
+              <option>Asian</option>
+              <option>Other</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Language</label>
-            <input name="language" defaultValue={participant.language || ""} className={inputCls} />
+            <select name="language" defaultValue={participant.language || ""} className={inputCls}>
+              <option value="">— select —</option>
+              <option>Xhosa</option>
+              <option>Zulu</option>
+              <option>English</option>
+              <option>Afrikaans</option>
+              <option>Other</option>
+            </select>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">School</label>
-            <input name="school" defaultValue={participant.school || ""} className={inputCls} />
+            <select name="school" defaultValue={participant.school || ""} className={inputCls}>
+              <option value="">— select —</option>
+              <option value="N/A">N/A</option>
+              <option>Alternative</option>
+              <option>Indwe Secondary</option>
+              <option>TM Ndanda</option>
+              <option>Hillcrest</option>
+              <option>Sao Bras</option>
+              <option>Milkwood</option>
+              <option>Other</option>
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Grade</label>
-            <input name="grade" defaultValue={participant.grade || ""} className={inputCls} />
+            <label className="block text-sm font-medium text-gray-700">Current Grade</label>
+            <select name="grade" defaultValue={participant.grade || ""} onChange={(e) => setSelectedGrade(e.target.value)} className={inputCls}>
+              <option value="">— select —</option>
+              <option value="N/A">N/A</option>
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i + 1}>Grade {i + 1}</option>
+              ))}
+            </select>
+            {(() => {
+              const expected = getExpectedGrade(participant.dateOfBirth);
+              const expectedNum = expected.startsWith("Grade ") ? parseInt(expected.replace("Grade ", "")) : null;
+              const actualNum = selectedGrade.startsWith("Grade ") ? parseInt(selectedGrade.replace("Grade ", "")) : null;
+              const diff = expectedNum !== null && actualNum !== null ? actualNum - expectedNum : null;
+              const diffLabel = diff === null ? "" : diff === 0 ? " · on track" : diff > 0 ? ` · ${diff} ${diff === 1 ? "grade" : "grades"} ahead` : ` · ${Math.abs(diff)} ${Math.abs(diff) === 1 ? "grade" : "grades"} behind`;
+              const diffColor = diff === null || diff === 0 ? "text-gray-600" : diff > 0 ? "text-blue-600" : "text-amber-600";
+              return (
+                <p className="mt-1 text-xs text-gray-400">
+                  Expected: <span className={`font-medium ${selectedGrade && selectedGrade !== expected ? "text-amber-600" : "text-gray-600"}`}>{expected}</span>
+                  {diffLabel && <span className={`font-medium ${diffColor}`}>{diffLabel}</span>}
+                </p>
+              );
+            })()}
           </div>
         </div>
 
@@ -165,7 +244,16 @@ export default function EditParticipantForm({ participant }: { participant: Part
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Relationship</label>
-              <input name="guardianRelationship" defaultValue={participant.guardianRelationship || ""} className={inputCls} />
+              <select name="guardianRelationship" defaultValue={participant.guardianRelationship || ""} className={inputCls}>
+                <option value="">— select —</option>
+                <option>Mother</option>
+                <option>Father</option>
+                <option>Grandmother</option>
+                <option>Grandfather</option>
+                <option>Aunt</option>
+                <option>Uncle</option>
+                <option>Legal Guardian</option>
+              </select>
             </div>
           </div>
         </div>
@@ -189,14 +277,26 @@ export default function EditParticipantForm({ participant }: { participant: Part
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Housing Type</label>
-              <input name="housingType" defaultValue={participant.housingType || ""} className={inputCls} />
+              <select name="housingType" defaultValue={participant.housingType || ""} className={inputCls}>
+                <option value="">— select —</option>
+                <option>House</option>
+                <option>Shack</option>
+                <option>Street</option>
+              </select>
             </div>
           </div>
         </div>
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Membership</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select name="status" defaultValue={participant.status} className={inputCls}>
+                <option value="ACTIVE">Active</option>
+                <option value="RETIRED">Retired</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Card Number</label>
               <input name="cardNumber" defaultValue={participant.cardNumber || ""} className={inputCls} />
@@ -208,26 +308,44 @@ export default function EditParticipantForm({ participant }: { participant: Part
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Profile Link</label>
-          <input
-            type="url"
-            value={profileLinkUrl}
-            onChange={(e) => { setProfileLinkUrl(e.target.value); }}
-            placeholder="https://..."
-            className={inputCls}
-          />
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Profile Link</label>
+              <input
+                type="url"
+                value={profileLinkUrl}
+                onChange={(e) => { setProfileLinkUrl(e.target.value); }}
+                placeholder="https://..."
+                className={inputCls}
+              />
+            </div>
+          </div>
         </div>
 
         <input type="hidden" name="profilePicture" value={profileLinkUrl} />
 
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+          type="button"
+          onClick={() => document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-6 right-6 z-50 rounded-full bg-gray-700 p-3 text-white shadow-lg hover:bg-gray-800"
+          aria-label="Scroll to top"
         >
-          {loading ? "Saving..." : "Save Changes"}
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
         </button>
+
+        <div className="fixed top-[72px] right-6 z-50">
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-full bg-orange-600 px-6 py-3 text-sm font-medium text-white shadow-lg hover:bg-orange-700 disabled:opacity-50"
+          >
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
       </form>
     </div>
   );

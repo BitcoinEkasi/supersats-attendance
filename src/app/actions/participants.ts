@@ -72,6 +72,7 @@ export async function createParticipant(formData: FormData) {
   const contact1 = (formData.get("contact1") as string)?.trim() || null;
   const contact2 = (formData.get("contact2") as string)?.trim() || null;
   const housingType = (formData.get("housingType") as string)?.trim() || null;
+  const idDocumentUrl = (formData.get("idDocumentUrl") as string)?.trim() || null;
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -112,6 +113,7 @@ export async function createParticipant(formData: FormData) {
           contact1,
           contact2,
           housingType,
+          idDocumentUrl,
         },
       });
     });
@@ -150,6 +152,7 @@ export async function updateParticipant(id: string, formData: FormData) {
   const contact1 = (formData.get("contact1") as string)?.trim() || null;
   const contact2 = (formData.get("contact2") as string)?.trim() || null;
   const housingType = (formData.get("housingType") as string)?.trim() || null;
+  const idDocumentUrl = (formData.get("idDocumentUrl") as string)?.trim() || null;
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -184,6 +187,7 @@ export async function updateParticipant(id: string, formData: FormData) {
         contact1,
         contact2,
         housingType,
+        idDocumentUrl,
         ...(registrationDateRaw ? { registrationDate: new Date(registrationDateRaw + "T00:00:00Z") } : {}),
         ...(profilePicture ? { profilePicture } : {}),
       },

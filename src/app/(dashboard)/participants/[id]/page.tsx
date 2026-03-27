@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import EditParticipantForm from "./edit-participant-form";
 import ProfilePictureUpload from "./profile-picture-upload";
+import CertificationsSection from "./certifications-section";
 import ChangeRequestForm from "../change-request-form";
 import { resolveChangeRequest } from "@/app/actions/participants";
 import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
@@ -40,6 +41,7 @@ export default async function ParticipantDetailPage({
         include: { requestedByUser: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
       },
+      certifications: { orderBy: { uploadedAt: "desc" } },
     },
   });
 
@@ -56,6 +58,7 @@ export default async function ParticipantDetailPage({
 
   return (
     <div>
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 bg-white px-6 pt-6 pb-4 shadow-sm">
       <div className="flex items-start gap-4">
         {role === "ADMINISTRATOR" ? (
           <ProfilePictureUpload
@@ -78,9 +81,10 @@ export default async function ParticipantDetailPage({
         )}
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            {participant.knownAs
-              ? `${participant.knownAs} (${participant.surname})`
-              : `${participant.surname}, ${participant.fullNames}`}
+            {participant.surname}, {participant.fullNames}
+            {participant.knownAs && (
+              <span className="ml-2 text-lg font-normal text-gray-500">({participant.knownAs})</span>
+            )}
           </h2>
           <div className="mt-1 flex items-center gap-2">
             <span className="font-mono text-sm text-gray-500">{participant.tskId}</span>
@@ -93,7 +97,7 @@ export default async function ParticipantDetailPage({
             </span>
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-            <span>DoB {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+            <span>Born on {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
             <span className="text-gray-300">·</span>
             <span>Age {calculateAge(participant.dateOfBirth)}</span>
             <span className="text-gray-300">·</span>
@@ -106,11 +110,17 @@ export default async function ParticipantDetailPage({
           </div>
         </div>
       </div>
-
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {role === "ADMINISTRATOR" ? (
-          <EditParticipantForm participant={participant} />
+          <div className="space-y-6">
+            <EditParticipantForm participant={participant} />
+            <CertificationsSection
+              participantId={participant.id}
+              certifications={participant.certifications}
+            />
+          </div>
         ) : (
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Participant Details</h3>

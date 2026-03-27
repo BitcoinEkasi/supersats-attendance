@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { createParticipant } from "@/app/actions/participants";
 import Image from "next/image";
 
+function expectedGradeFromDob(dob: string): string {
+  const birthYear = parseInt(dob.substring(0, 4));
+  const grade = new Date().getFullYear() - birthYear - 6;
+  if (grade < 1) return "Not yet school-going";
+  if (grade > 12) return "Completed Grade 12";
+  return `Grade ${grade}`;
+}
+
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   if (!/^\d{13}$/.test(id)) return null;
   const yy = parseInt(id.substring(0, 2));
@@ -26,10 +34,14 @@ export default function AddParticipantForm() {
   const [loading, setLoading] = useState(false);
   const [idDerived, setIdDerived] = useState<{ dob: string; gender: string } | null>(null);
   const [idError, setIdError] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [idDocumentUrl, setIdDocumentUrl] = useState<string>("");
+  const [idDocUploading, setIdDocUploading] = useState(false);
+  const idDocInputRef = useRef<HTMLInputElement>(null);
 
   function handleIdBlur(e: React.FocusEvent<HTMLInputElement>) {
     const val = e.target.value.trim();
@@ -42,6 +54,22 @@ export default function AddParticipantForm() {
       setIdDerived(null);
       setIdError("Enter a valid 13-digit SA ID number");
     }
+  }
+
+  async function handleIdDocChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIdDocUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.path) {
+      setIdDocumentUrl(data.path);
+    } else {
+      setError(data.error || "Upload failed");
+    }
+    setIdDocUploading(false);
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -68,6 +96,7 @@ export default function AddParticipantForm() {
     setError("");
     const formData = new FormData(e.currentTarget);
     if (uploadedPath) formData.set("profilePicture", uploadedPath);
+    if (idDocumentUrl) formData.set("idDocumentUrl", idDocumentUrl);
     const result = await createParticipant(formData);
     if (result.error) {
       setError(result.error);
@@ -122,6 +151,26 @@ export default function AddParticipantForm() {
           {idError && <p className="mt-1 text-xs text-red-500">{idError}</p>}
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700">ID / Birth Certificate</label>
+          <div className="mt-1 flex items-center gap-3">
+            {idDocumentUrl && (
+              <a href={idDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
+                View document
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => idDocInputRef.current?.click()}
+              disabled={idDocUploading}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {idDocUploading ? "Uploading..." : idDocumentUrl ? "Replace" : "Upload"}
+            </button>
+          </div>
+          <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
@@ -131,14 +180,6 @@ export default function AddParticipantForm() {
             <label className="block text-sm font-medium text-gray-700">Gender</label>
             <div className={readonlyCls}>{idDerived?.gender || "— auto from ID"}</div>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select name="status" defaultValue="ACTIVE" className={inputCls}>
-            <option value="ACTIVE">Active</option>
-            <option value="RETIRED">Retired</option>
-          </select>
         </div>
 
         <div>
@@ -154,22 +195,67 @@ export default function AddParticipantForm() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Ethnicity</label>
-            <input name="ethnicity" className={inputCls} />
+            <select name="ethnicity" className={inputCls}>
+              <option value="">— select —</option>
+              <option>Black</option>
+              <option>Coloured</option>
+              <option>White</option>
+              <option>Indian</option>
+              <option>Asian</option>
+              <option>Other</option>
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Language</label>
-            <input name="language" className={inputCls} />
+            <select name="language" className={inputCls}>
+              <option value="">— select —</option>
+              <option>Xhosa</option>
+              <option>Zulu</option>
+              <option>English</option>
+              <option>Afrikaans</option>
+              <option>Other</option>
+            </select>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">School</label>
-            <input name="school" className={inputCls} />
+            <select name="school" className={inputCls}>
+              <option value="">— select —</option>
+              <option value="N/A">N/A</option>
+              <option>Alternative</option>
+              <option>Indwe Secondary</option>
+              <option>TM Ndanda</option>
+              <option>Hillcrest</option>
+              <option>Sao Bras</option>
+              <option>Milkwood</option>
+              <option>Other</option>
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Grade</label>
-            <input name="grade" className={inputCls} />
+            <label className="block text-sm font-medium text-gray-700">Current Grade</label>
+            <select name="grade" onChange={(e) => setSelectedGrade(e.target.value)} className={inputCls}>
+              <option value="">— select —</option>
+              <option value="N/A">N/A</option>
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i + 1}>Grade {i + 1}</option>
+              ))}
+            </select>
+            {idDerived && (() => {
+              const expected = expectedGradeFromDob(idDerived.dob);
+              const expectedNum = expected.startsWith("Grade ") ? parseInt(expected.replace("Grade ", "")) : null;
+              const actualNum = selectedGrade.startsWith("Grade ") ? parseInt(selectedGrade.replace("Grade ", "")) : null;
+              const diff = expectedNum !== null && actualNum !== null ? actualNum - expectedNum : null;
+              const diffLabel = diff === null ? "" : diff === 0 ? " · on track" : diff > 0 ? ` · ${diff} ${diff === 1 ? "grade" : "grades"} ahead` : ` · ${Math.abs(diff)} ${Math.abs(diff) === 1 ? "grade" : "grades"} behind`;
+              const diffColor = diff === null || diff === 0 ? "text-gray-600" : diff > 0 ? "text-blue-600" : "text-amber-600";
+              return (
+                <p className="mt-1 text-xs text-gray-400">
+                  Expected: <span className={`font-medium ${selectedGrade && selectedGrade !== expected ? "text-amber-600" : "text-gray-600"}`}>{expected}</span>
+                  {diffLabel && <span className={`font-medium ${diffColor}`}>{diffLabel}</span>}
+                </p>
+              );
+            })()}
           </div>
         </div>
 
@@ -188,7 +274,16 @@ export default function AddParticipantForm() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Relationship</label>
-              <input name="guardianRelationship" className={inputCls} />
+              <select name="guardianRelationship" className={inputCls}>
+                <option value="">— select —</option>
+                <option>Mother</option>
+                <option>Father</option>
+                <option>Grandmother</option>
+                <option>Grandfather</option>
+                <option>Aunt</option>
+                <option>Uncle</option>
+                <option>Legal Guardian</option>
+              </select>
             </div>
           </div>
         </div>
@@ -212,14 +307,26 @@ export default function AddParticipantForm() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Housing Type</label>
-              <input name="housingType" className={inputCls} />
+              <select name="housingType" className={inputCls}>
+                <option value="">— select —</option>
+                <option>House</option>
+                <option>Shack</option>
+                <option>Street</option>
+              </select>
             </div>
           </div>
         </div>
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Membership</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select name="status" defaultValue="ACTIVE" className={inputCls}>
+                <option value="ACTIVE">Active</option>
+                <option value="RETIRED">Retired</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Card Number</label>
               <input name="cardNumber" className={inputCls} />

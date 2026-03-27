@@ -69,6 +69,13 @@ export function calculateAge(dob: Date): number {
   return age;
 }
 
+export function getExpectedGrade(dob: Date): string {
+  const grade = new Date().getFullYear() - dob.getUTCFullYear() - 6;
+  if (grade < 1) return "Not yet school-going";
+  if (grade > 12) return "Completed Grade 12";
+  return `Grade ${grade}`;
+}
+
 export function getDivision(dob: Date): string {
   const ageThisYear = new Date().getFullYear() - dob.getUTCFullYear();
   if (ageThisYear <= 8)  return "U/8";
