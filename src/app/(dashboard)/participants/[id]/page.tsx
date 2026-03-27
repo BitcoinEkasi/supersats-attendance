@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import EditParticipantForm from "./edit-participant-form";
 import ProfilePictureUpload from "./profile-picture-upload";
-import CertificationsSection from "./certifications-section";
 import ChangeRequestForm from "../change-request-form";
 import { resolveChangeRequest } from "@/app/actions/participants";
 import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
@@ -42,6 +41,7 @@ export default async function ParticipantDetailPage({
         orderBy: { createdAt: "desc" },
       },
       certifications: { orderBy: { uploadedAt: "desc" } },
+      performanceEvents: { orderBy: { eventDate: "desc" } },
     },
   });
 
@@ -57,70 +57,83 @@ export default async function ParticipantDetailPage({
   };
 
   return (
-    <div>
-      <div className="sticky top-0 z-10 -mx-6 -mt-6 bg-white px-6 pt-6 pb-4 shadow-sm">
-      <div className="flex items-start gap-4">
-        {role === "ADMINISTRATOR" ? (
-          <ProfilePictureUpload
-            participantId={participant.id}
-            profilePicture={participant.profilePicture}
-            initial={(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
-          />
-        ) : participant.profilePicture ? (
-          <Image
-            src={participant.profilePicture}
-            alt={participant.knownAs || participant.surname}
-            width={80}
-            height={112}
-            className="h-28 w-20 rounded-xl object-cover"
-          />
-        ) : (
-          <div className="flex h-28 w-20 items-center justify-center rounded-xl bg-orange-100 text-2xl font-bold text-orange-600">
-            {(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {participant.surname}, {participant.fullNames}
-            {participant.knownAs && (
-              <span className="ml-2 text-lg font-normal text-gray-500">({participant.knownAs})</span>
+    <div className="-m-6 flex h-full flex-col">
+      {/* Pinned ID card — outside scroll area */}
+      <div className="shrink-0 border-b border-gray-200 bg-white shadow-sm flex items-stretch overflow-hidden">
+        {/* Profile picture — flush top and bottom */}
+        <div className="shrink-0 w-24 self-stretch overflow-hidden">
+          {role === "ADMINISTRATOR" ? (
+            <ProfilePictureUpload
+              participantId={participant.id}
+              profilePicture={participant.profilePicture}
+              initial={(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
+            />
+          ) : participant.profilePicture ? (
+            <Image
+              src={participant.profilePicture}
+              alt={participant.knownAs || participant.surname}
+              width={96}
+              height={144}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-orange-100 text-2xl font-bold text-orange-600">
+              {(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+        {/* Text content — padded */}
+        <div className="flex-1 px-4 py-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {participant.surname}, {participant.fullNames}
+              {participant.knownAs && (
+                <span className="ml-2 text-lg font-normal text-gray-500">({participant.knownAs})</span>
+              )}
+            </h2>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="font-mono text-sm text-gray-500">{participant.tskId}</span>
+              <span
+                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                  statusColors[participant.status] || "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {participant.status.charAt(0) + participant.status.slice(1).toLowerCase()}
+              </span>
+            </div>
+            <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+              <span>Born on {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+              <span className="text-gray-300">·</span>
+              <span>Age {calculateAge(participant.dateOfBirth)}</span>
+              <span className="text-gray-300">·</span>
+              <span>Division {getDivision(participant.dateOfBirth)}</span>
+              <span className="text-gray-300">·</span>
+              <span>{participant.gender.charAt(0) + participant.gender.slice(1).toLowerCase()}</span>
+            </div>
+            <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+              <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>
+            </div>
+            {participant.cardNumber && (
+              <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+                <span className="text-gray-400">Card</span>
+                <span className="font-mono">{participant.cardNumber}</span>
+                {participant.cardBalance != null && (
+                  <>
+                    <span className="text-gray-300">·</span>
+                    <span className="font-medium">{Math.round(participant.cardBalance).toLocaleString()} sats</span>
+                  </>
+                )}
+              </div>
             )}
-          </h2>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="font-mono text-sm text-gray-500">{participant.tskId}</span>
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                statusColors[participant.status] || "bg-gray-100 text-gray-600"
-              }`}
-            >
-              {participant.status.charAt(0) + participant.status.slice(1).toLowerCase()}
-            </span>
-          </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-            <span>Born on {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
-            <span className="text-gray-300">·</span>
-            <span>Age {calculateAge(participant.dateOfBirth)}</span>
-            <span className="text-gray-300">·</span>
-            <span>Division {getDivision(participant.dateOfBirth)}</span>
-            <span className="text-gray-300">·</span>
-            <span>{participant.gender.charAt(0) + participant.gender.slice(1).toLowerCase()}</span>
-          </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-            <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>
           </div>
         </div>
       </div>
-      </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {role === "ADMINISTRATOR" ? (
-          <div className="space-y-6">
-            <EditParticipantForm participant={participant} />
-            <CertificationsSection
-              participantId={participant.id}
-              certifications={participant.certifications}
-            />
-          </div>
+          <EditParticipantForm participant={participant} />
         ) : (
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Participant Details</h3>
@@ -332,6 +345,7 @@ export default async function ParticipantDetailPage({
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

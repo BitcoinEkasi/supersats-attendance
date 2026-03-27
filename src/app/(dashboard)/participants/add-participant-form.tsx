@@ -122,7 +122,7 @@ export default function AddParticipantForm() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Surname *</label>
             <input name="surname" required className={inputCls} />
@@ -131,44 +131,56 @@ export default function AddParticipantForm() {
             <label className="block text-sm font-medium text-gray-700">Full Names *</label>
             <input name="fullNames" required className={inputCls} />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Known As</label>
-          <input name="knownAs" className={inputCls} placeholder="Nickname or preferred name" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">SA ID Number *</label>
-          <input
-            name="idNumber"
-            required
-            maxLength={13}
-            onBlur={handleIdBlur}
-            className={`${inputCls} ${idError ? "border-red-400" : ""}`}
-            placeholder="13-digit ID number"
-          />
-          {idError && <p className="mt-1 text-xs text-red-500">{idError}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">ID / Birth Certificate</label>
-          <div className="mt-1 flex items-center gap-3">
-            {idDocumentUrl && (
-              <a href={idDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
-                View document
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={() => idDocInputRef.current?.click()}
-              disabled={idDocUploading}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {idDocUploading ? "Uploading..." : idDocumentUrl ? "Replace" : "Upload"}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Known As</label>
+            <input name="knownAs" className={inputCls} placeholder="Nickname or preferred name" />
           </div>
-          <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">SA ID Number *</label>
+            <input
+              name="idNumber"
+              required
+              maxLength={13}
+              onBlur={handleIdBlur}
+              className={`${inputCls} ${idError ? "border-red-400" : ""}`}
+              placeholder="13-digit ID number"
+            />
+            {idError && <p className="mt-1 text-xs text-red-500">{idError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">ID / Birth Certificate</label>
+            <div className="mt-1 flex items-center gap-3">
+              {idDocumentUrl && (
+                <a href={idDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
+                  View document
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => idDocInputRef.current?.click()}
+                disabled={idDocUploading}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {idDocUploading ? "Uploading..." : idDocumentUrl ? "Replace" : "Upload"}
+              </button>
+              {idDocumentUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIdDocumentUrl("")}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                  aria-label="Remove document"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -181,6 +193,7 @@ export default function AddParticipantForm() {
             <div className={readonlyCls}>{idDerived?.gender || "— auto from ID"}</div>
           </div>
         </div>
+        <p className="text-xs text-gray-400">Date of birth and gender are automatically derived from the SA ID number.</p>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Registration Date</label>
@@ -289,12 +302,8 @@ export default function AddParticipantForm() {
         </div>
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Contact</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Guardian Contact Details</p>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Address</label>
-              <input name="address" className={inputCls} />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">1st Contact</label>
@@ -314,6 +323,10 @@ export default function AddParticipantForm() {
                 <option>Street</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <input name="address" className={inputCls} />
+            </div>
           </div>
         </div>
 
@@ -327,13 +340,80 @@ export default function AddParticipantForm() {
                 <option value="RETIRED">Retired</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Card Number</label>
-              <input name="cardNumber" className={inputCls} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Card Number</label>
+                <input name="cardNumber" className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Card Balance (sats)</label>
+                <input name="cardBalance" type="number" step="1" className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 5000" />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
               <input name="boltCardUrl" type="url" className={inputCls} placeholder="https://..." />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Level</label>
+              <select name="tskStatus" className={inputCls}>
+                <option value="">— select —</option>
+                <option value="Turtle">Turtle (Grom)</option>
+                <option value="Seal">Seal (Intermediate)</option>
+                <option value="Dolphin">Dolphin (Advanced)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                <input name="weightKg" type="number" step="0.1" min="0" className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 65.5" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Height (cm)</label>
+                <input name="heightCm" type="number" step="0.1" min="0" className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 170" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">T-Shirt Size</label>
+                <select name="tshirtSize" className={inputCls}>
+                  <option value="">— select —</option>
+                  <option>XS</option>
+                  <option>S</option>
+                  <option>M</option>
+                  <option>L</option>
+                  <option>XL</option>
+                  <option>XXL</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Shoe Size (UK)</label>
+                <input name="shoeSize" className={inputCls} placeholder="e.g. 8" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Wetsuit Size</label>
+                <select name="wetsuiteSize" className={inputCls}>
+                  <option value="">— select —</option>
+                  <option>XS</option>
+                  <option>S</option>
+                  <option>M</option>
+                  <option>L</option>
+                  <option>XL</option>
+                  <option>XXL</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -357,6 +437,18 @@ export default function AddParticipantForm() {
             >
               {uploading ? "Uploading..." : "Choose photo"}
             </button>
+            {uploadedPath && (
+              <button
+                type="button"
+                onClick={() => { setUploadedPath(""); setPhotoPreview(null); }}
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                aria-label="Remove photo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
           </div>
           <input
             ref={fileInputRef}

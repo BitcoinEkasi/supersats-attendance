@@ -58,6 +58,7 @@ export async function createParticipant(formData: FormData) {
   const idNumber = (formData.get("idNumber") as string)?.trim();
   const boltCardUrl = (formData.get("boltCardUrl") as string)?.trim() || null;
   const cardNumber = (formData.get("cardNumber") as string)?.trim() || null;
+  const cardBalance = formData.get("cardBalance") ? parseFloat(formData.get("cardBalance") as string) || null : null;
   const status = (formData.get("status") as ParticipantStatus) || "ACTIVE";
   const profilePicture = (formData.get("profilePicture") as string) || null;
   const registrationDateRaw = (formData.get("registrationDate") as string)?.trim() || null;
@@ -73,6 +74,12 @@ export async function createParticipant(formData: FormData) {
   const contact2 = (formData.get("contact2") as string)?.trim() || null;
   const housingType = (formData.get("housingType") as string)?.trim() || null;
   const idDocumentUrl = (formData.get("idDocumentUrl") as string)?.trim() || null;
+  const tskStatus = (formData.get("tskStatus") as string)?.trim() || null;
+  const weightKg = formData.get("weightKg") ? parseFloat(formData.get("weightKg") as string) || null : null;
+  const heightCm = formData.get("heightCm") ? parseFloat(formData.get("heightCm") as string) || null : null;
+  const tshirtSize = (formData.get("tshirtSize") as string)?.trim() || null;
+  const shoeSize = (formData.get("shoeSize") as string)?.trim() || null;
+  const wetsuiteSize = (formData.get("wetsuiteSize") as string)?.trim() || null;
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -99,6 +106,7 @@ export async function createParticipant(formData: FormData) {
           dateOfBirth: parsed.dob,
           boltCardUrl,
           cardNumber,
+          cardBalance,
           status,
           profilePicture,
           registrationDate,
@@ -114,6 +122,12 @@ export async function createParticipant(formData: FormData) {
           contact2,
           housingType,
           idDocumentUrl,
+          tskStatus,
+          weightKg,
+          heightCm,
+          tshirtSize,
+          shoeSize,
+          wetsuiteSize,
         },
       });
     });
@@ -138,6 +152,7 @@ export async function updateParticipant(id: string, formData: FormData) {
   const idNumber = (formData.get("idNumber") as string)?.trim();
   const boltCardUrl = (formData.get("boltCardUrl") as string)?.trim() || null;
   const cardNumber = (formData.get("cardNumber") as string)?.trim() || null;
+  const cardBalance = formData.get("cardBalance") ? parseFloat(formData.get("cardBalance") as string) || null : null;
   const status = formData.get("status") as ParticipantStatus;
   const profilePicture = (formData.get("profilePicture") as string) || null;
   const registrationDateRaw = (formData.get("registrationDate") as string)?.trim() || null;
@@ -153,6 +168,12 @@ export async function updateParticipant(id: string, formData: FormData) {
   const contact2 = (formData.get("contact2") as string)?.trim() || null;
   const housingType = (formData.get("housingType") as string)?.trim() || null;
   const idDocumentUrl = (formData.get("idDocumentUrl") as string)?.trim() || null;
+  const tskStatus = (formData.get("tskStatus") as string)?.trim() || null;
+  const weightKg = formData.get("weightKg") ? parseFloat(formData.get("weightKg") as string) || null : null;
+  const heightCm = formData.get("heightCm") ? parseFloat(formData.get("heightCm") as string) || null : null;
+  const tshirtSize = (formData.get("tshirtSize") as string)?.trim() || null;
+  const shoeSize = (formData.get("shoeSize") as string)?.trim() || null;
+  const wetsuiteSize = (formData.get("wetsuiteSize") as string)?.trim() || null;
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -175,6 +196,7 @@ export async function updateParticipant(id: string, formData: FormData) {
         dateOfBirth: parsed.dob,
         boltCardUrl,
         cardNumber,
+        cardBalance,
         status,
         ethnicity,
         language,
@@ -188,6 +210,12 @@ export async function updateParticipant(id: string, formData: FormData) {
         contact2,
         housingType,
         idDocumentUrl,
+        tskStatus,
+        weightKg,
+        heightCm,
+        tshirtSize,
+        shoeSize,
+        wetsuiteSize,
         ...(registrationDateRaw ? { registrationDate: new Date(registrationDateRaw + "T00:00:00Z") } : {}),
         ...(profilePicture ? { profilePicture } : {}),
       },

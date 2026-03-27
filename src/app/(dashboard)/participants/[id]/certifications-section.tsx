@@ -14,9 +14,10 @@ const CERT_TYPES: { type: CertificationType; label: string }[] = [
 interface Props {
   participantId: string;
   certifications: Certification[];
+  inline?: boolean;
 }
 
-export default function CertificationsSection({ participantId, certifications }: Props) {
+export default function CertificationsSection({ participantId, certifications, inline }: Props) {
   const router = useRouter();
   const [uploading, setUploading] = useState<CertificationType | null>(null);
   const [error, setError] = useState("");
@@ -58,15 +59,12 @@ export default function CertificationsSection({ participantId, certifications }:
 
   const certMap = new Map(certifications.map(c => [c.type, c]));
 
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-gray-900">Certifications</h3>
-
+  const content = (
+    <>
       {error && (
-        <div className="mt-2 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
+        <div className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
       )}
-
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {CERT_TYPES.map(({ type, label }) => {
           const cert = certMap.get(type);
           const isUploading = uploading === type;
@@ -122,6 +120,15 @@ export default function CertificationsSection({ participantId, certifications }:
         onChange={handleFileChange}
         className="hidden"
       />
+    </>
+  );
+
+  if (inline) return content;
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <h3 className="text-lg font-semibold text-gray-900">Certifications</h3>
+      <div className="mt-4">{content}</div>
     </div>
   );
 }

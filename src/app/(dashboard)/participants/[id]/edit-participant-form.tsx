@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { updateParticipant } from "@/app/actions/participants";
 import { getExpectedGrade } from "@/lib/sa-id";
-import type { Participant } from "@prisma/client";
+import CertificationsSection from "./certifications-section";
+import PerformanceEventsSection from "./performance-events-section";
+import type { Participant, Certification, PerformanceEvent } from "@prisma/client";
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   if (!/^\d{13}$/.test(id)) return null;
@@ -21,7 +23,7 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   };
 }
 
-export default function EditParticipantForm({ participant }: { participant: Participant }) {
+export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[] } }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -91,7 +93,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <div className="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-600">{message}</div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Surname *</label>
             <input name="surname" required defaultValue={participant.surname} className={inputCls} />
@@ -100,45 +102,57 @@ export default function EditParticipantForm({ participant }: { participant: Part
             <label className="block text-sm font-medium text-gray-700">Full Names *</label>
             <input name="fullNames" required defaultValue={participant.fullNames} className={inputCls} />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Known As</label>
-          <input name="knownAs" defaultValue={participant.knownAs || ""} className={inputCls} />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">SA ID Number *</label>
-          <input
-            name="idNumber"
-            required
-            maxLength={13}
-            defaultValue={participant.idNumber}
-            onBlur={handleIdBlur}
-            className={`${inputCls} ${idError ? "border-red-400" : ""}`}
-          />
-          {idError && <p className="mt-1 text-xs text-red-500">{idError}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">ID / Birth Certificate</label>
-          <div className="mt-1 flex items-center gap-3">
-            {idDocumentUrl && (
-              <a href={idDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
-                View document
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={() => idDocInputRef.current?.click()}
-              disabled={idDocUploading}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {idDocUploading ? "Uploading..." : idDocumentUrl ? "Replace" : "Upload"}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Known As</label>
+            <input name="knownAs" defaultValue={participant.knownAs || ""} className={inputCls} />
           </div>
-          <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
-          <input type="hidden" name="idDocumentUrl" value={idDocumentUrl} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">SA ID Number *</label>
+            <input
+              name="idNumber"
+              required
+              maxLength={13}
+              defaultValue={participant.idNumber}
+              onBlur={handleIdBlur}
+              className={`${inputCls} ${idError ? "border-red-400" : ""}`}
+            />
+            {idError && <p className="mt-1 text-xs text-red-500">{idError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">ID / Birth Certificate</label>
+            <div className="mt-1 flex items-center gap-3">
+              {idDocumentUrl && (
+                <a href={idDocumentUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
+                  View document
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => idDocInputRef.current?.click()}
+                disabled={idDocUploading}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {idDocUploading ? "Uploading..." : idDocumentUrl ? "Replace" : "Upload"}
+              </button>
+              {idDocumentUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIdDocumentUrl("")}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                  aria-label="Remove document"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
+            <input type="hidden" name="idDocumentUrl" value={idDocumentUrl} />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -151,6 +165,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
             <div className={readonlyCls}>{idDerived?.gender || participant.gender}</div>
           </div>
         </div>
+        <p className="text-xs text-gray-400">Date of birth and gender are automatically derived from the SA ID number.</p>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Registration Date</label>
@@ -259,12 +274,8 @@ export default function EditParticipantForm({ participant }: { participant: Part
         </div>
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Contact</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Guardian Contact Details</p>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Address</label>
-              <input name="address" defaultValue={participant.address || ""} className={inputCls} />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">1st Contact</label>
@@ -284,22 +295,34 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 <option>Street</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address</label>
+              <input name="address" defaultValue={participant.address || ""} className={inputCls} />
+            </div>
           </div>
         </div>
 
         <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select name="status" defaultValue={participant.status} className={inputCls}>
-                <option value="ACTIVE">Active</option>
-                <option value="RETIRED">Retired</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" defaultValue={participant.status} className={inputCls}>
+                  <option value="ACTIVE">Active</option>
+                  <option value="RETIRED">Retired</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Card Number</label>
-              <input name="cardNumber" defaultValue={participant.cardNumber || ""} className={inputCls} />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Card Number</label>
+                <input name="cardNumber" defaultValue={participant.cardNumber || ""} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Card Balance (sats)</label>
+                <input name="cardBalance" type="number" step="1" defaultValue={participant.cardBalance != null ? Math.round(participant.cardBalance) : ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 5000" />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
@@ -310,7 +333,16 @@ export default function EditParticipantForm({ participant }: { participant: Part
 
         <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Level</label>
+              <select name="tskStatus" defaultValue={participant.tskStatus || ""} className={inputCls}>
+                <option value="">— select —</option>
+                <option value="Turtle">Turtle (Grom)</option>
+                <option value="Seal">Seal (Intermediate)</option>
+                <option value="Dolphin">Dolphin (Advanced)</option>
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Profile Link</label>
               <input
@@ -322,22 +354,18 @@ export default function EditParticipantForm({ participant }: { participant: Part
               />
             </div>
           </div>
+          <div className="mt-4">
+            <label className="mb-2 block text-xs font-medium text-gray-500 uppercase tracking-wide">Events</label>
+            <PerformanceEventsSection
+              participantId={participant.id}
+              events={participant.performanceEvents}
+            />
+          </div>
         </div>
 
         <input type="hidden" name="profilePicture" value={profileLinkUrl} />
 
-        <button
-          type="button"
-          onClick={() => document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 z-50 rounded-full bg-gray-700 p-3 text-white shadow-lg hover:bg-gray-800"
-          aria-label="Scroll to top"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
-
-        <div className="fixed top-[72px] right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
           <button
             type="submit"
             disabled={loading}
@@ -345,8 +373,73 @@ export default function EditParticipantForm({ participant }: { participant: Part
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>
+          <button
+            type="button"
+            onClick={() => document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" })}
+            className="rounded-full bg-gray-700 p-3 text-white shadow-lg hover:bg-gray-800"
+            aria-label="Scroll to top"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
       </form>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                <input name="weightKg" type="number" step="0.1" min="0" defaultValue={participant.weightKg ?? ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 65.5" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Height (cm)</label>
+                <input name="heightCm" type="number" step="0.1" min="0" defaultValue={participant.heightCm ?? ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 170" />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">T-Shirt Size</label>
+                <select name="tshirtSize" defaultValue={participant.tshirtSize || ""} className={inputCls}>
+                  <option value="">— select —</option>
+                  <option>XS</option>
+                  <option>S</option>
+                  <option>M</option>
+                  <option>L</option>
+                  <option>XL</option>
+                  <option>XXL</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Shoe Size (UK)</label>
+                <input name="shoeSize" defaultValue={participant.shoeSize || ""} className={inputCls} placeholder="e.g. 8" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Wetsuit Size</label>
+                <select name="wetsuiteSize" defaultValue={participant.wetsuiteSize || ""} className={inputCls}>
+                  <option value="">— select —</option>
+                  <option>XS</option>
+                  <option>S</option>
+                  <option>M</option>
+                  <option>L</option>
+                  <option>XL</option>
+                  <option>XXL</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <div className="border-t pt-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Certifications</p>
+        <CertificationsSection
+          participantId={participant.id}
+          certifications={participant.certifications}
+          inline
+        />
+      </div>
     </div>
   );
 }

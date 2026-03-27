@@ -71,6 +71,7 @@ model Participant {
   dateOfBirth      DateTime          @map("date_of_birth") @db.Date
   boltCardUrl      String?           @map("bolt_card_url")
   cardNumber       String?           @map("card_number")
+  cardBalance      Float?            @map("card_balance")
   ethnicity        String?
   language         String?
   school           String?
@@ -83,6 +84,12 @@ model Participant {
   contact2         String?           @map("contact_2")
   housingType      String?           @map("housing_type")
   idDocumentUrl    String?           @map("id_document_url")
+  tskStatus        String?           @map("tsk_status")
+  weightKg         Float?            @map("weight_kg")
+  heightCm         Float?            @map("height_cm")
+  tshirtSize       String?           @map("tshirt_size")
+  shoeSize         String?           @map("shoe_size")
+  wetsuiteSize     String?           @map("wetsuit_size")
   status           ParticipantStatus @default(ACTIVE)
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
@@ -91,6 +98,7 @@ model Participant {
   monthlyReportEntries MonthlyReportEntry[]
   changeRequests       ParticipantChangeRequest[]
   certifications       Certification[]
+  performanceEvents    PerformanceEvent[]
 
   @@map("participants")
 }
@@ -108,6 +116,22 @@ model ParticipantChangeRequest {
   requestedByUser User         @relation(fields: [requestedBy], references: [id])
 
   @@map("participant_change_requests")
+}
+
+model PerformanceEvent {
+  id            String   @id @default(uuid())
+  participantId String   @map("participant_id")
+  eventDate     DateTime @db.Date @map("event_date")
+  eventName     String   @map("event_name")
+  location      String?
+  division      String?
+  result        String
+  verifyUrl     String?  @map("verify_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@map("performance_events")
 }
 
 model Certification {
