@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import ParticipantSearch from "./participant-search";
+import ParticipantsExportButton from "./participants-export-button";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
@@ -34,6 +35,7 @@ export default async function ParticipantsPage({
     <div>
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
+        <ParticipantsExportButton />
       </div>
 
       <div className="mt-6">
