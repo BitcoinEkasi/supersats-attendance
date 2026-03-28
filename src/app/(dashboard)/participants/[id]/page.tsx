@@ -116,9 +116,9 @@ export default async function ParticipantDetailPage({
               <span className="text-gray-300">·</span>
               <span>Age {calculateAge(participant.dateOfBirth)}</span>
               <span className="text-gray-300">·</span>
-              <span>Division {getDivision(participant.dateOfBirth)}</span>
+              <span>Division {getDivision(participant.dateOfBirth)} {participant.gender === "MALE" ? "Boys" : "Girls"}</span>
               <span className="text-gray-300">·</span>
-              <span>{participant.gender.charAt(0) + participant.gender.slice(1).toLowerCase()}</span>
+              <span>{participant.gender === "MALE" ? "Boy" : "Girl"}</span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>

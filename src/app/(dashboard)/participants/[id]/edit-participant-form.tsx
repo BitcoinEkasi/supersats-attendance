@@ -19,7 +19,7 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   const genderDigits = parseInt(id.substring(6, 10));
   return {
     dob: `${year}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`,
-    gender: genderDigits >= 5000 ? "Male" : "Female",
+    gender: genderDigits >= 5000 ? "Boy" : "Girl",
   };
 }
 
@@ -189,7 +189,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Gender</label>
-            <div className={readonlyCls}>{idDerived?.gender || participant.gender}</div>
+            <div className={readonlyCls}>{idDerived?.gender || (participant.gender === "MALE" ? "Boy" : "Girl")}</div>
           </div>
         </div>
         <p className="text-xs text-gray-400">Date of birth and gender are automatically derived from the SA ID number.</p>
