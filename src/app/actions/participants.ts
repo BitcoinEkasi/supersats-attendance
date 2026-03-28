@@ -74,6 +74,7 @@ export async function createParticipant(formData: FormData) {
   const contact2 = (formData.get("contact2") as string)?.trim() || null;
   const housingType = (formData.get("housingType") as string)?.trim() || null;
   const idDocumentUrl = (formData.get("idDocumentUrl") as string)?.trim() || null;
+  const indemnityFormUrl = (formData.get("indemnityFormUrl") as string)?.trim() || null;
   const tskStatus = (formData.get("tskStatus") as string)?.trim() || null;
   const weightKg = formData.get("weightKg") ? parseFloat(formData.get("weightKg") as string) || null : null;
   const heightCm = formData.get("heightCm") ? parseFloat(formData.get("heightCm") as string) || null : null;
@@ -124,6 +125,7 @@ export async function createParticipant(formData: FormData) {
           contact2,
           housingType,
           idDocumentUrl,
+          indemnityFormUrl,
           tskStatus,
           weightKg,
           heightCm,
@@ -170,6 +172,7 @@ export async function updateParticipant(id: string, formData: FormData) {
   const contact2 = (formData.get("contact2") as string)?.trim() || null;
   const housingType = (formData.get("housingType") as string)?.trim() || null;
   const idDocumentUrl = (formData.get("idDocumentUrl") as string)?.trim() || null;
+  const indemnityFormUrl = (formData.get("indemnityFormUrl") as string)?.trim() || null;
   const tskStatus = (formData.get("tskStatus") as string)?.trim() || null;
   const weightKg = formData.get("weightKg") ? parseFloat(formData.get("weightKg") as string) || null : null;
   const heightCm = formData.get("heightCm") ? parseFloat(formData.get("heightCm") as string) || null : null;
@@ -214,6 +217,7 @@ export async function updateParticipant(id: string, formData: FormData) {
         contact2,
         housingType,
         idDocumentUrl,
+        indemnityFormUrl,
         tskStatus,
         weightKg,
         heightCm,

@@ -59,9 +59,9 @@ export default async function ParticipantDetailPage({
   return (
     <div className="-m-6 flex h-full flex-col">
       {/* Pinned ID card — outside scroll area */}
-      <div className="shrink-0 border-b border-gray-200 bg-white shadow-sm flex items-stretch overflow-hidden">
-        {/* Profile picture — flush top and bottom */}
-        <div className="shrink-0 w-24 self-stretch overflow-hidden">
+      <div className="shrink-0 border-b-2 border-gray-200 bg-white shadow-md flex items-center">
+        {/* Profile picture — circle */}
+        <div className="shrink-0 ml-4 relative h-16 w-16">
           {role === "ADMINISTRATOR" ? (
             <ProfilePictureUpload
               participantId={participant.id}
@@ -72,12 +72,12 @@ export default async function ParticipantDetailPage({
             <Image
               src={participant.profilePicture}
               alt={participant.knownAs || participant.surname}
-              width={96}
-              height={144}
-              className="h-full w-full object-cover"
+              width={64}
+              height={64}
+              className="h-full w-full rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-orange-100 text-2xl font-bold text-orange-600">
+            <div className="flex h-full w-full items-center justify-center rounded-full bg-orange-100 text-2xl font-bold text-orange-600">
               {(participant.knownAs || participant.surname).charAt(0).toUpperCase()}
             </div>
           )}
@@ -100,6 +100,11 @@ export default async function ParticipantDetailPage({
               >
                 {participant.status.charAt(0) + participant.status.slice(1).toLowerCase()}
               </span>
+              {participant.tskStatus && (
+                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
+                  {participant.tskStatus}
+                </span>
+              )}
               {participant.isJuniorCoach && (
                 <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">
                   Junior Coach
@@ -134,8 +139,11 @@ export default async function ParticipantDetailPage({
         </div>
       </div>
 
+      {/* Fixed gap between header and scrollable content */}
+      <div className="shrink-0 h-6 bg-gray-50 border-b border-gray-100" />
+
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto bg-gray-50 px-6 pb-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {role === "ADMINISTRATOR" ? (
           <EditParticipantForm participant={participant} />

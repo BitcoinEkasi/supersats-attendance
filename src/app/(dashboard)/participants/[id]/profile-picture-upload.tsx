@@ -48,7 +48,7 @@ export default function ProfilePictureUpload({ participantId, profilePicture, in
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="group relative h-full w-full overflow-hidden focus:outline-none"
+        className="group relative h-full w-full overflow-hidden rounded-full focus:outline-none"
       >
         {src ? (
           <Image src={src} alt="Profile" width={96} height={144} className="h-full w-full object-cover" />

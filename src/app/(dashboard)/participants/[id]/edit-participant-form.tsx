@@ -37,12 +37,31 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [idDocumentUrl, setIdDocumentUrl] = useState<string>(participant.idDocumentUrl || "");
   const [idDocUploading, setIdDocUploading] = useState(false);
   const idDocInputRef = useRef<HTMLInputElement>(null);
+  const [indemnityFormUrl, setIndemnityFormUrl] = useState<string>(participant.indemnityFormUrl || "");
+  const [indemnityUploading, setIndemnityUploading] = useState(false);
+  const indemnityInputRef = useRef<HTMLInputElement>(null);
 
   function handleIdBlur(e: React.FocusEvent<HTMLInputElement>) {
     const val = e.target.value.trim();
     const result = parseSaIdClient(val);
     if (result) { setIdDerived(result); setIdError(""); }
     else { setIdDerived(null); setIdError("Enter a valid 13-digit SA ID number"); }
+  }
+
+  async function handleIndemnityChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIndemnityUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.path) {
+      setIndemnityFormUrl(data.path);
+    } else {
+      setError(data.error || "Upload failed");
+    }
+    setIndemnityUploading(false);
   }
 
   async function handleIdDocChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -167,14 +186,48 @@ export default function EditParticipantForm({ participant }: { participant: Part
         </div>
         <p className="text-xs text-gray-400">Date of birth and gender are automatically derived from the SA ID number.</p>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Registration Date</label>
-          <input
-            name="registrationDate"
-            type="date"
-            defaultValue={participant.registrationDate.toISOString().split("T")[0]}
-            className={inputCls}
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Registration Date</label>
+            <input
+              name="registrationDate"
+              type="date"
+              defaultValue={participant.registrationDate.toISOString().split("T")[0]}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Indemnity Form</label>
+            <div className="mt-1 flex items-center gap-3">
+              {indemnityFormUrl && (
+                <a href={indemnityFormUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-orange-600 hover:underline">
+                  View form
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => indemnityInputRef.current?.click()}
+                disabled={indemnityUploading}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {indemnityUploading ? "Uploading..." : indemnityFormUrl ? "Replace" : "Upload"}
+              </button>
+              {indemnityFormUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIndemnityFormUrl("")}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                  aria-label="Remove indemnity form"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <input ref={indemnityInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIndemnityChange} className="hidden" />
+            <input type="hidden" name="indemnityFormUrl" value={indemnityFormUrl} />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
