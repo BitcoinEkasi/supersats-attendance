@@ -313,6 +313,17 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <option value="RETIRED">Retired</option>
                 </select>
               </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="isJuniorCoach"
+                    defaultChecked={participant.isJuniorCoach}
+                    className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Junior Coach</span>
+                </label>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

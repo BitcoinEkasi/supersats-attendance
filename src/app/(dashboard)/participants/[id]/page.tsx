@@ -100,6 +100,11 @@ export default async function ParticipantDetailPage({
               >
                 {participant.status.charAt(0) + participant.status.slice(1).toLowerCase()}
               </span>
+              {participant.isJuniorCoach && (
+                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">
+                  Junior Coach
+                </span>
+              )}
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               <span>Born on {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>

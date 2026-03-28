@@ -34,7 +34,7 @@ export async function generateMonthlyReport(month: string) {
   // Get all active participants
   const participants = await prisma.participant.findMany({
     where: { status: "ACTIVE" },
-    select: { id: true },
+    select: { id: true, isJuniorCoach: true },
   });
 
   // Get all attendance records for these events
@@ -64,7 +64,7 @@ export async function generateMonthlyReport(month: string) {
       if (attended === 0) continue; // Skip participants with no attendance this month
 
       const percentage = (attended / totalEvents) * 100;
-      const rewardSats = calculateRewardSats(percentage);
+      const rewardSats = participant.isJuniorCoach ? 0 : calculateRewardSats(percentage);
 
       await tx.monthlyReportEntry.create({
         data: {

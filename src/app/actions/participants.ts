@@ -80,6 +80,7 @@ export async function createParticipant(formData: FormData) {
   const tshirtSize = (formData.get("tshirtSize") as string)?.trim() || null;
   const shoeSize = (formData.get("shoeSize") as string)?.trim() || null;
   const wetsuiteSize = (formData.get("wetsuiteSize") as string)?.trim() || null;
+  const isJuniorCoach = formData.get("isJuniorCoach") === "on";
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -108,6 +109,7 @@ export async function createParticipant(formData: FormData) {
           cardNumber,
           cardBalance,
           status,
+          isJuniorCoach,
           profilePicture,
           registrationDate,
           ethnicity,
@@ -174,6 +176,7 @@ export async function updateParticipant(id: string, formData: FormData) {
   const tshirtSize = (formData.get("tshirtSize") as string)?.trim() || null;
   const shoeSize = (formData.get("shoeSize") as string)?.trim() || null;
   const wetsuiteSize = (formData.get("wetsuiteSize") as string)?.trim() || null;
+  const isJuniorCoach = formData.get("isJuniorCoach") === "on";
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -198,6 +201,7 @@ export async function updateParticipant(id: string, formData: FormData) {
         cardNumber,
         cardBalance,
         status,
+        isJuniorCoach,
         ethnicity,
         language,
         school,

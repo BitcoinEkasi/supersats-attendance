@@ -72,6 +72,7 @@ model Participant {
   boltCardUrl      String?           @map("bolt_card_url")
   cardNumber       String?           @map("card_number")
   cardBalance      Float?            @map("card_balance")
+  isJuniorCoach    Boolean           @default(false) @map("is_junior_coach")
   ethnicity        String?
   language         String?
   school           String?
