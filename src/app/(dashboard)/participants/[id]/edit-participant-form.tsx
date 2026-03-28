@@ -35,9 +35,11 @@ export default function EditParticipantForm({ participant }: { participant: Part
     parseSaIdClient(participant.idNumber)
   );
   const [idDocumentUrl, setIdDocumentUrl] = useState<string>(participant.idDocumentUrl || "");
+  const [idDocUploadedAt, setIdDocUploadedAt] = useState<string>(participant.idDocumentUploadedAt ? participant.idDocumentUploadedAt.toISOString() : "");
   const [idDocUploading, setIdDocUploading] = useState(false);
   const idDocInputRef = useRef<HTMLInputElement>(null);
   const [indemnityFormUrl, setIndemnityFormUrl] = useState<string>(participant.indemnityFormUrl || "");
+  const [indemnityUploadedAt, setIndemnityUploadedAt] = useState<string>(participant.indemnityUploadedAt ? participant.indemnityUploadedAt.toISOString() : "");
   const [indemnityUploading, setIndemnityUploading] = useState(false);
   const indemnityInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +60,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
     const data = await res.json();
     if (data.path) {
       setIndemnityFormUrl(data.path);
+      setIndemnityUploadedAt(new Date().toISOString());
     } else {
       setError(data.error || "Upload failed");
     }
@@ -74,6 +77,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
     const data = await res.json();
     if (data.path) {
       setIdDocumentUrl(data.path);
+      setIdDocUploadedAt(new Date().toISOString());
     } else {
       setError(data.error || "Upload failed");
     }
@@ -159,7 +163,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               {idDocumentUrl && (
                 <button
                   type="button"
-                  onClick={() => setIdDocumentUrl("")}
+                  onClick={() => { setIdDocumentUrl(""); setIdDocUploadedAt(""); }}
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                   aria-label="Remove document"
                 >
@@ -169,8 +173,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 </button>
               )}
             </div>
+            {idDocUploadedAt && (
+              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(idDocUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            )}
             <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
             <input type="hidden" name="idDocumentUrl" value={idDocumentUrl} />
+            <input type="hidden" name="idDocumentUploadedAt" value={idDocUploadedAt} />
           </div>
         </div>
 
@@ -215,7 +223,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               {indemnityFormUrl && (
                 <button
                   type="button"
-                  onClick={() => setIndemnityFormUrl("")}
+                  onClick={() => { setIndemnityFormUrl(""); setIndemnityUploadedAt(""); }}
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                   aria-label="Remove indemnity form"
                 >
@@ -225,8 +233,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 </button>
               )}
             </div>
+            {indemnityUploadedAt && (
+              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(indemnityUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            )}
             <input ref={indemnityInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIndemnityChange} className="hidden" />
             <input type="hidden" name="indemnityFormUrl" value={indemnityFormUrl} />
+            <input type="hidden" name="indemnityUploadedAt" value={indemnityUploadedAt} />
           </div>
         </div>
 

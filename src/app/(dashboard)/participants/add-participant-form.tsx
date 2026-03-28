@@ -43,8 +43,10 @@ export default function AddParticipantForm() {
   const [idDocUploading, setIdDocUploading] = useState(false);
   const idDocInputRef = useRef<HTMLInputElement>(null);
   const [indemnityFormUrl, setIndemnityFormUrl] = useState<string>("");
+  const [indemnityUploadedAt, setIndemnityUploadedAt] = useState<string>("");
   const [indemnityUploading, setIndemnityUploading] = useState(false);
   const indemnityInputRef = useRef<HTMLInputElement>(null);
+  const [idDocUploadedAt, setIdDocUploadedAt] = useState<string>("");
 
   function handleIdBlur(e: React.FocusEvent<HTMLInputElement>) {
     const val = e.target.value.trim();
@@ -69,6 +71,7 @@ export default function AddParticipantForm() {
     const data = await res.json();
     if (data.path) {
       setIndemnityFormUrl(data.path);
+      setIndemnityUploadedAt(new Date().toISOString());
     } else {
       setError(data.error || "Upload failed");
     }
@@ -85,6 +88,7 @@ export default function AddParticipantForm() {
     const data = await res.json();
     if (data.path) {
       setIdDocumentUrl(data.path);
+      setIdDocUploadedAt(new Date().toISOString());
     } else {
       setError(data.error || "Upload failed");
     }
@@ -116,7 +120,9 @@ export default function AddParticipantForm() {
     const formData = new FormData(e.currentTarget);
     if (uploadedPath) formData.set("profilePicture", uploadedPath);
     if (idDocumentUrl) formData.set("idDocumentUrl", idDocumentUrl);
+    if (idDocUploadedAt) formData.set("idDocumentUploadedAt", idDocUploadedAt);
     if (indemnityFormUrl) formData.set("indemnityFormUrl", indemnityFormUrl);
+    if (indemnityUploadedAt) formData.set("indemnityUploadedAt", indemnityUploadedAt);
     const result = await createParticipant(formData);
     if (result.error) {
       setError(result.error);
@@ -189,7 +195,7 @@ export default function AddParticipantForm() {
               {idDocumentUrl && (
                 <button
                   type="button"
-                  onClick={() => setIdDocumentUrl("")}
+                  onClick={() => { setIdDocumentUrl(""); setIdDocUploadedAt(""); }}
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                   aria-label="Remove document"
                 >
@@ -199,6 +205,9 @@ export default function AddParticipantForm() {
                 </button>
               )}
             </div>
+            {idDocUploadedAt && (
+              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(idDocUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            )}
             <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
           </div>
         </div>
@@ -244,7 +253,7 @@ export default function AddParticipantForm() {
               {indemnityFormUrl && (
                 <button
                   type="button"
-                  onClick={() => setIndemnityFormUrl("")}
+                  onClick={() => { setIndemnityFormUrl(""); setIndemnityUploadedAt(""); }}
                   className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                   aria-label="Remove indemnity form"
                 >
@@ -254,6 +263,9 @@ export default function AddParticipantForm() {
                 </button>
               )}
             </div>
+            {indemnityUploadedAt && (
+              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(indemnityUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            )}
             <input ref={indemnityInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIndemnityChange} className="hidden" />
           </div>
         </div>
