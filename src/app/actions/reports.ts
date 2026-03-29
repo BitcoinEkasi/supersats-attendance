@@ -1,49 +1,41 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { requireRole } from "@/lib/role-guard";
 import { calculateRewardSats } from "@/lib/rewards";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 
-export async function generateMonthlyReport(month: string) {
-  const user = await requireRole(["ADMINISTRATOR"]);
+/**
+ * Upserts the monthly report for the given month (YYYY-MM).
+ * Called automatically whenever attendance is saved or an event is created/updated.
+ * If the report was previously approved and data has changed, it resets to PENDING.
+ */
+export async function upsertMonthlyReport(month: string, userId: string) {
+  if (!/^\d{4}-\d{2}$/.test(month)) return;
 
-  if (!/^\d{4}-\d{2}$/.test(month)) {
-    return { error: "Invalid month format. Use YYYY-MM." };
-  }
-
-  const [year, mon] = month.split("-").map(Number);
-  const startDate = new Date(Date.UTC(year, mon - 1, 1));
-  const endDate = new Date(Date.UTC(year, mon, 0));
-
-  // Get all events in this month
   const events = await prisma.event.findMany({
-    where: { date: { gte: startDate, lte: endDate } },
+    where: { date: { gte: getStartOfSASTMonth(month), lte: getEndOfSASTMonth(month) } },
     select: { id: true },
   });
 
-  if (events.length === 0) {
-    return { error: "No events found for this month. Create events before generating a report." };
-  }
+  if (events.length === 0) return;
 
   const eventIds = events.map((e) => e.id);
   const totalEvents = eventIds.length;
 
-  // Get all active participants
-  const participants = await prisma.participant.findMany({
-    where: { status: "ACTIVE" },
-    select: { id: true, isJuniorCoach: true },
-  });
+  const [participants, records] = await Promise.all([
+    prisma.participant.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true, isJuniorCoach: true },
+    }),
+    prisma.attendanceRecord.findMany({
+      where: { eventId: { in: eventIds } },
+      select: { participantId: true, present: true },
+    }),
+  ]);
 
-  // Get all attendance records for these events
-  const records = await prisma.attendanceRecord.findMany({
-    where: { eventId: { in: eventIds } },
-    select: { participantId: true, present: true },
-  });
-
-  // Count attended per participant
   const attendedMap = new Map<string, number>();
   for (const record of records) {
     if (record.present) {
@@ -51,24 +43,38 @@ export async function generateMonthlyReport(month: string) {
     }
   }
 
-  const report = await prisma.$transaction(async (tx) => {
-    const report = await tx.monthlyReport.create({
-      data: {
-        month,
-        generatedBy: user.id,
-      },
-    });
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.monthlyReport.findUnique({ where: { month } });
+
+    let reportId: string;
+    if (existing) {
+      await tx.monthlyReport.update({
+        where: { month },
+        data: {
+          generatedAt: new Date(),
+          ...(existing.status === "APPROVED"
+            ? { status: "PENDING", approvedAt: null, approvedBy: null }
+            : {}),
+        },
+      });
+      reportId = existing.id;
+    } else {
+      const created = await tx.monthlyReport.create({
+        data: { month, generatedBy: userId },
+      });
+      reportId = created.id;
+    }
+
+    await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
       const attended = attendedMap.get(participant.id) || 0;
-      if (attended === 0) continue; // Skip participants with no attendance this month
-
       const percentage = (attended / totalEvents) * 100;
       const rewardSats = participant.isJuniorCoach ? 0 : calculateRewardSats(percentage);
 
       await tx.monthlyReportEntry.create({
         data: {
-          reportId: report.id,
+          reportId,
           participantId: participant.id,
           totalEvents,
           attended,
@@ -77,13 +83,10 @@ export async function generateMonthlyReport(month: string) {
         },
       });
     }
-
-    return report;
   });
 
   revalidatePath("/reports");
   revalidatePath("/dashboard");
-  return { success: true, reportId: report.id };
 }
 
 export async function approveReport(reportId: string) {
@@ -159,26 +162,3 @@ export async function exportReportCSV(reportId: string): Promise<string> {
   return lines.join("\n");
 }
 
-export async function checkUnreportedPreviousMonth(): Promise<string | null> {
-  const session = await auth();
-  if (session?.user?.role !== "ADMINISTRATOR") return null;
-
-  const now = new Date();
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const monthStr = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, "0")}`;
-
-  const [existingReport, eventCount] = await Promise.all([
-    prisma.monthlyReport.findUnique({ where: { month: monthStr } }),
-    prisma.event.count({
-      where: {
-        date: {
-          gte: new Date(Date.UTC(prevMonth.getFullYear(), prevMonth.getMonth(), 1)),
-          lte: new Date(Date.UTC(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0)),
-        },
-      },
-    }),
-  ]);
-
-  if (!existingReport && eventCount > 0) return monthStr;
-  return null;
-}

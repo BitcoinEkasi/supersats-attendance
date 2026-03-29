@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import GenerateReportForm from "./generate-report-form";
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -25,8 +24,10 @@ export default async function ReportsPage() {
     <div>
       <h2 className="text-2xl font-bold text-gray-900">Monthly Reports</h2>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <p className="mt-1 text-sm text-gray-500">Reports are generated automatically as attendance is recorded.</p>
+
+      <div className="mt-6">
+        <div>
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
             <table className="w-full text-sm">
               <thead className="border-b bg-gray-50">
@@ -43,8 +44,7 @@ export default async function ReportsPage() {
                 {reports.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                      No reports yet.{" "}
-                      {role === "ADMINISTRATOR" ? "Generate one using the form." : "Ask an administrator to generate one."}
+                      No reports yet. Reports will appear automatically once attendance is recorded.
                     </td>
                   </tr>
                 ) : (
@@ -82,7 +82,6 @@ export default async function ReportsPage() {
           </div>
         </div>
 
-        {role === "ADMINISTRATOR" && <GenerateReportForm />}
       </div>
     </div>
   );

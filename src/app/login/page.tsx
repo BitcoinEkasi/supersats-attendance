@@ -34,7 +34,8 @@ export default function LoginPage() {
       setError("Invalid email or password");
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      // Middleware will redirect to the correct page based on role
+      router.push("/");
     }
   }
 
@@ -46,7 +47,8 @@ export default function LoginPage() {
       setError("Dev login failed");
       setDevLoading(null);
     } else {
-      router.push("/dashboard");
+      // Middleware will redirect to the correct page based on role
+      router.push("/");
     }
   }
 

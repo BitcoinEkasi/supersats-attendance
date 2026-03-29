@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/role-guard";
+import { getSASTDateString, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
+import { upsertMonthlyReport } from "@/app/actions/reports";
 import type { EventCategory } from "@prisma/client";
 
 export async function createEvent(formData: FormData) {
@@ -19,13 +21,15 @@ export async function createEvent(formData: FormData) {
   try {
     const event = await prisma.event.create({
       data: {
-        date: new Date(date + "T00:00:00Z"),
+        date: new Date(date + "T00:00:00+02:00"),
         category,
         note,
         createdBy: user.id,
       },
     });
     revalidatePath("/attendance");
+    const month = date.substring(0, 7);
+    await upsertMonthlyReport(month, user.id);
     return { success: true, id: event.id };
   } catch {
     return { error: "Failed to create event" };
@@ -36,12 +40,8 @@ export async function getEvents(month?: string) {
   const where = month
     ? {
         date: {
-          gte: new Date(`${month}-01T00:00:00Z`),
-          lte: new Date(
-            new Date(`${month}-01T00:00:00Z`).getFullYear(),
-            new Date(`${month}-01T00:00:00Z`).getMonth() + 1,
-            0,
-          ),
+          gte: getStartOfSASTMonth(month),
+          lte: getEndOfSASTMonth(month),
         },
       }
     : {};
@@ -74,9 +74,9 @@ export async function getEvent(id: string) {
 
 export async function saveAttendance(
   eventId: string,
-  records: { participantId: string; present: boolean }[],
+  records: { participantId: string; present: boolean; onTour?: boolean }[],
 ) {
-  await requireRole(["ADMINISTRATOR", "MARSHALL"]);
+  const user = await requireRole(["ADMINISTRATOR", "MARSHALL"]);
 
   try {
     await prisma.$transaction(
@@ -88,11 +88,12 @@ export async function saveAttendance(
               eventId,
             },
           },
-          update: { present: r.present },
+          update: { present: r.present, onTour: r.onTour ?? false },
           create: {
             participantId: r.participantId,
             eventId,
             present: r.present,
+            onTour: r.onTour ?? false,
           },
         }),
       ),
@@ -100,8 +101,62 @@ export async function saveAttendance(
 
     revalidatePath(`/attendance/${eventId}`);
     revalidatePath("/attendance");
+
+    // Auto-update the monthly report for this event's month
+    const event = await prisma.event.findUnique({ where: { id: eventId }, select: { date: true } });
+    if (event) {
+      const sastDate = new Date(event.date.getTime() + 2 * 60 * 60 * 1000);
+      const month = sastDate.toISOString().substring(0, 7);
+      await upsertMonthlyReport(month, user.id);
+    }
+
     return { success: true };
   } catch {
     return { error: "Failed to save attendance" };
+  }
+}
+
+export async function updateEventNote(eventId: string, note: string | null) {
+  await requireRole(["ADMINISTRATOR", "MARSHALL"]);
+  try {
+    await prisma.event.update({ where: { id: eventId }, data: { note: note || null } });
+    revalidatePath(`/attendance/${eventId}`);
+    return { success: true };
+  } catch {
+    return { error: "Failed to update note" };
+  }
+}
+
+export async function updateEventCategory(eventId: string, category: EventCategory) {
+  await requireRole(["ADMINISTRATOR", "MARSHALL"]);
+  try {
+    await prisma.event.update({ where: { id: eventId }, data: { category } });
+    revalidatePath(`/attendance/${eventId}`);
+    revalidatePath("/attendance");
+    return { success: true };
+  } catch {
+    return { error: "Failed to update category" };
+  }
+}
+
+export async function createEventForToday(category: EventCategory, note: string | null) {
+  const user = await requireRole(["ADMINISTRATOR", "MARSHALL"]);
+  const today = getSASTDateString();
+
+  try {
+    const event = await prisma.event.create({
+      data: {
+        date: new Date(today + "T00:00:00+02:00"),
+        category,
+        note,
+        createdBy: user.id,
+      },
+    });
+    revalidatePath("/attendance");
+    const month = today.substring(0, 7);
+    await upsertMonthlyReport(month, user.id);
+    return { success: true, id: event.id };
+  } catch {
+    return { error: "Failed to create event" };
   }
 }

@@ -169,6 +169,7 @@ model AttendanceRecord {
   participantId String   @map("participant_id")
   eventId       String   @map("event_id")
   present       Boolean
+  onTour        Boolean  @default(false) @map("on_tour")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 

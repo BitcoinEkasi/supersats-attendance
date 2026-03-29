@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
+import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -19,6 +22,29 @@ const categoryColors: Record<string, string> = {
 };
 
 export default async function AttendancePage() {
+  const session = await auth();
+  const role = session?.user?.role;
+  const isMobile = role === "MARSHALL";
+
+  const todayStart = getStartOfSASTToday();
+  const todayEnd = getEndOfSASTToday();
+
+  if (isMobile) {
+    // If there's already an event today, go straight to it
+    const todayEvent = await prisma.event.findFirst({
+      where: { date: { gte: todayStart, lte: todayEnd } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (todayEvent) {
+      redirect(`/attendance/${todayEvent.id}`);
+    }
+
+    // No event yet — show category picker
+    return <CreateEventForm mobile />;
+  }
+
+  // Desktop layout
   const [events, activeCount] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
@@ -62,33 +88,20 @@ export default async function AttendancePage() {
                     const complete = marked >= activeCount;
                     return (
                       <tr key={event.id} className="border-b last:border-0">
-                        <td className="px-4 py-3 font-medium">
-                          {event.date.toISOString().split("T")[0]}
-                        </td>
+                        <td className="px-4 py-3 font-medium">{event.date.toISOString().split("T")[0]}</td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                              categoryColors[event.category] || "bg-gray-100 text-gray-600"
-                            }`}
-                          >
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
                             {categoryLabels[event.category] || event.category}
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={complete ? "text-green-600 font-medium" : "text-amber-600"}
-                          >
+                          <span className={complete ? "text-green-600 font-medium" : "text-amber-600"}>
                             {marked}/{activeCount}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-500 max-w-32 truncate">
-                          {event.note || "—"}
-                        </td>
+                        <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
                         <td className="px-4 py-3">
-                          <Link
-                            href={`/attendance/${event.id}`}
-                            className="text-orange-600 hover:text-orange-800"
-                          >
+                          <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
                             {complete ? "View" : "Capture"}
                           </Link>
                         </td>
@@ -100,7 +113,6 @@ export default async function AttendancePage() {
             )}
           </div>
         </div>
-
         <CreateEventForm />
       </div>
     </div>

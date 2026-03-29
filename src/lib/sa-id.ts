@@ -1,4 +1,5 @@
 import type { Gender } from "@prisma/client";
+import { getSASTNow } from "./sast";
 
 export type SaIdResult =
   | { dob: Date; gender: Gender }
@@ -40,7 +41,7 @@ export function parseSaId(id: string): SaIdResult {
   }
 
   // Year disambiguation: <= 25 → 2000s, else 1900s
-  const currentYY = new Date().getFullYear() % 100;
+  const currentYY = getSASTNow().year % 100;
   const year = yy <= currentYY ? 2000 + yy : 1900 + yy;
 
   const dob = new Date(Date.UTC(year, mm - 1, dd));
@@ -60,24 +61,24 @@ export function parseSaId(id: string): SaIdResult {
 }
 
 export function calculateAge(dob: Date): number {
-  const now = new Date();
-  let age = now.getFullYear() - dob.getUTCFullYear();
-  const monthDiff = now.getMonth() - dob.getUTCMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getUTCDate())) {
+  const now = getSASTNow();
+  let age = now.year - dob.getUTCFullYear();
+  const monthDiff = now.month - (dob.getUTCMonth() + 1);
+  if (monthDiff < 0 || (monthDiff === 0 && now.day < dob.getUTCDate())) {
     age--;
   }
   return age;
 }
 
 export function getExpectedGrade(dob: Date): string {
-  const grade = new Date().getFullYear() - dob.getUTCFullYear() - 6;
+  const grade = getSASTNow().year - dob.getUTCFullYear() - 6;
   if (grade < 1) return "Not yet school-going";
   if (grade > 12) return "Completed Grade 12";
   return `Grade ${grade}`;
 }
 
 export function getDivision(dob: Date): string {
-  const ageThisYear = new Date().getFullYear() - dob.getUTCFullYear();
+  const ageThisYear = getSASTNow().year - dob.getUTCFullYear();
   if (ageThisYear <= 8)  return "U/8";
   if (ageThisYear <= 10) return "U/10";
   if (ageThisYear <= 12) return "U/12";
@@ -88,9 +89,9 @@ export function getDivision(dob: Date): string {
 }
 
 export function formatTenure(registrationDate: Date): string {
-  const now = new Date();
-  let years = now.getFullYear() - registrationDate.getFullYear();
-  let months = now.getMonth() - registrationDate.getMonth();
+  const now = getSASTNow();
+  let years = now.year - registrationDate.getUTCFullYear();
+  let months = now.month - (registrationDate.getUTCMonth() + 1);
 
   if (months < 0) {
     years--;

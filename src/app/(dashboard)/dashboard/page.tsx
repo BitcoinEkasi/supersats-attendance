@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import { checkUnreportedPreviousMonth } from "@/app/actions/reports";
+import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -15,11 +15,12 @@ export default async function DashboardPage() {
   const session = await auth();
   const role = session?.user?.role;
 
-  const now = new Date();
-  const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
-  const monthEnd = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0));
+  const { year, month } = getSASTNow();
+  const currentMonth = `${year}-${String(month).padStart(2, "0")}`;
+  const monthStart = getStartOfSASTMonth(currentMonth);
+  const monthEnd = getEndOfSASTMonth(currentMonth);
 
-  const [activeCount, thisMonthEvents, recentEvents, recentReports, unreportedMonth] =
+  const [activeCount, thisMonthEvents, recentEvents, recentReports] =
     await Promise.all([
       prisma.participant.count({ where: { status: "ACTIVE" } }),
       prisma.event.count({ where: { date: { gte: monthStart, lte: monthEnd } } }),
@@ -36,29 +37,13 @@ export default async function DashboardPage() {
         take: 5,
         include: { generator: { select: { name: true } } },
       }),
-      checkUnreportedPreviousMonth(),
     ]);
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
 
-      {/* Unreported month banner (admin only) */}
-      {unreportedMonth && (
-        <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm text-amber-800">
-            <strong>{unreportedMonth}</strong> has events but no report yet.
-          </p>
-          <Link
-            href="/reports"
-            className="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700"
-          >
-            Generate Report
-          </Link>
-        </div>
-      )}
-
-      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+<div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <p className="text-sm font-medium text-gray-500">Active Participants</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">{activeCount}</p>

@@ -1,6 +1,8 @@
 import SessionProvider from "@/components/session-provider";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import MobileHeader from "@/components/mobile-header";
+import MobileBottomNav from "@/components/mobile-bottom-nav";
 import { auth } from "@/lib/auth";
 import type { UserRole } from "@prisma/client";
 
@@ -11,6 +13,16 @@ export default async function DashboardLayout({
 }) {
   const session = await auth();
   const role = session?.user?.role as UserRole | undefined;
+
+  if (role === "MARSHALL") {
+    return (
+      <SessionProvider>
+        <div className="h-dvh overflow-y-auto bg-white">
+          {children}
+        </div>
+      </SessionProvider>
+    );
+  }
 
   return (
     <SessionProvider>
