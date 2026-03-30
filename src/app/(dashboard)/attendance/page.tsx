@@ -50,7 +50,7 @@ export default async function AttendancePage() {
       orderBy: { date: "desc" },
       take: 30,
       include: {
-        _count: { select: { attendanceRecords: true } },
+        _count: { select: { attendanceRecords: { where: { present: true } } } },
         creator: { select: { name: true } },
       },
     }),

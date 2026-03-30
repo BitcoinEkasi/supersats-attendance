@@ -7,6 +7,7 @@ import ChangeRequestForm from "../change-request-form";
 import PerformanceEventsSection from "./performance-events-section";
 import { resolveChangeRequest } from "@/app/actions/participants";
 import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
+import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import Image from "next/image";
 
 const categoryLabels: Record<string, string> = {
@@ -48,9 +49,18 @@ export default async function ParticipantDetailPage({
 
   if (!participant) notFound();
 
-  const totalEvents = participant.attendanceRecords.length;
-  const attended = participant.attendanceRecords.filter((r) => r.present).length;
-  const percentage = totalEvents > 0 ? (attended / totalEvents) * 100 : 0;
+  // Last 3 months attendance
+  const { year, month } = getSASTNow();
+  const threeMonthsAgoMonth = month - 2 <= 0 ? month - 2 + 12 : month - 2;
+  const threeMonthsAgoYear = month - 2 <= 0 ? year - 1 : year;
+  const threeMonthsAgoYM = `${threeMonthsAgoYear}-${String(threeMonthsAgoMonth).padStart(2, "0")}`;
+
+  const [last3mEvents, last3mAttended] = await Promise.all([
+    prisma.attendanceRecord.count({ where: { participantId: id, event: { date: { gte: getStartOfSASTMonth(threeMonthsAgoYM) } } } }),
+    prisma.attendanceRecord.count({ where: { participantId: id, present: true, event: { date: { gte: getStartOfSASTMonth(threeMonthsAgoYM) } } } }),
+  ]);
+
+  const last3mPct = last3mEvents > 0 ? (last3mAttended / last3mEvents) * 100 : 0;
 
   const statusColors: Record<string, string> = {
     ACTIVE: "bg-green-100 text-green-700",
@@ -305,18 +315,19 @@ export default async function ParticipantDetailPage({
 
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Attendance Summary</h3>
+            <p className="mt-1 text-xs text-gray-400">Last 3 months</p>
             <div className="mt-4 grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-gray-900">{totalEvents}</p>
-                <p className="text-sm text-gray-500">Total Events</p>
+                <p className="text-2xl font-bold text-gray-900">{last3mEvents}</p>
+                <p className="text-sm text-gray-500">Events</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-600">{attended}</p>
+                <p className="text-2xl font-bold text-green-600">{last3mAttended}</p>
                 <p className="text-sm text-gray-500">Attended</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-orange-600">{percentage.toFixed(1)}%</p>
-                <p className="text-sm text-gray-500">Overall Attendance</p>
+                <p className="text-2xl font-bold text-orange-600">{last3mPct.toFixed(1)}%</p>
+                <p className="text-sm text-gray-500">Rate</p>
               </div>
             </div>
           </div>

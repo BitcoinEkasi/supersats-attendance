@@ -145,7 +145,7 @@ export async function createEventForToday(category: EventCategory, note: string 
   try {
     const event = await prisma.event.create({
       data: {
-        date: new Date(today + "T00:00:00+02:00"),
+        date: new Date(today + "T12:00:00.000Z"),
         category,
         note,
         createdBy: user.id,

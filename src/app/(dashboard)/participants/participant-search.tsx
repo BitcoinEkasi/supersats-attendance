@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function ParticipantSearch({
   initialSearch,
@@ -10,40 +10,40 @@ export default function ParticipantSearch({
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(initialSearch);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const params = search ? `?search=${encodeURIComponent(search)}` : "";
-    router.push(`/participants${params}`);
-  }
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const params = search ? `?search=${encodeURIComponent(search)}` : "";
+      router.push(`/participants${params}`);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, router]);
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <div className="relative">
       <input
         type="text"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search participants..."
-        className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 pr-8 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
       />
-      <button
-        type="submit"
-        className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-      >
-        Search
-      </button>
       {search && (
         <button
           type="button"
-          onClick={() => {
-            setSearch("");
-            router.push("/participants");
-          }}
-          className="rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100"
+          onClick={() => setSearch("")}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
-          Clear
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <line x1="6" y1="6" x2="18" y2="18" strokeLinecap="round" />
+            <line x1="18" y1="6" x2="6" y2="18" strokeLinecap="round" />
+          </svg>
         </button>
       )}
-    </form>
+    </div>
   );
 }

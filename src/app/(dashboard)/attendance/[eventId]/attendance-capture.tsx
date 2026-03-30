@@ -88,13 +88,11 @@ export default function AttendanceCapture({
     if (autosaveRef.current) clearTimeout(autosaveRef.current);
     setSaveStatus("saving");
     autosaveRef.current = setTimeout(async () => {
-      const records = [...marks.entries()]
-        .filter(([, v]) => v !== null)
-        .map(([participantId, v]) => ({
-          participantId,
-          present: true,
-          onTour: v === "onTour",
-        }));
+      const records = [...marks.entries()].map(([participantId, v]) => ({
+        participantId,
+        present: v !== null,
+        onTour: v === "onTour",
+      }));
       const result = await saveAttendance(eventId, records);
       if (result.error) {
         setError(result.error);
