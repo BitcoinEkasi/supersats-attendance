@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { updateParticipant } from "@/app/actions/participants";
 import { getExpectedGrade } from "@/lib/sa-id";
 import CertificationsSection from "./certifications-section";
-import PerformanceEventsSection from "./performance-events-section";
 import type { Participant, Certification, PerformanceEvent } from "@prisma/client";
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
@@ -26,8 +25,8 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
 export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[] } }) {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [selectedGrade, setSelectedGrade] = useState<string>(participant.grade || "");
   const [idError, setIdError] = useState("");
@@ -61,6 +60,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
     if (data.path) {
       setIndemnityFormUrl(data.path);
       setIndemnityUploadedAt(new Date().toISOString());
+      setSaved(false);
     } else {
       setError(data.error || "Upload failed");
     }
@@ -78,6 +78,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
     if (data.path) {
       setIdDocumentUrl(data.path);
       setIdDocUploadedAt(new Date().toISOString());
+      setSaved(false);
     } else {
       setError(data.error || "Upload failed");
     }
@@ -88,13 +89,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
     e.preventDefault();
     setLoading(true);
     setError("");
-    setMessage("");
     const formData = new FormData(e.currentTarget);
     const result = await updateParticipant(participant.id, formData);
     if (result.error) {
       setError(result.error);
     } else {
-      setMessage("Participant updated successfully");
+      setSaved(true);
       router.refresh();
     }
     setLoading(false);
@@ -108,14 +108,10 @@ export default function EditParticipantForm({ participant }: { participant: Part
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-gray-900">Edit Participant</h3>
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+      <form onSubmit={handleSubmit} onChange={() => setSaved(false)} className="mt-4 space-y-4">
         {error && (
           <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
         )}
-        {message && (
-          <div className="rounded border border-green-200 bg-green-50 p-2 text-sm text-green-600">{message}</div>
-        )}
-
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Surname *</label>
@@ -424,18 +420,11 @@ export default function EditParticipantForm({ participant }: { participant: Part
               <input
                 type="url"
                 value={profileLinkUrl}
-                onChange={(e) => { setProfileLinkUrl(e.target.value); }}
+                onChange={(e) => { setProfileLinkUrl(e.target.value); setSaved(false); }}
                 placeholder="https://..."
                 className={inputCls}
               />
             </div>
-          </div>
-          <div className="mt-4">
-            <label className="mb-2 block text-xs font-medium text-gray-500 uppercase tracking-wide">Events</label>
-            <PerformanceEventsSection
-              participantId={participant.id}
-              events={participant.performanceEvents}
-            />
           </div>
         </div>
 
@@ -445,9 +434,11 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <button
             type="submit"
             disabled={loading}
-            className="rounded-full bg-orange-600 px-6 py-3 text-sm font-medium text-white shadow-lg hover:bg-orange-700 disabled:opacity-50"
+            className={`rounded-full px-6 py-3 text-sm font-medium text-white shadow-lg disabled:opacity-50 transition-colors ${
+              saved ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
+            }`}
           >
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? "Saving…" : saved ? "Changes Saved" : "Save Changes"}
           </button>
           <button
             type="button"
@@ -514,6 +505,17 @@ export default function EditParticipantForm({ participant }: { participant: Part
           participantId={participant.id}
           certifications={participant.certifications}
           inline
+        />
+      </div>
+
+      <div className="border-t pt-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Notes</p>
+        <textarea
+          name="notes"
+          rows={4}
+          defaultValue={participant.notes || ""}
+          placeholder="Add any notes about this participant…"
+          className={inputCls}
         />
       </div>
     </div>

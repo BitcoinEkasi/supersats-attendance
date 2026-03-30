@@ -3,6 +3,7 @@ import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
 import MobileHeader from "@/components/mobile-header";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
+import MidnightReset from "@/components/midnight-reset";
 import { auth } from "@/lib/auth";
 import type { UserRole } from "@prisma/client";
 
@@ -17,6 +18,7 @@ export default async function DashboardLayout({
   if (role === "MARSHALL") {
     return (
       <SessionProvider>
+        <MidnightReset />
         <div className="h-dvh overflow-y-auto bg-white">
           {children}
         </div>

@@ -107,8 +107,6 @@ export default async function ParticipantsPage({
                     <span>Age {calculateAge(p.dateOfBirth)}</span>
                     <span className="text-gray-300">·</span>
                     <span>Division {getDivision(p.dateOfBirth)} {p.gender === "MALE" ? "Boys" : "Girls"}</span>
-                    <span className="text-gray-300">·</span>
-                    <span>{p.gender === "MALE" ? "Boy" : "Girl"}</span>
                   </div>
 
                   {/* Joined */}
@@ -124,7 +122,7 @@ export default async function ParticipantsPage({
                       {p.cardBalance != null && (
                         <>
                           <span className="text-gray-300">·</span>
-                          <span className="font-medium">{Math.round(p.cardBalance).toLocaleString()} sats</span>
+                          <span className="font-medium">🗲 {Math.round(p.cardBalance).toLocaleString()} sats</span>
                         </>
                       )}
                     </div>

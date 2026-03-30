@@ -94,6 +94,7 @@ model Participant {
   tshirtSize       String?           @map("tshirt_size")
   shoeSize         String?           @map("shoe_size")
   wetsuiteSize     String?           @map("wetsuit_size")
+  notes            String?
   status           ParticipantStatus @default(ACTIVE)
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")

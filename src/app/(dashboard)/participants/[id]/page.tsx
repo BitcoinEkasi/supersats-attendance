@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import EditParticipantForm from "./edit-participant-form";
 import ProfilePictureUpload from "./profile-picture-upload";
 import ChangeRequestForm from "../change-request-form";
+import PerformanceEventsSection from "./performance-events-section";
 import { resolveChangeRequest } from "@/app/actions/participants";
 import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
 import Image from "next/image";
@@ -117,8 +118,6 @@ export default async function ParticipantDetailPage({
               <span>Age {calculateAge(participant.dateOfBirth)}</span>
               <span className="text-gray-300">·</span>
               <span>Division {getDivision(participant.dateOfBirth)} {participant.gender === "MALE" ? "Boys" : "Girls"}</span>
-              <span className="text-gray-300">·</span>
-              <span>{participant.gender === "MALE" ? "Boy" : "Girl"}</span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>
@@ -130,7 +129,7 @@ export default async function ParticipantDetailPage({
                 {participant.cardBalance != null && (
                   <>
                     <span className="text-gray-300">·</span>
-                    <span className="font-medium">{Math.round(participant.cardBalance).toLocaleString()} sats</span>
+                    <span className="font-medium">🗲 {Math.round(participant.cardBalance).toLocaleString()} sats</span>
                   </>
                 )}
               </div>
@@ -262,6 +261,12 @@ export default async function ParticipantDetailPage({
                 </div>
               )}
             </dl>
+            {participant.notes && (
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Notes</p>
+                <p className="whitespace-pre-wrap text-sm text-gray-700">{participant.notes}</p>
+              </div>
+            )}
             <div className="mt-4 border-t pt-4">
               <ChangeRequestForm participantId={participant.id} />
             </div>
@@ -357,6 +362,17 @@ export default async function ParticipantDetailPage({
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Performance Events — full width at bottom */}
+      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+        <h3 className="text-lg font-semibold text-gray-900">Performance Events</h3>
+        <div className="mt-4">
+          <PerformanceEventsSection
+            participantId={participant.id}
+            events={participant.performanceEvents}
+          />
         </div>
       </div>
       </div>

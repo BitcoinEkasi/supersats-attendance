@@ -86,6 +86,7 @@ export async function createParticipant(formData: FormData) {
   const shoeSize = (formData.get("shoeSize") as string)?.trim() || null;
   const wetsuiteSize = (formData.get("wetsuiteSize") as string)?.trim() || null;
   const isJuniorCoach = formData.get("isJuniorCoach") === "on";
+  const notes = (formData.get("notes") as string)?.trim() || null;
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -138,6 +139,7 @@ export async function createParticipant(formData: FormData) {
           tshirtSize,
           shoeSize,
           wetsuiteSize,
+          notes,
         },
       });
     });
@@ -190,6 +192,7 @@ export async function updateParticipant(id: string, formData: FormData) {
   const shoeSize = (formData.get("shoeSize") as string)?.trim() || null;
   const wetsuiteSize = (formData.get("wetsuiteSize") as string)?.trim() || null;
   const isJuniorCoach = formData.get("isJuniorCoach") === "on";
+  const notes = (formData.get("notes") as string)?.trim() || null;
 
   if (!surname || !fullNames || !idNumber) {
     return { error: "Surname, full names, and ID number are required" };
@@ -236,6 +239,7 @@ export async function updateParticipant(id: string, formData: FormData) {
         tshirtSize,
         shoeSize,
         wetsuiteSize,
+        notes,
         ...(registrationDateRaw ? { registrationDate: new Date(registrationDateRaw + "T00:00:00Z") } : {}),
         ...(profilePicture ? { profilePicture } : {}),
       },

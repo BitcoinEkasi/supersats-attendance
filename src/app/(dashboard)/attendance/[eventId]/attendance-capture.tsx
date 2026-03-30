@@ -265,13 +265,35 @@ export default function AttendanceCapture({
   // Desktop version
   return (
     <div className="mx-auto max-w-lg">
-      <div className="sticky top-0 z-10 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          <span>Listed: <span className="font-semibold text-gray-900">{total}</span></span>
-          <span>Present: <span className="font-semibold text-green-600">{presentCount}</span></span>
-          <span>On Tour: <span className="font-semibold text-blue-600">{onTourCount}</span></span>
+      <div className="sticky top-0 z-10 flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <span>Listed: <span className="font-semibold text-gray-900">{total}</span></span>
+            <span>Present: <span className="font-semibold text-green-600">{presentCount}</span></span>
+            <span>On Tour: <span className="font-semibold text-blue-600">{onTourCount}</span></span>
+          </div>
+          {statusIndicator}
         </div>
-        {statusIndicator}
+        <div className="relative">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search…"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 pr-8 text-sm focus:border-orange-400 focus:outline-none"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <line x1="6" y1="6" x2="18" y2="18" strokeLinecap="round" />
+                <line x1="18" y1="6" x2="6" y2="18" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

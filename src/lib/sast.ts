@@ -12,25 +12,28 @@ export function getSASTNow(): { year: number; month: number; day: number } {
   return { year, month, day };
 }
 
-/** Midnight at the start of today SAST, as a UTC Date (for DB range queries) */
+/**
+ * Start of today in SAST as a UTC Date for DB range queries.
+ * Dates are stored as the SAST calendar date at UTC noon, so we query
+ * the full UTC day that matches the SAST date string.
+ */
 export function getStartOfSASTToday(): Date {
-  return new Date(getSASTDateString() + "T00:00:00+02:00");
+  return new Date(getSASTDateString() + "T00:00:00.000Z");
 }
 
-/** 23:59:59 at the end of today SAST, as a UTC Date */
+/** End of today in SAST as a UTC Date for DB range queries. */
 export function getEndOfSASTToday(): Date {
-  return new Date(getSASTDateString() + "T23:59:59+02:00");
+  return new Date(getSASTDateString() + "T23:59:59.999Z");
 }
 
 /** First moment of a given SAST month ("YYYY-MM") as a UTC Date */
 export function getStartOfSASTMonth(yearMonth: string): Date {
-  return new Date(`${yearMonth}-01T00:00:00+02:00`);
+  return new Date(`${yearMonth}-01T00:00:00.000Z`);
 }
 
 /** Last moment of a given SAST month ("YYYY-MM") as a UTC Date */
 export function getEndOfSASTMonth(yearMonth: string): Date {
   const [y, m] = yearMonth.split("-").map(Number);
-  // Last day of the month: day 0 of the next month
   const lastDay = new Date(y, m, 0).getDate();
-  return new Date(`${yearMonth}-${String(lastDay).padStart(2, "0")}T23:59:59+02:00`);
+  return new Date(`${yearMonth}-${String(lastDay).padStart(2, "0")}T23:59:59.999Z`);
 }

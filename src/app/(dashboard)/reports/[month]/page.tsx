@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { REWARD_TIERS } from "@/lib/rewards";
 import ExportButton from "./export-button";
 import ApproveButton from "../approve-button";
+import ReportTable from "./report-table";
 
 export default async function ReportDetailPage({
   params,
@@ -85,7 +86,7 @@ export default async function ReportDetailPage({
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Rewards</p>
           <p className="mt-1 text-2xl font-bold text-orange-600">
-            {totalSats.toLocaleString()} sats
+            🗲 {totalSats.toLocaleString()} sats
           </p>
         </div>
       </div>
@@ -99,69 +100,25 @@ export default async function ReportDetailPage({
               <p className={`text-lg font-bold ${tier.color}`}>{tier.count}</p>
               <p className="text-xs text-gray-500">{tier.label}</p>
               <p className="text-xs font-medium text-gray-700">
-                {tier.sats > 0 ? `${tier.sats} sats` : "No reward"}
+                {tier.sats > 0 ? `🗲 ${tier.sats} sats` : "No reward"}
               </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Participant detail table */}
-      <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">TSK ID</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Participant</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Events</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Attended</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Attendance %</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Reward (sats)</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.entries.map((entry) => {
-              const pct = Number(entry.percentage);
-              const tier = REWARD_TIERS.find((t) =>
-                t.sats === 7500 ? pct >= 100 : pct >= t.min && pct <= t.max,
-              );
-              const p = entry.participant;
-              const name = p.knownAs
-                ? `${p.knownAs} (${p.surname})`
-                : `${p.surname}, ${p.fullNames}`;
-
-              return (
-                <tr key={entry.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.tskId}</td>
-                  <td className="px-4 py-3 font-medium">{name}</td>
-                  <td className="px-4 py-3">{entry.totalEvents}</td>
-                  <td className="px-4 py-3">{entry.attended}</td>
-                  <td className="px-4 py-3">
-                    <span className={tier?.color || ""}>{pct.toFixed(1)}%</span>
-                  </td>
-                  <td className="px-4 py-3 font-medium">
-                    {entry.rewardSats > 0 ? entry.rewardSats.toLocaleString() : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        entry.payoutStatus === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : entry.payoutStatus === "approved"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {entry.payoutStatus}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <ReportTable entries={report.entries.map(e => ({
+        ...e,
+        percentage: e.percentage.toString(),
+        participant: {
+          tskId: e.participant.tskId,
+          surname: e.participant.surname,
+          fullNames: e.participant.fullNames,
+          knownAs: e.participant.knownAs,
+          dateOfBirth: e.participant.dateOfBirth,
+          gender: e.participant.gender,
+        },
+      }))} />
     </div>
   );
 }

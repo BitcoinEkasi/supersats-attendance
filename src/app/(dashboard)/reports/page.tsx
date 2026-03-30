@@ -62,7 +62,7 @@ export default async function ReportsPage() {
                         <td className="px-4 py-3">{statusBadge(report.status)}</td>
                         <td className="px-4 py-3">{report.entries.length}</td>
                         <td className="px-4 py-3 font-medium text-orange-600">
-                          {totalSats.toLocaleString()} sats
+                          🗲 {totalSats.toLocaleString()} sats
                         </td>
                         <td className="px-4 py-3">{avgPct.toFixed(1)}%</td>
                         <td className="px-4 py-3">

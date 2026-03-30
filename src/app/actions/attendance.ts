@@ -21,7 +21,7 @@ export async function createEvent(formData: FormData) {
   try {
     const event = await prisma.event.create({
       data: {
-        date: new Date(date + "T00:00:00+02:00"),
+        date: new Date(date + "T12:00:00.000Z"),
         category,
         note,
         createdBy: user.id,
@@ -105,8 +105,7 @@ export async function saveAttendance(
     // Auto-update the monthly report for this event's month
     const event = await prisma.event.findUnique({ where: { id: eventId }, select: { date: true } });
     if (event) {
-      const sastDate = new Date(event.date.getTime() + 2 * 60 * 60 * 1000);
-      const month = sastDate.toISOString().substring(0, 7);
+      const month = event.date.toISOString().substring(0, 7);
       await upsertMonthlyReport(month, user.id);
     }
 
