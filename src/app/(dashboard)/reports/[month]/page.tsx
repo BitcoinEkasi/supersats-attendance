@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getReportWithEntries } from "@/app/actions/reports";
 import { auth } from "@/lib/auth";
 import { REWARD_TIERS } from "@/lib/rewards";
+import { getSASTNow } from "@/lib/sast";
 import ExportButton from "./export-button";
 import ApproveButton from "../approve-button";
 import ReportTable from "./report-table";
@@ -20,6 +21,11 @@ export default async function ReportDetailPage({
   if (!report) notFound();
 
   const role = session?.user?.role;
+
+  const { year, month } = getSASTNow();
+  const currentYM = `${year}-${String(month).padStart(2, "0")}`;
+  const monthComplete = report.month < currentYM;
+
   const totalSats = report.entries.reduce((sum, e) => sum + e.rewardSats, 0);
   const totalParticipants = report.entries.length;
   const avgPercentage =
@@ -63,8 +69,8 @@ export default async function ReportDetailPage({
             </span>
           )}
           <ExportButton reportId={report.id} month={report.month} />
-          {role === "SUPERVISOR" && report.status === "PENDING" && (
-            <ApproveButton reportId={report.id} />
+          {role === "ADMINISTRATOR" && report.status === "PENDING" && (
+            <ApproveButton reportId={report.id} disabled={!monthComplete} />
           )}
         </div>
       </div>

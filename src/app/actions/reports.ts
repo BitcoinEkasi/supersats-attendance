@@ -90,11 +90,16 @@ export async function upsertMonthlyReport(month: string, userId: string) {
 }
 
 export async function approveReport(reportId: string) {
-  const user = await requireRole(["SUPERVISOR"]);
+  const user = await requireRole(["ADMINISTRATOR"]);
 
   const report = await prisma.monthlyReport.findUnique({ where: { id: reportId } });
   if (!report) return { error: "Report not found" };
   if (report.status === "APPROVED") return { error: "Report is already approved" };
+
+  // Only allow approval once the month is complete
+  const { year, month } = getSASTNow();
+  const currentYM = `${year}-${String(month).padStart(2, "0")}`;
+  if (report.month >= currentYM) return { error: "Month is not yet complete" };
 
   await prisma.monthlyReport.update({
     where: { id: reportId },

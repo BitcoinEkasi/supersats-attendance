@@ -4,7 +4,7 @@ import { useState } from "react";
 import { approveReport } from "@/app/actions/reports";
 import { useRouter } from "next/navigation";
 
-export default function ApproveButton({ reportId }: { reportId: string }) {
+export default function ApproveButton({ reportId, disabled = false }: { reportId: string; disabled?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,8 +29,9 @@ export default function ApproveButton({ reportId }: { reportId: string }) {
       )}
       <button
         onClick={handleApprove}
-        disabled={loading}
-        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+        disabled={loading || disabled}
+        title={disabled ? "Month is not yet complete" : undefined}
+        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? "Approving..." : "Approve Report"}
       </button>

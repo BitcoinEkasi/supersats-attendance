@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 const DEV_ACCOUNTS = [
   { label: "Administrator", email: "admin@tsk.local", password: "admin123", color: "bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200" },
   { label: "Marshall",      email: "marshall@tsk.local",    password: "marshall123",    color: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200" },
-  { label: "Supervisor",    email: "supervisor@tsk.local", password: "supervisor123", color: "bg-purple-100 text-purple-700 hover:bg-purple-200 border-purple-200" },
 ];
 
 const isDev = process.env.NODE_ENV === "development";

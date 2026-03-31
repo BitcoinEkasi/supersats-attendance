@@ -27,15 +27,22 @@ export default async function ParticipantsPage({
       }
     : {};
 
-  const participants = await prisma.participant.findMany({
-    where,
-    orderBy: [{ surname: "asc" }, { fullNames: "asc" }],
-  });
+  const [participants, activeCount, retiredCount] = await Promise.all([
+    prisma.participant.findMany({ where, orderBy: [{ surname: "asc" }, { fullNames: "asc" }] }),
+    prisma.participant.count({ where: { status: "ACTIVE" } }),
+    prisma.participant.count({ where: { status: "RETIRED" } }),
+  ]);
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
+          <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-700">{activeCount} active</span>
+          {retiredCount > 0 && (
+            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-500">{retiredCount} retired</span>
+          )}
+        </div>
         <ParticipantsExportButton />
       </div>
 

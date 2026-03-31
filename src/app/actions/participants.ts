@@ -581,7 +581,7 @@ export async function updateParticipantDates(rows: CsvParticipantRow[]) {
 }
 
 export async function exportParticipantsCSV(): Promise<string> {
-  await requireRole(["ADMINISTRATOR", "SUPERVISOR", "MARSHALL"]);
+  await requireRole(["ADMINISTRATOR", "MARSHALL"]);
 
   const participants = await prisma.participant.findMany({
     orderBy: [{ surname: "asc" }, { fullNames: "asc" }],

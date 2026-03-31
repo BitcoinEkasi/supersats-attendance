@@ -38,12 +38,8 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Reports section: ADMINISTRATOR or SUPERVISOR
-    if (
-      pathname.startsWith("/reports") &&
-      role !== "ADMINISTRATOR" &&
-      role !== "SUPERVISOR"
-    ) {
+    // Reports section: ADMINISTRATOR only
+    if (pathname.startsWith("/reports") && role !== "ADMINISTRATOR") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

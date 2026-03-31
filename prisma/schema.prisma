@@ -9,7 +9,6 @@ datasource db {
 enum UserRole {
   ADMINISTRATOR
   MARSHALL
-  SUPERVISOR
 }
 
 enum ParticipantStatus {
