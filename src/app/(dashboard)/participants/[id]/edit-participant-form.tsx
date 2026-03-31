@@ -451,7 +451,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
             </svg>
           </button>
         </div>
-      </form>
 
         <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
@@ -499,23 +498,24 @@ export default function EditParticipantForm({ participant }: { participant: Part
           </div>
         </div>
 
+        <div className="border-t pt-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Notes</p>
+          <textarea
+            name="notes"
+            rows={4}
+            defaultValue={participant.notes || ""}
+            placeholder="Add any notes about this participant…"
+            className={inputCls}
+          />
+        </div>
+      </form>
+
       <div className="border-t pt-4">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Certifications</p>
         <CertificationsSection
           participantId={participant.id}
           certifications={participant.certifications}
           inline
-        />
-      </div>
-
-      <div className="border-t pt-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Notes</p>
-        <textarea
-          name="notes"
-          rows={4}
-          defaultValue={participant.notes || ""}
-          placeholder="Add any notes about this participant…"
-          className={inputCls}
         />
       </div>
     </div>

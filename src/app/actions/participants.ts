@@ -249,10 +249,11 @@ export async function updateParticipant(id: string, formData: FormData) {
     return { success: true };
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Unknown error";
+    console.error("[updateParticipant] error:", e);
     if (message.includes("Unique constraint")) {
       return { error: "A participant with this ID number already exists" };
     }
-    return { error: "Failed to update participant" };
+    return { error: `Failed to update participant: ${message}` };
   }
 }
 
