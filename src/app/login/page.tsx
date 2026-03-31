@@ -5,8 +5,8 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 const DEV_ACCOUNTS = [
-  { label: "Administrator", email: "admin@tsk.local", password: "admin123", color: "bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200" },
-  { label: "Marshall",      email: "marshall@tsk.local",    password: "marshall123",    color: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200" },
+  { label: "Administrator", username: "admin",   password: "admin123",    color: "bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200" },
+  { label: "Marshall",      username: "marshall", password: "marshall123", color: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200" },
 ];
 
 const isDev = process.env.NODE_ENV === "development";
@@ -24,29 +24,27 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget);
     const result = await signIn("credentials", {
-      email: formData.get("email"),
+      username: formData.get("username"),
       password: formData.get("password"),
       redirect: false,
     });
 
     if (result?.error) {
-      setError("Invalid email or password");
+      setError("Invalid username or password");
       setLoading(false);
     } else {
-      // Middleware will redirect to the correct page based on role
       router.push("/");
     }
   }
 
-  async function devLogin(email: string, password: string, label: string) {
+  async function devLogin(username: string, password: string, label: string) {
     setDevLoading(label);
     setError("");
-    const result = await signIn("credentials", { email, password, redirect: false });
+    const result = await signIn("credentials", { username, password, redirect: false });
     if (result?.error) {
       setError("Dev login failed");
       setDevLoading(null);
     } else {
-      // Middleware will redirect to the correct page based on role
       router.push("/");
     }
   }
@@ -67,13 +65,13 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
+              id="username"
+              name="username"
+              type="text"
               required
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
             />
@@ -114,7 +112,7 @@ export default function LoginPage() {
               {DEV_ACCOUNTS.map((account) => (
                 <button
                   key={account.label}
-                  onClick={() => devLogin(account.email, account.password, account.label)}
+                  onClick={() => devLogin(account.username, account.password, account.label)}
                   disabled={!!devLoading}
                   className={`rounded-md border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 ${account.color}`}
                 >

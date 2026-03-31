@@ -9,51 +9,36 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@tsk.local";
+  const adminUsername = process.env.ADMIN_USERNAME || "admin";
   const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 
   const adminHash = await bcrypt.hash(adminPassword, 12);
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { username: adminUsername },
     update: {},
     create: {
-      email: adminEmail,
+      username: adminUsername,
       name: "Administrator",
       passwordHash: adminHash,
       role: "ADMINISTRATOR",
     },
   });
-  console.log(`Seeded administrator: ${admin.email}`);
+  console.log(`Seeded administrator: ${admin.username}`);
 
-  const marshallEmail = process.env.MARSHALL_EMAIL || "marshall@tsk.local";
+  const marshallUsername = process.env.MARSHALL_USERNAME || "marshall";
   const marshallPassword = process.env.MARSHALL_PASSWORD || "marshall123";
   const marshallHash = await bcrypt.hash(marshallPassword, 12);
   const marshall = await prisma.user.upsert({
-    where: { email: marshallEmail },
+    where: { username: marshallUsername },
     update: {},
     create: {
-      email: marshallEmail,
+      username: marshallUsername,
       name: "Marshall",
       passwordHash: marshallHash,
       role: "MARSHALL",
     },
   });
-  console.log(`Seeded marshall: ${marshall.email}`);
-
-  const supervisorEmail = process.env.SUPERVISOR_EMAIL || "supervisor@tsk.local";
-  const supervisorPassword = process.env.SUPERVISOR_PASSWORD || "supervisor123";
-  const supervisorHash = await bcrypt.hash(supervisorPassword, 12);
-  const supervisor = await prisma.user.upsert({
-    where: { email: supervisorEmail },
-    update: {},
-    create: {
-      email: supervisorEmail,
-      name: "Supervisor",
-      passwordHash: supervisorHash,
-      role: "SUPERVISOR",
-    },
-  });
-  console.log(`Seeded supervisor: ${supervisor.email}`);
+  console.log(`Seeded marshall: ${marshall.username}`);
 }
 
 main()
