@@ -11,8 +11,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# DATABASE_URL is required by prisma.config.ts at generate time; a dummy value is sufficient here
-RUN DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy npx prisma generate
+RUN npx prisma generate
 RUN npm run build
 
 # --- Production ---
