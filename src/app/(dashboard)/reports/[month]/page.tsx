@@ -123,6 +123,7 @@ export default async function ReportDetailPage({
           knownAs: e.participant.knownAs,
           dateOfBirth: e.participant.dateOfBirth,
           gender: e.participant.gender,
+          isJuniorCoach: e.participant.isJuniorCoach,
         },
       }))} />
     </div>
