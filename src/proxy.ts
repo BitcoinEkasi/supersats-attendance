@@ -1,28 +1,23 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/lib/auth";
 
-export async function proxy(request: NextRequest) {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
+export const proxy = auth((request) => {
+  const session = request.auth;
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === "/login";
 
-  if (!token && !isLoginPage) {
+  if (!session && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (token && isLoginPage) {
-    const role = token.role as string;
+  if (session && isLoginPage) {
+    const role = session.user?.role as string;
     const dest = role === "MARSHALL" ? "/attendance" : "/dashboard";
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
-  if (token) {
-    const role = token.role as string;
+  if (session) {
+    const role = session.user?.role as string;
 
     // Participants section: ADMINISTRATOR only
     if (pathname.startsWith("/participants") && role !== "ADMINISTRATOR") {
@@ -45,7 +40,7 @@ export async function proxy(request: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/((?!api/auth|api/upload|_next/static|_next/image|favicon.ico|uploads).*)"],
