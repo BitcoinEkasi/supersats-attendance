@@ -23,17 +23,22 @@ export default function LoginPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const result = await signIn("credentials", {
-      username: formData.get("username"),
-      password: formData.get("password"),
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        username: formData.get("username"),
+        password: formData.get("password"),
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Invalid username or password");
+      if (result?.error) {
+        setError("Invalid username or password");
+        setLoading(false);
+      } else {
+        router.push("/");
+      }
+    } catch {
+      setError("An error occurred. Please try again.");
       setLoading(false);
-    } else {
-      router.push("/");
     }
   }
 
