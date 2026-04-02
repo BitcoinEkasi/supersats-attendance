@@ -133,6 +133,9 @@ export default async function ParticipantsPage({
                   {p.boltUserId && (
                     <div className="mt-0.5 text-xs text-gray-500">
                       <span className="text-gray-400">Bolt Card</span>
+                      {p.boltCardId && (
+                        <span className="ml-1 font-mono text-gray-500">{p.boltCardId}</span>
+                      )}
                       {(() => {
                         const bu = boltMap.get(p.id);
                         if (!bu) return null;
