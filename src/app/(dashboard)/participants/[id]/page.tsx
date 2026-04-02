@@ -5,7 +5,7 @@ import EditParticipantForm from "./edit-participant-form";
 import ProfilePictureUpload from "./profile-picture-upload";
 import ChangeRequestForm from "../change-request-form";
 import PerformanceEventsSection from "./performance-events-section";
-import { resolveChangeRequest } from "@/app/actions/participants";
+import ResolveButton from "./resolve-button";
 import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import Image from "next/image";
@@ -39,7 +39,6 @@ export default async function ParticipantDetailPage({
       },
       changeRequests: {
         where: { status: "pending" },
-        include: { requestedByUser: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
       },
       certifications: { orderBy: { uploadedAt: "desc" } },
@@ -296,16 +295,9 @@ export default async function ParticipantDetailPage({
                     <p className="text-sm text-gray-700">{req.notes}</p>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-xs text-gray-500">
-                        By {req.requestedByUser.name} · {req.createdAt.toLocaleDateString()}
+                        By {req.requestedBy} · {req.createdAt.toLocaleDateString()}
                       </span>
-                      <form action={async () => { "use server"; await resolveChangeRequest(req.id); }}>
-                        <button
-                          type="submit"
-                          className="rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
-                        >
-                          Mark Resolved
-                        </button>
-                      </form>
+                      <ResolveButton requestId={req.id} />
                     </div>
                   </div>
                 ))}

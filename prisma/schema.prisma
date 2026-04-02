@@ -3,12 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-}
-
-enum UserRole {
-  ADMINISTRATOR
-  MARSHALL
+  provider = "sqlite"
 }
 
 enum ParticipantStatus {
@@ -40,34 +35,17 @@ enum ReportStatus {
   APPROVED
 }
 
-model User {
-  id           String   @id @default(uuid())
-  username     String   @unique @map("email")
-  name         String
-  passwordHash String   @map("password_hash")
-  role         UserRole @default(MARSHALL)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  createdEvents    Event[]
-  generatedReports MonthlyReport[]          @relation("GeneratedBy")
-  approvedReports  MonthlyReport[]          @relation("ApprovedBy")
-  changeRequests   ParticipantChangeRequest[]
-
-  @@map("users")
-}
-
 model Participant {
   id               String            @id @default(uuid())
   tskId            String            @unique @map("tsk_id")
-  registrationDate DateTime          @default(now()) @map("registration_date") @db.Date
+  registrationDate DateTime          @default(now()) @map("registration_date")
   profilePicture   String?           @map("profile_picture")
   surname          String
   fullNames        String            @map("full_names")
   knownAs          String?           @map("known_as")
   gender           Gender
   idNumber         String            @unique @map("id_number")
-  dateOfBirth      DateTime          @map("date_of_birth") @db.Date
+  dateOfBirth      DateTime          @map("date_of_birth")
   boltCardUrl      String?           @map("bolt_card_url")
   cardNumber       String?           @map("card_number")
   cardBalance      Float?            @map("card_balance")
@@ -83,10 +61,10 @@ model Participant {
   contact1         String?           @map("contact_1")
   contact2         String?           @map("contact_2")
   housingType      String?           @map("housing_type")
-  idDocumentUrl        String?   @map("id_document_url")
-  idDocumentUploadedAt DateTime? @map("id_document_uploaded_at")
-  indemnityFormUrl     String?   @map("indemnity_form_url")
-  indemnityUploadedAt  DateTime? @map("indemnity_uploaded_at")
+  idDocumentUrl        String?       @map("id_document_url")
+  idDocumentUploadedAt DateTime?     @map("id_document_uploaded_at")
+  indemnityFormUrl     String?       @map("indemnity_form_url")
+  indemnityUploadedAt  DateTime?     @map("indemnity_uploaded_at")
   tskStatus        String?           @map("tsk_status")
   weightKg         Float?            @map("weight_kg")
   heightCm         Float?            @map("height_cm")
@@ -116,8 +94,7 @@ model ParticipantChangeRequest {
   createdAt     DateTime  @default(now()) @map("created_at")
   resolvedAt    DateTime? @map("resolved_at")
 
-  participant     Participant? @relation(fields: [participantId], references: [id])
-  requestedByUser User         @relation(fields: [requestedBy], references: [id])
+  participant Participant? @relation(fields: [participantId], references: [id])
 
   @@map("participant_change_requests")
 }
@@ -125,7 +102,7 @@ model ParticipantChangeRequest {
 model PerformanceEvent {
   id            String   @id @default(uuid())
   participantId String   @map("participant_id")
-  eventDate     DateTime @db.Date @map("event_date")
+  eventDate     DateTime @map("event_date")
   eventName     String   @map("event_name")
   location      String?
   division      String?
@@ -152,13 +129,12 @@ model Certification {
 
 model Event {
   id        String        @id @default(uuid())
-  date      DateTime      @db.Date
+  date      DateTime
   category  EventCategory
   note      String?
   createdBy String        @map("created_by")
   createdAt DateTime      @default(now()) @map("created_at")
 
-  creator           User               @relation(fields: [createdBy], references: [id])
   attendanceRecords AttendanceRecord[]
 
   @@map("events")
@@ -189,9 +165,7 @@ model MonthlyReport {
   approvedAt  DateTime?    @map("approved_at")
   approvedBy  String?      @map("approved_by")
 
-  generator User               @relation("GeneratedBy", fields: [generatedBy], references: [id])
-  approver  User?              @relation("ApprovedBy", fields: [approvedBy], references: [id])
-  entries   MonthlyReportEntry[]
+  entries MonthlyReportEntry[]
 
   @@unique([month])
   @@map("monthly_reports")
@@ -203,7 +177,7 @@ model MonthlyReportEntry {
   participantId String   @map("participant_id")
   totalEvents   Int      @map("total_events")
   attended      Int
-  percentage    Decimal  @db.Decimal(5, 2)
+  percentage    Float
   rewardSats    Int      @map("reward_sats")
   payoutStatus  String   @default("pending") @map("payout_status")
   createdAt     DateTime @default(now()) @map("created_at")

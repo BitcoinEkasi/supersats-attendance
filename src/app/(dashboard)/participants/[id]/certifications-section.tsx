@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { uploadCertification, deleteCertification } from "@/app/actions/certifications";
 import type { Certification, CertificationType } from "@prisma/client";
 
 const CERT_TYPES: { type: CertificationType; label: string }[] = [
@@ -40,30 +39,34 @@ export default function CertificationsSection({ participantId, certifications, i
 
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const data = await res.json();
+    const uploadRes = await fetch("/api/upload", { method: "POST", body: fd });
+    const uploadData = await uploadRes.json();
 
-    if (data.path) {
-      await uploadCertification(participantId, type, data.path);
-      router.refresh();
+    if (uploadData.path) {
+      const res = await fetch(`/api/participants/${participantId}/certifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, fileUrl: uploadData.path }),
+      });
+      const result = await res.json();
+      if (result.error) setError(result.error);
+      else router.refresh();
     } else {
-      setError(data.error || "Upload failed");
+      setError(uploadData.error || "Upload failed");
     }
     setUploading(null);
   }
 
-  async function handleDelete(id: string) {
-    await deleteCertification(id, participantId);
+  async function handleDelete(certId: string) {
+    await fetch(`/api/participants/${participantId}/certifications/${certId}`, { method: "DELETE" });
     router.refresh();
   }
 
-  const certMap = new Map(certifications.map(c => [c.type, c]));
+  const certMap = new Map(certifications.map((c) => [c.type, c]));
 
   const content = (
     <>
-      {error && (
-        <div className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
-      )}
+      {error && <div className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>}
       <div className="grid grid-cols-3 gap-3">
         {CERT_TYPES.map(({ type, label }) => {
           const cert = certMap.get(type);
@@ -84,18 +87,10 @@ export default function CertificationsSection({ participantId, certifications, i
               <div className="flex items-center gap-2">
                 {cert && (
                   <>
-                    <a
-                      href={cert.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-orange-600 hover:underline"
-                    >
+                    <a href={cert.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-orange-600 hover:underline">
                       {isPdf ? "View PDF" : "View"}
                     </a>
-                    <button
-                      onClick={() => handleDelete(cert.id)}
-                      className="text-xs text-red-400 hover:text-red-600"
-                    >
+                    <button onClick={() => handleDelete(cert.id)} className="text-xs text-red-400 hover:text-red-600">
                       Remove
                     </button>
                   </>
@@ -112,14 +107,7 @@ export default function CertificationsSection({ participantId, certifications, i
           );
         })}
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,application/pdf"
-        onChange={handleFileChange}
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFileChange} className="hidden" />
     </>
   );
 

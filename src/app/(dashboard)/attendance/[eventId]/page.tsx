@@ -35,7 +35,6 @@ export default async function EventAttendancePage({
         attendanceRecords: {
           select: { participantId: true, present: true, onTour: true },
         },
-        creator: { select: { name: true } },
       },
     }),
     prisma.participant.findMany({

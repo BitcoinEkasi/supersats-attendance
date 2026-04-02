@@ -1,8 +1,24 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/db";
-import type { UserRole } from "@prisma/client";
+
+export type UserRole = "ADMINISTRATOR" | "MARSHALL";
+
+const USERS = [
+  {
+    id: "admin",
+    name: process.env.ADMIN_NAME || "Administrator",
+    username: process.env.ADMIN_USERNAME || "admin",
+    password: process.env.ADMIN_PASSWORD || "",
+    role: "ADMINISTRATOR" as UserRole,
+  },
+  {
+    id: "marshall",
+    name: process.env.MARSHALL_NAME || "Marshall",
+    username: process.env.MARSHALL_USERNAME || "marshall",
+    password: process.env.MARSHALL_PASSWORD || "",
+    role: "MARSHALL" as UserRole,
+  },
+];
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -14,23 +30,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { username: credentials.username as string },
-        });
+        const user = USERS.find((u) => u.username === credentials.username);
+        if (!user || user.password !== credentials.password) return null;
 
-        if (!user) return null;
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash,
-        );
-        if (!isValid) return null;
-
-        return {
-          id: user.id,
-          name: user.name,
-          role: user.role,
-        };
+        return { id: user.id, name: user.name, role: user.role };
       },
     }),
   ],
@@ -57,7 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
-        token.role = user.role;
+        token.role = (user as { role: UserRole }).role;
       }
       return token;
     },

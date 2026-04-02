@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addPerformanceEvent, deletePerformanceEvent } from "@/app/actions/performance-events";
 import type { PerformanceEvent } from "@prisma/client";
 
 interface Props {
@@ -29,25 +28,35 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
     }
     setSaving(true);
     setError("");
-    await addPerformanceEvent(participantId, eventDate, eventName.trim(), location.trim() || null, division || null, result.trim(), verifyUrl.trim() || null);
-    setEventDate("");
-    setEventName("");
-    setLocation("");
-    setDivision("");
-    setResult("");
-    setVerifyUrl("");
-    setAdding(false);
+    const res = await fetch(`/api/participants/${participantId}/performance-events`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventDate,
+        eventName: eventName.trim(),
+        location: location.trim() || null,
+        division: division || null,
+        result: result.trim(),
+        verifyUrl: verifyUrl.trim() || null,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      setError(data.error);
+    } else {
+      setEventDate(""); setEventName(""); setLocation(""); setDivision(""); setResult(""); setVerifyUrl("");
+      setAdding(false);
+      router.refresh();
+    }
     setSaving(false);
-    router.refresh();
   }
 
   async function handleDelete(id: string) {
-    await deletePerformanceEvent(id, participantId);
+    await fetch(`/api/participants/${participantId}/performance-events/${id}`, { method: "DELETE" });
     router.refresh();
   }
 
-  const inputCls =
-    "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
+  const inputCls = "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
 
   return (
     <div className="space-y-3">
@@ -66,12 +75,7 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
               {ev.division && <span> · {ev.division}</span>}
             </p>
             {ev.verifyUrl && (
-              <a
-                href={ev.verifyUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-orange-600 hover:underline"
-              >
+              <a href={ev.verifyUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-orange-600 hover:underline">
                 Verify result
               </a>
             )}
@@ -111,13 +115,8 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
               <label className="block text-xs font-medium text-gray-600">Division</label>
               <select value={division} onChange={(e) => setDivision(e.target.value)} className={inputCls}>
                 <option value="">— select —</option>
-                <option>U/8</option>
-                <option>U/10</option>
-                <option>U/12</option>
-                <option>U/14</option>
-                <option>U/16</option>
-                <option>U/18</option>
-                <option>Open</option>
+                <option>U/8</option><option>U/10</option><option>U/12</option>
+                <option>U/14</option><option>U/16</option><option>U/18</option><option>Open</option>
               </select>
             </div>
             <div>
@@ -130,19 +129,10 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
             <input type="url" value={verifyUrl} onChange={(e) => setVerifyUrl(e.target.value)} placeholder="https://..." className={inputCls} />
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleAdd}
-              disabled={saving}
-              className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50"
-            >
+            <button type="button" onClick={handleAdd} disabled={saving} className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50">
               {saving ? "Saving..." : "Save Event"}
             </button>
-            <button
-              type="button"
-              onClick={() => { setAdding(false); setError(""); }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
-            >
+            <button type="button" onClick={() => { setAdding(false); setError(""); }} className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50">
               Cancel
             </button>
           </div>
@@ -150,11 +140,7 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
       )}
 
       {!adding && (
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="rounded-md border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-orange-400 hover:text-orange-600"
-        >
+        <button type="button" onClick={() => setAdding(true)} className="rounded-md border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-500 hover:border-orange-400 hover:text-orange-600">
           + Add Event
         </button>
       )}

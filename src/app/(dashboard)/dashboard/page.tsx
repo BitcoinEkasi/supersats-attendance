@@ -29,13 +29,11 @@ export default async function DashboardPage() {
         take: 5,
         include: {
           _count: { select: { attendanceRecords: true } },
-          creator: { select: { name: true } },
         },
       }),
       prisma.monthlyReport.findMany({
         orderBy: { generatedAt: "desc" },
         take: 5,
-        include: { generator: { select: { name: true } } },
       }),
     ]);
 
@@ -134,7 +132,7 @@ export default async function DashboardPage() {
                           {report.status === "APPROVED" ? "Approved" : "Pending"}
                         </span>
                       </td>
-                      <td className="py-2 text-gray-600">{report.generator.name}</td>
+                      <td className="py-2 text-gray-600">{report.generatedBy}</td>
                     </tr>
                   ))}
                 </tbody>

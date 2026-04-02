@@ -6,11 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:push": "prisma db push"
   },
   "repository": {
     "type": "git",
@@ -21,22 +19,19 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
-    "@prisma/adapter-pg": "^7.4.2",
+    "@libsql/client": "^0.17.2",
+    "@prisma/adapter-libsql": "^7.6.0",
     "@prisma/client": "^7.4.2",
-    "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
     "next": "^16.1.6",
     "next-auth": "^5.0.0-beta.30",
-    "pg": "^8.19.0",
     "prisma": "^7.4.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^25.3.3",
-    "@types/pg": "^8.18.0",
     "@types/react": "^19.2.14",
     "eslint": "^9.39.3",
     "eslint-config-next": "^16.1.6",

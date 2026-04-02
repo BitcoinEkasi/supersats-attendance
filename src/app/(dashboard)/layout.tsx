@@ -5,7 +5,7 @@ import MobileHeader from "@/components/mobile-header";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
 import MidnightReset from "@/components/midnight-reset";
 import { auth } from "@/lib/auth";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/lib/auth";
 
 export default async function DashboardLayout({
   children,
@@ -19,8 +19,9 @@ export default async function DashboardLayout({
     return (
       <SessionProvider>
         <MidnightReset />
-        <div className="h-dvh overflow-y-auto bg-white">
-          {children}
+        <div className="flex h-dvh flex-col bg-white">
+          <MobileHeader />
+          <div className="flex-1 overflow-y-auto">{children}</div>
         </div>
       </SessionProvider>
     );

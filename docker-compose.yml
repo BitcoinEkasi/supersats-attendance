@@ -4,52 +4,16 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://tsk:${DB_PASSWORD}@postgres:5432/tsk_rewards
+      - DATABASE_URL=file:/data/tsk.db
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTH_TRUST_HOST=true
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: tsk
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: tsk_rewards
+      - ADMIN_NAME=${ADMIN_NAME:-Administrator}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - MARSHALL_NAME=${MARSHALL_NAME:-Marshall}
+      - MARSHALL_USERNAME=${MARSHALL_USERNAME:-marshall}
+      - MARSHALL_PASSWORD=${MARSHALL_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tsk -d tsk_rewards"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - ./data:/data
     restart: unless-stopped
-
-  backup:
-    image: postgres:16-alpine
-    environment:
-      PGHOST: postgres
-      PGUSER: tsk
-      PGPASSWORD: ${DB_PASSWORD}
-      PGDATABASE: tsk_rewards
-      BACKUP_REMOTE_PATH: ${BACKUP_REMOTE_PATH:-}
-    volumes:
-      - backup_data:/backups
-      - ./backup/backup.sh:/usr/local/bin/backup.sh:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        chmod +x /usr/local/bin/backup.sh
-        echo "0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" | crontab -
-        crond -f -l 2
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-  backup_data:

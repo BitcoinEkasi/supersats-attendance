@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { approveReport } from "@/app/actions/reports";
 import { useRouter } from "next/navigation";
 
 export default function ApproveButton({ reportId, disabled = false }: { reportId: string; disabled?: boolean }) {
@@ -13,7 +12,8 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
     if (!confirm("Approve this report? This confirms that the month's results have been reviewed and are correct.")) return;
     setLoading(true);
     setError("");
-    const result = await approveReport(reportId);
+    const res = await fetch(`/api/reports/${reportId}/approve`, { method: "POST" });
+    const result = await res.json();
     if (result.error) {
       setError(result.error);
       setLoading(false);
@@ -24,9 +24,7 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
 
   return (
     <div>
-      {error && (
-        <p className="mb-2 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <button
         onClick={handleApprove}
         disabled={loading || disabled}

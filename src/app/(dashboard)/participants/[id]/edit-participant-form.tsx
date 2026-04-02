@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { updateParticipant } from "@/app/actions/participants";
 import { getExpectedGrade } from "@/lib/sa-id";
 import CertificationsSection from "./certifications-section";
 import type { Participant, Certification, PerformanceEvent } from "@prisma/client";
@@ -90,7 +89,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
     setLoading(true);
     setError("");
     const formData = new FormData(e.currentTarget);
-    const result = await updateParticipant(participant.id, formData);
+    const res = await fetch(`/api/participants/${participant.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(formData.entries())),
+    });
+    const result = await res.json();
     if (result.error) {
       setError(result.error);
     } else {

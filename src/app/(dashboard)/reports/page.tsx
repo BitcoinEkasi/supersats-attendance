@@ -9,7 +9,6 @@ export default async function ReportsPage() {
   const reports = await prisma.monthlyReport.findMany({
     orderBy: { generatedAt: "desc" },
     include: {
-      generator: { select: { name: true } },
       entries: { select: { rewardSats: true, percentage: true } },
     },
   });

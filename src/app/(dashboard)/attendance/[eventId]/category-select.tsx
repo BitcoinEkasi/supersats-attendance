@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { updateEventCategory } from "@/app/actions/attendance";
 import type { EventCategory } from "@prisma/client";
 
 const categories: { value: EventCategory; label: string }[] = [
@@ -12,19 +11,17 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-export default function CategorySelect({
-  eventId,
-  category,
-}: {
-  eventId: string;
-  category: EventCategory;
-}) {
+export default function CategorySelect({ eventId, category }: { eventId: string; category: EventCategory }) {
   const [current, setCurrent] = useState(category);
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as EventCategory;
     setCurrent(next);
-    await updateEventCategory(eventId, next);
+    await fetch(`/api/events/${eventId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ category: next }),
+    });
   }
 
   return (

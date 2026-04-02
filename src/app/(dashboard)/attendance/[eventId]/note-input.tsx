@@ -1,19 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { updateEventNote } from "@/app/actions/attendance";
 
-export default function NoteInput({
-  eventId,
-  note,
-}: {
-  eventId: string;
-  note: string | null;
-}) {
+export default function NoteInput({ eventId, note }: { eventId: string; note: string | null }) {
   const [value, setValue] = useState(note ?? "");
 
   async function handleBlur() {
-    await updateEventNote(eventId, value.trim() || null);
+    await fetch(`/api/events/${eventId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: value.trim() || null }),
+    });
   }
 
   return (

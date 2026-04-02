@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createEvent, createEventForToday } from "@/app/actions/attendance";
 import type { EventCategory } from "@prisma/client";
 import { getSASTDateString } from "@/lib/sast";
 
@@ -25,11 +24,16 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
     if (!selected) return;
     setLoading(true);
     setError("");
-    const result = await createEventForToday(selected, note.trim() || null);
+    const res = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: "today", category: selected, note: note.trim() || null }),
+    });
+    const result = await res.json();
     if (result.error) {
       setError(result.error);
       setLoading(false);
-    } else if (result.id) {
+    } else {
       router.push(`/attendance/${result.id}`);
     }
   }
@@ -97,17 +101,22 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
     setDesktopLoading(true);
     setDesktopError("");
     const formData = new FormData(e.currentTarget);
-    const result = await createEvent(formData);
+    const res = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: formData.get("date"),
+        category: formData.get("category"),
+        note: formData.get("note"),
+      }),
+    });
+    const result = await res.json();
     if (result.error) {
       setDesktopError(result.error);
       setDesktopLoading(false);
-    } else if (result.id) {
+    } else {
       router.push(`/attendance/${result.id}`);
     }
-  }
-
-  function todayString() {
-    return getSASTDateString();
   }
 
   return (
@@ -119,7 +128,7 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
         )}
         <div>
           <label className="block text-sm font-medium text-gray-700">Date *</label>
-          <input name="date" type="date" required defaultValue={todayString()} className={inputCls} />
+          <input name="date" type="date" required defaultValue={getSASTDateString()} className={inputCls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Category *</label>

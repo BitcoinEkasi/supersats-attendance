@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createParticipant } from "@/app/actions/participants";
 import Image from "next/image";
 
 function expectedGradeFromDob(dob: string): string {
@@ -123,7 +122,12 @@ export default function AddParticipantForm() {
     if (idDocUploadedAt) formData.set("idDocumentUploadedAt", idDocUploadedAt);
     if (indemnityFormUrl) formData.set("indemnityFormUrl", indemnityFormUrl);
     if (indemnityUploadedAt) formData.set("indemnityUploadedAt", indemnityUploadedAt);
-    const result = await createParticipant(formData);
+    const res = await fetch("/api/participants", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(formData.entries())),
+    });
+    const result = await res.json();
     if (result.error) {
       setError(result.error);
     } else {

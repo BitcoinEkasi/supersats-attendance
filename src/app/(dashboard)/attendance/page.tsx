@@ -51,7 +51,6 @@ export default async function AttendancePage() {
       take: 30,
       include: {
         _count: { select: { attendanceRecords: { where: { present: true } } } },
-        creator: { select: { name: true } },
       },
     }),
     prisma.participant.count({ where: { status: "ACTIVE" } }),
