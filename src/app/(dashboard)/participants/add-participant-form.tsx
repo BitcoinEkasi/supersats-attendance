@@ -23,7 +23,7 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   const genderDigits = parseInt(id.substring(6, 10));
   return {
     dob: `${year}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`,
-    gender: genderDigits >= 5000 ? "Boy" : "Girl",
+    gender: genderDigits >= 5000 ? "Male" : "Female",
   };
 }
 

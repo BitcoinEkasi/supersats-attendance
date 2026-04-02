@@ -32,7 +32,7 @@ export async function GET() {
     esc(p.surname),
     esc(p.fullNames),
     esc(p.knownAs),
-    p.gender === "MALE" ? "Boy" : "Girl",
+    p.gender === "MALE" ? "Male" : "Female",
     p.dateOfBirth.toISOString().split("T")[0],
     p.status.charAt(0) + p.status.slice(1).toLowerCase(),
     p.isJuniorCoach ? "Yes" : "No",
