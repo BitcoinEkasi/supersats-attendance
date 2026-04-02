@@ -55,11 +55,28 @@ export async function createBoltUser(tskId: string, displayName: string): Promis
   return res.json();
 }
 
+export async function deleteBoltCard(boltUserId: number): Promise<void> {
+  await boltFetch(`/api/v1/users/${boltUserId}/card`, { method: 'DELETE' });
+}
+
 export async function createBoltCard(boltUserId: number, cardId: string): Promise<{ id: number; setup_token: string }> {
   const res = await boltFetch(`/api/v1/users/${boltUserId}/card`, {
     method: 'POST',
     body: JSON.stringify({ card_id: cardId }),
   });
+  // 409 means a stale card exists — delete it and retry once
+  if (res.status === 409) {
+    await deleteBoltCard(boltUserId);
+    const retry = await boltFetch(`/api/v1/users/${boltUserId}/card`, {
+      method: 'POST',
+      body: JSON.stringify({ card_id: cardId }),
+    });
+    if (!retry.ok) {
+      const body = await retry.text();
+      throw new Error(`Bolt createCard ${retry.status}: ${body}`);
+    }
+    return retry.json();
+  }
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Bolt createCard ${res.status}: ${body}`);
