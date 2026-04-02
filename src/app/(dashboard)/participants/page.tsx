@@ -107,9 +107,9 @@ export default async function ParticipantsPage({
                     )}
                   </div>
 
-                  {/* Born · Age · Division · Gender */}
+                  {/* Born · Age · Division */}
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
-                    <span>Born {p.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                    <span>Born on {p.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
                     <span className="text-gray-300">·</span>
                     <span>Age {calculateAge(p.dateOfBirth)}</span>
                     <span className="text-gray-300">·</span>
@@ -124,9 +124,12 @@ export default async function ParticipantsPage({
                   {/* Bolt card */}
                   {p.boltUserId && (
                     <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
-                      <span className="inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">⚡ Card</span>
+                      <span className="text-gray-400">Bolt Card</span>
                       {p.boltCardId && (
-                        <span className="font-mono text-xs text-gray-400">{p.boltCardId}</span>
+                        <>
+                          <span className="text-gray-300">·</span>
+                          <span className="font-mono text-gray-500">{p.boltCardId}</span>
+                        </>
                       )}
                     </div>
                   )}
