@@ -1,4 +1,4 @@
-import { getBoltUser, getBtcZarRate, satsToZar, type BoltUser } from "@/lib/bolt";
+import { getBoltUser, getZarPerSat, satsToZar, type BoltUser } from "@/lib/bolt";
 import IssueCardButton from "./issue-card-button";
 
 function CardStatusBadge({ card }: { card: BoltUser["card"] }) {
@@ -27,7 +27,7 @@ export default async function BoltCardSection({
   if (boltUserId && boltUser === null) {
     boltUser = await getBoltUser(boltUserId);
   }
-  const btcZarRate = boltUser ? await getBtcZarRate() : null;
+  const zarPerSat = boltUser ? await getZarPerSat() : null;
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -51,9 +51,9 @@ export default async function BoltCardSection({
             <div>
               <p className="text-3xl font-bold text-gray-900">
                 ⚡ {boltUser.balance_sats.toLocaleString()} <span className="text-2xl">sats</span>
-                {btcZarRate && (
+                {zarPerSat && (
                   <span className="ml-2 text-lg font-normal text-gray-500">
-                    ({satsToZar(boltUser.balance_sats, btcZarRate)})
+                    ({satsToZar(boltUser.balance_sats, zarPerSat)})
                   </span>
                 )}
               </p>

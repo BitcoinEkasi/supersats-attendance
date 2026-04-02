@@ -67,22 +67,25 @@ export async function createBoltCard(boltUserId: number, cardId: string): Promis
   return res.json();
 }
 
-export async function getBtcZarRate(): Promise<number | null> {
+// zarPerSat: same calculation as bolt's usePriceFeed hook
+export async function getZarPerSat(): Promise<number | null> {
   try {
-    const res = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=zar',
-      { next: { revalidate: 300 } } // cache for 5 minutes
-    );
+    const res = await fetch('https://price-feed.dev.fedibtc.com/latest', {
+      next: { revalidate: 300 }, // cache for 5 minutes
+    });
     if (!res.ok) return null;
-    const data = await res.json() as { bitcoin?: { zar?: number } };
-    return data?.bitcoin?.zar ?? null;
+    const data = await res.json() as { prices?: { 'BTC/USD'?: { rate: number }; 'ZAR/USD'?: { rate: number } } };
+    const btcUsd = data?.prices?.['BTC/USD']?.rate;
+    const zarUsd = data?.prices?.['ZAR/USD']?.rate;
+    if (!btcUsd || !zarUsd) return null;
+    return btcUsd / zarUsd / 1e8;
   } catch {
     return null;
   }
 }
 
-export function satsToZar(sats: number, btcZarRate: number): string {
-  const zar = (sats / 100_000_000) * btcZarRate;
+export function satsToZar(sats: number, zarPerSat: number): string {
+  const zar = sats * zarPerSat;
   return `R ${zar.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
