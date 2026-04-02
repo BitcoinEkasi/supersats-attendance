@@ -90,7 +90,7 @@ export function getDivision(dob: Date): string {
 
 export function getDivisionLabel(dob: Date, gender: "MALE" | "FEMALE"): string {
   const division = getDivision(dob);
-  if (division === "Open") return gender === "MALE" ? "Open Men" : "Open Women";
+  if (division === "Open") return gender === "MALE" ? "Open Male" : "Open Female";
   return `${division} ${gender === "MALE" ? "Boys" : "Girls"}`;
 }
 
