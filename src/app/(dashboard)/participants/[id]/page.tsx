@@ -138,13 +138,13 @@ export default async function ParticipantDetailPage({
             </div>
             {participant.boltUserId && (
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-                <span className="text-gray-400">⚡ Bolt Card</span>
+                <span className="text-gray-400">Bolt Card</span>
                 {participant.boltCardId && (
                   <span className="font-mono text-xs text-gray-500">{participant.boltCardId}</span>
                 )}
                 {boltUser && (
-                  <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                    {boltUser.balance_sats.toLocaleString()} sats
+                  <span className="text-sm text-gray-500">
+                    ⚡ {boltUser.balance_sats.toLocaleString()} sats
                     {btcZarRate && ` (${satsToZar(boltUser.balance_sats, btcZarRate)})`}
                   </span>
                 )}
