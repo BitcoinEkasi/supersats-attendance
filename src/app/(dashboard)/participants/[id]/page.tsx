@@ -9,7 +9,7 @@ import ResolveButton from "./resolve-button";
 import BoltCardSection from "./bolt-card-section";
 import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
-import { getBoltUser } from "@/lib/bolt";
+import { getBoltUser, getBtcZarRate, satsToZar } from "@/lib/bolt";
 import Image from "next/image";
 
 const categoryLabels: Record<string, string> = {
@@ -64,6 +64,7 @@ export default async function ParticipantDetailPage({
   const last3mPct = last3mEvents > 0 ? (last3mAttended / last3mEvents) * 100 : 0;
 
   const boltUser = participant.boltUserId ? await getBoltUser(participant.boltUserId) : null;
+  const btcZarRate = boltUser ? await getBtcZarRate() : null;
 
   const statusColors: Record<string, string> = {
     ACTIVE: "bg-green-100 text-green-700",
@@ -144,6 +145,7 @@ export default async function ParticipantDetailPage({
                 {boltUser && (
                   <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
                     {boltUser.balance_sats.toLocaleString()} sats
+                    {btcZarRate && ` (${satsToZar(boltUser.balance_sats, btcZarRate)})`}
                   </span>
                 )}
               </div>

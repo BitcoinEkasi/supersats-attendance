@@ -67,6 +67,25 @@ export async function createBoltCard(boltUserId: number, cardId: string): Promis
   return res.json();
 }
 
+export async function getBtcZarRate(): Promise<number | null> {
+  try {
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=zar',
+      { next: { revalidate: 300 } } // cache for 5 minutes
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as { bitcoin?: { zar?: number } };
+    return data?.bitcoin?.zar ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function satsToZar(sats: number, btcZarRate: number): string {
+  const zar = (sats / 100_000_000) * btcZarRate;
+  return `R ${zar.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export async function getBoltUser(boltUserId: string): Promise<BoltUser | null> {
   try {
     const res = await boltFetch(`/api/v1/users/${boltUserId}`);

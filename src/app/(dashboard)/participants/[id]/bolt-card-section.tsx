@@ -1,4 +1,4 @@
-import { getBoltUser, type BoltUser } from "@/lib/bolt";
+import { getBoltUser, getBtcZarRate, satsToZar, type BoltUser } from "@/lib/bolt";
 import IssueCardButton from "./issue-card-button";
 
 function CardStatusBadge({ card }: { card: BoltUser["card"] }) {
@@ -27,6 +27,7 @@ export default async function BoltCardSection({
   if (boltUserId && boltUser === null) {
     boltUser = await getBoltUser(boltUserId);
   }
+  const btcZarRate = boltUser ? await getBtcZarRate() : null;
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -49,9 +50,13 @@ export default async function BoltCardSection({
           <div className="flex items-center gap-4">
             <div>
               <p className="text-3xl font-bold text-gray-900">
-                ⚡ {boltUser.balance_sats.toLocaleString()}
+                ⚡ {boltUser.balance_sats.toLocaleString()} <span className="text-2xl">sats</span>
+                {btcZarRate && (
+                  <span className="ml-2 text-lg font-normal text-gray-500">
+                    ({satsToZar(boltUser.balance_sats, btcZarRate)})
+                  </span>
+                )}
               </p>
-              <p className="text-sm text-gray-500">sats</p>
             </div>
             <div className="ml-auto flex flex-col items-end gap-1">
               <CardStatusBadge card={boltUser.card} />
