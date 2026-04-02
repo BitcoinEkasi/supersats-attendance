@@ -10,7 +10,7 @@ type Participant = {
   knownAs: string | null;
   profilePicture: string | null;
   dateOfBirth: Date;
-  gender: string;
+  gender: "MALE" | "FEMALE";
   isJuniorCoach: boolean;
 };
 
