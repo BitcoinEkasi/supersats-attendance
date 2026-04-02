@@ -38,7 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   await prisma.participant.update({
     where: { id },
-    data: { boltUserId: String(boltUserId) },
+    data: { boltUserId: String(boltUserId), boltCardId: cardId.trim() },
   });
 
   return Response.json({ boltUserId });

@@ -125,6 +125,9 @@ export default async function ParticipantsPage({
                   {p.boltUserId && (
                     <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
                       <span className="inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">⚡ Card</span>
+                      {p.boltCardId && (
+                        <span className="font-mono text-xs text-gray-400">{p.boltCardId}</span>
+                      )}
                     </div>
                   )}
                 </div>

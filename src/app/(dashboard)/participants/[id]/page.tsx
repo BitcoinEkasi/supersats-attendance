@@ -9,6 +9,7 @@ import ResolveButton from "./resolve-button";
 import BoltCardSection from "./bolt-card-section";
 import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
+import { getBoltUser } from "@/lib/bolt";
 import Image from "next/image";
 
 const categoryLabels: Record<string, string> = {
@@ -61,6 +62,8 @@ export default async function ParticipantDetailPage({
   ]);
 
   const last3mPct = last3mEvents > 0 ? (last3mAttended / last3mEvents) * 100 : 0;
+
+  const boltUser = participant.boltUserId ? await getBoltUser(participant.boltUserId) : null;
 
   const statusColors: Record<string, string> = {
     ACTIVE: "bg-green-100 text-green-700",
@@ -134,8 +137,15 @@ export default async function ParticipantDetailPage({
             </div>
             {participant.boltUserId && (
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-                <span className="text-gray-400">Bolt Card</span>
-                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">Issued</span>
+                <span className="text-gray-400">⚡ Bolt Card</span>
+                {participant.boltCardId && (
+                  <span className="font-mono text-xs text-gray-500">{participant.boltCardId}</span>
+                )}
+                {boltUser && (
+                  <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
+                    {boltUser.balance_sats.toLocaleString()} sats
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -146,7 +156,7 @@ export default async function ParticipantDetailPage({
       <div className="shrink-0 h-6 bg-gray-50 border-b border-gray-100" />
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 px-6 pb-6">
+      <div id="scroll-container" className="flex-1 overflow-y-auto bg-gray-50 px-6 pb-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {role === "ADMINISTRATOR" ? (
           <EditParticipantForm participant={participant} />
@@ -294,6 +304,13 @@ export default async function ParticipantDetailPage({
             </div>
           )}
 
+          <BoltCardSection
+            participantId={participant.id}
+            boltUserId={participant.boltUserId ?? null}
+            isAdmin={role === "ADMINISTRATOR"}
+            prefetchedBoltUser={boltUser}
+          />
+
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Attendance Summary</h3>
             <p className="mt-1 text-xs text-gray-400">Last 3 months</p>
@@ -312,12 +329,6 @@ export default async function ParticipantDetailPage({
               </div>
             </div>
           </div>
-
-          <BoltCardSection
-            participantId={participant.id}
-            boltUserId={participant.boltUserId ?? null}
-            isAdmin={role === "ADMINISTRATOR"}
-          />
 
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Recent Attendance</h3>

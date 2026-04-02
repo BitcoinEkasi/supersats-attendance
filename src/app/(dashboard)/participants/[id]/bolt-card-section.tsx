@@ -16,13 +16,15 @@ export default async function BoltCardSection({
   participantId,
   boltUserId,
   isAdmin,
+  prefetchedBoltUser,
 }: {
   participantId: string;
   boltUserId: string | null;
   isAdmin: boolean;
+  prefetchedBoltUser?: BoltUser | null;
 }) {
-  let boltUser: BoltUser | null = null;
-  if (boltUserId) {
+  let boltUser: BoltUser | null = prefetchedBoltUser ?? null;
+  if (boltUserId && boltUser === null) {
     boltUser = await getBoltUser(boltUserId);
   }
 

@@ -432,7 +432,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
           </button>
           <button
             type="button"
-            onClick={() => document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={() => document.getElementById("scroll-container")?.scrollTo({ top: 0, behavior: "smooth" })}
             className="rounded-full bg-gray-700 p-3 text-white shadow-lg hover:bg-gray-800"
             aria-label="Scroll to top"
           >
