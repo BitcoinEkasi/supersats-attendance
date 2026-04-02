@@ -17,7 +17,7 @@ type Entry = {
     fullNames: string;
     knownAs: string | null;
     dateOfBirth: Date | null;
-    gender: string | null;
+    gender: "MALE" | "FEMALE" | null;
     isJuniorCoach: boolean;
   };
 };
