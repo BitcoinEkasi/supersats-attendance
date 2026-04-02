@@ -121,17 +121,10 @@ export default async function ParticipantsPage({
                     Joined {p.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(p.registrationDate)}
                   </div>
 
-                  {/* Card */}
-                  {p.cardNumber && (
+                  {/* Bolt card */}
+                  {p.boltUserId && (
                     <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
-                      <span className="text-gray-400">Card</span>
-                      <span className="font-mono">{p.cardNumber}</span>
-                      {p.cardBalance != null && (
-                        <>
-                          <span className="text-gray-300">·</span>
-                          <span className="font-medium">🗲 {Math.round(p.cardBalance).toLocaleString()} sats</span>
-                        </>
-                      )}
+                      <span className="inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">⚡ Card</span>
                     </div>
                   )}
                 </div>

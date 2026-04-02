@@ -8,8 +8,6 @@ interface CsvParticipantRow {
   fullNames: string;
   knownAs: string | null;
   idNumber: string;
-  boltCardUrl: string | null;
-  cardNumber: string | null;
   registrationDate: string | null;
   profilePicture: string | null;
   ethnicity: string | null;

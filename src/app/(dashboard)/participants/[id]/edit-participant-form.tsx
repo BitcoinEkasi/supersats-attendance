@@ -390,20 +390,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 </label>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Card Number</label>
-                <input name="cardNumber" defaultValue={participant.cardNumber || ""} className={inputCls} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Card Balance (sats)</label>
-                <input name="cardBalance" type="number" step="1" defaultValue={participant.cardBalance != null ? Math.round(participant.cardBalance) : ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 5000" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
-              <input name="boltCardUrl" type="url" defaultValue={participant.boltCardUrl || ""} className={inputCls} />
-            </div>
           </div>
         </div>
 

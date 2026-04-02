@@ -15,7 +15,7 @@ export async function GET() {
     "Ethnicity", "Language", "School", "Grade",
     "Guardian", "Guardian ID", "Relationship",
     "Address", "Contact 1", "Contact 2", "Housing Type",
-    "Card Number", "Card Balance (sats)",
+    "Bolt Card",
     "ID Document", "Indemnity Form",
   ];
 
@@ -49,8 +49,7 @@ export async function GET() {
     esc(p.contact1),
     esc(p.contact2),
     esc(p.housingType),
-    esc(p.cardNumber),
-    p.cardBalance != null ? Math.round(p.cardBalance).toString() : "",
+    p.boltUserId ? "Yes" : "No",
     p.idDocumentUrl ? "Yes" : "No",
     p.indemnityFormUrl ? "Yes" : "No",
   ].join(","));

@@ -7,8 +7,6 @@ export interface CsvParticipantRow {
   fullNames: string;
   knownAs: string | null;
   idNumber: string;
-  boltCardUrl: string | null;
-  cardNumber: string | null;
   registrationDate: string | null;
   profilePicture: string | null;
   ethnicity: string | null;
@@ -65,8 +63,6 @@ export async function POST(req: Request) {
   const iSurname      = col("surname");
   const iKnownAs      = col("known as");
   const iIdNumber     = col("sa id number");
-  const iBoltCard     = col("pull payment link");
-  const iCardNumber   = col("card number");
   const iDateFrom     = col("date from");
   const iProfileLink  = col("profile link");
   const iEthnicity    = col("ethnicity");
@@ -100,8 +96,6 @@ export async function POST(req: Request) {
       surname, fullNames,
       knownAs:              get(iKnownAs) || null,
       idNumber,
-      boltCardUrl:          get(iBoltCard) || null,
-      cardNumber:           get(iCardNumber) || null,
       registrationDate:     get(iDateFrom) || null,
       profilePicture:       get(iProfileLink) || null,
       ethnicity:            get(iEthnicity) || null,

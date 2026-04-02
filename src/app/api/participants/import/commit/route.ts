@@ -30,8 +30,6 @@ export async function POST(req: Request) {
         data: {
           ...(regDate ? { registrationDate: regDate } : {}),
           ...(row.knownAs ? { knownAs: row.knownAs } : {}),
-          ...(row.boltCardUrl ? { boltCardUrl: row.boltCardUrl } : {}),
-          ...(row.cardNumber ? { cardNumber: row.cardNumber } : {}),
           ...(row.profilePicture ? { profilePicture: row.profilePicture } : {}),
           ...(row.ethnicity ? { ethnicity: row.ethnicity } : {}),
           ...(row.language ? { language: row.language } : {}),
@@ -70,8 +68,6 @@ export async function POST(req: Request) {
           idNumber:             row.idNumber,
           gender:               parsed.gender,
           dateOfBirth:          parsed.dob,
-          boltCardUrl:          row.boltCardUrl || null,
-          cardNumber:           row.cardNumber || null,
           profilePicture:       row.profilePicture || null,
           registrationDate:     regDate || new Date(),
           status:               "ACTIVE",

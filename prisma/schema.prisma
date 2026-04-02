@@ -46,9 +46,7 @@ model Participant {
   gender           Gender
   idNumber         String            @unique @map("id_number")
   dateOfBirth      DateTime          @map("date_of_birth")
-  boltCardUrl      String?           @map("bolt_card_url")
-  cardNumber       String?           @map("card_number")
-  cardBalance      Float?            @map("card_balance")
+  boltUserId       String?           @map("bolt_user_id")
   isJuniorCoach    Boolean           @default(false) @map("is_junior_coach")
   ethnicity        String?
   language         String?

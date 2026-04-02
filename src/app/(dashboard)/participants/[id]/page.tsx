@@ -6,6 +6,7 @@ import ProfilePictureUpload from "./profile-picture-upload";
 import ChangeRequestForm from "../change-request-form";
 import PerformanceEventsSection from "./performance-events-section";
 import ResolveButton from "./resolve-button";
+import BoltCardSection from "./bolt-card-section";
 import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import Image from "next/image";
@@ -131,16 +132,10 @@ export default async function ParticipantDetailPage({
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>
             </div>
-            {participant.cardNumber && (
+            {participant.boltUserId && (
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-                <span className="text-gray-400">Card</span>
-                <span className="font-mono">{participant.cardNumber}</span>
-                {participant.cardBalance != null && (
-                  <>
-                    <span className="text-gray-300">·</span>
-                    <span className="font-medium">🗲 {Math.round(participant.cardBalance).toLocaleString()} sats</span>
-                  </>
-                )}
+                <span className="text-gray-400">Bolt Card</span>
+                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">Issued</span>
               </div>
             )}
           </div>
@@ -247,16 +242,10 @@ export default async function ParticipantDetailPage({
                   <dd className="font-medium">{participant.housingType}</dd>
                 </div>
               )}
-              {participant.cardNumber && (
+              {participant.boltUserId && (
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Card Number</dt>
-                  <dd className="font-mono font-medium">{participant.cardNumber}</dd>
-                </div>
-              )}
-              {participant.boltCardUrl && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Pull Payment Link</dt>
-                  <dd className="font-medium truncate max-w-48">{participant.boltCardUrl}</dd>
+                  <dt className="text-gray-500">Bolt Card</dt>
+                  <dd><span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">Issued</span></dd>
                 </div>
               )}
               {participant.profilePicture && (
@@ -323,6 +312,12 @@ export default async function ParticipantDetailPage({
               </div>
             </div>
           </div>
+
+          <BoltCardSection
+            participantId={participant.id}
+            boltUserId={participant.boltUserId ?? null}
+            isAdmin={role === "ADMINISTRATOR"}
+          />
 
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Recent Attendance</h3>

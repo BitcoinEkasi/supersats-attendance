@@ -421,20 +421,6 @@ export default function AddParticipantForm() {
                 </label>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Card Number</label>
-                <input name="cardNumber" className={inputCls} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Card Balance (sats)</label>
-                <input name="cardBalance" type="number" step="1" className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 5000" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Bolt Card Payment URL</label>
-              <input name="boltCardUrl" type="url" className={inputCls} placeholder="https://..." />
-            </div>
           </div>
         </div>
 
