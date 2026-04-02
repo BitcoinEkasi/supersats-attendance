@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import ParticipantSearch from "./participant-search";
 import ParticipantsExportButton from "./participants-export-button";
 import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
+import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
@@ -32,6 +33,13 @@ export default async function ParticipantsPage({
     prisma.participant.count({ where: { status: "ACTIVE" } }),
     prisma.participant.count({ where: { status: "RETIRED" } }),
   ]);
+
+  const withBolt = participants.filter((p) => p.boltUserId);
+  const [boltResults, zarPerSat] = await Promise.all([
+    Promise.all(withBolt.map((p) => getBoltUser(p.boltUserId!).then((u) => ({ id: p.id, user: u })))),
+    withBolt.length > 0 ? getZarPerSat() : Promise.resolve(null),
+  ]);
+  const boltMap = new Map(boltResults.map(({ id, user }) => [id, user]));
 
   return (
     <div>
@@ -123,14 +131,18 @@ export default async function ParticipantsPage({
 
                   {/* Bolt card */}
                   {p.boltUserId && (
-                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-gray-500">
+                    <div className="mt-0.5 text-xs text-gray-500">
                       <span className="text-gray-400">Bolt Card</span>
-                      {p.boltCardId && (
-                        <>
-                          <span className="text-gray-300">·</span>
-                          <span className="font-mono text-gray-500">{p.boltCardId}</span>
-                        </>
-                      )}
+                      {(() => {
+                        const bu = boltMap.get(p.id);
+                        if (!bu) return null;
+                        return (
+                          <span className="ml-0.5">
+                            ⚡ {bu.balance_sats.toLocaleString()} sats
+                            {zarPerSat && ` (${satsToZar(bu.balance_sats, zarPerSat)})`}
+                          </span>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
