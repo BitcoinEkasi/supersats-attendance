@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import ParticipantSearch from "./participant-search";
 import ParticipantsExportButton from "./participants-export-button";
-import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
+import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
@@ -113,7 +113,7 @@ export default async function ParticipantsPage({
                     <span className="text-gray-300">·</span>
                     <span>Age {calculateAge(p.dateOfBirth)}</span>
                     <span className="text-gray-300">·</span>
-                    <span>Division {getDivision(p.dateOfBirth)} {p.gender === "MALE" ? "Boys" : "Girls"}</span>
+                    <span>Division {getDivisionLabel(p.dateOfBirth, p.gender)}</span>
                   </div>
 
                   {/* Joined */}

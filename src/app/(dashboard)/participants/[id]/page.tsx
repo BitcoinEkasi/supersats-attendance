@@ -7,7 +7,7 @@ import ChangeRequestForm from "../change-request-form";
 import PerformanceEventsSection from "./performance-events-section";
 import ResolveButton from "./resolve-button";
 import BoltCardSection from "./bolt-card-section";
-import { formatTenure, calculateAge, getDivision } from "@/lib/sa-id";
+import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import Image from "next/image";
 
@@ -127,7 +127,7 @@ export default async function ParticipantDetailPage({
               <span className="text-gray-300">·</span>
               <span>Age {calculateAge(participant.dateOfBirth)}</span>
               <span className="text-gray-300">·</span>
-              <span>Division {getDivision(participant.dateOfBirth)} {participant.gender === "MALE" ? "Boys" : "Girls"}</span>
+              <span>Division {getDivisionLabel(participant.dateOfBirth, participant.gender)}</span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>

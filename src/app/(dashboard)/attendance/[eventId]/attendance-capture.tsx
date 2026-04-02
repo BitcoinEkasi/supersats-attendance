@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { getDivision } from "@/lib/sa-id";
+import { getDivisionLabel } from "@/lib/sa-id";
 
 type Participant = {
   id: string;
@@ -191,7 +191,7 @@ export default function AttendanceCapture({
           <p className="truncate font-bold text-gray-900">{p.surname}, {p.fullNames}</p>
           <p className="truncate text-xs text-gray-500">
             {p.knownAs && <span className="mr-1">({p.knownAs})</span>}
-            {getDivision(p.dateOfBirth)} {p.gender === "MALE" ? "Boys" : "Girls"}
+            {getDivisionLabel(p.dateOfBirth, p.gender)}
             {p.isJuniorCoach && <span className="ml-1 text-blue-400">· JC</span>}
           </p>
         </div>

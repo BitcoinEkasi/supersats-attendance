@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { REWARD_TIERS } from "@/lib/rewards";
-import { calculateAge, getDivision } from "@/lib/sa-id";
+import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 
 type Entry = {
   id: string;
@@ -93,7 +93,7 @@ export default function ReportTable({ entries }: { entries: Entry[] }) {
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.tskId}</td>
                   <td className="px-4 py-3 font-medium">{name}</td>
                   <td className="px-4 py-3 text-gray-600">{p.dateOfBirth ? calculateAge(p.dateOfBirth) : "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.dateOfBirth ? `${getDivision(p.dateOfBirth)} ${p.gender === "MALE" ? "Boys" : p.gender === "FEMALE" ? "Girls" : ""}`.trim() : "—"}</td>
+                  <td className="px-4 py-3 text-gray-600">{p.dateOfBirth && p.gender ? getDivisionLabel(p.dateOfBirth, p.gender) : "—"}</td>
                   <td className="px-4 py-3">{entry.totalEvents}</td>
                   <td className="px-4 py-3">{entry.attended}</td>
                   <td className="px-4 py-3">

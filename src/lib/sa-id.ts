@@ -88,6 +88,12 @@ export function getDivision(dob: Date): string {
   return "Open";
 }
 
+export function getDivisionLabel(dob: Date, gender: "MALE" | "FEMALE"): string {
+  const division = getDivision(dob);
+  if (division === "Open") return gender === "MALE" ? "Open Men" : "Open Women";
+  return `${division} ${gender === "MALE" ? "Boys" : "Girls"}`;
+}
+
 export function formatTenure(registrationDate: Date): string {
   const now = getSASTNow();
   let years = now.year - registrationDate.getUTCFullYear();
