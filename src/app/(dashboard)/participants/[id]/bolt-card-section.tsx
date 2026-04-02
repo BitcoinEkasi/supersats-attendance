@@ -33,7 +33,9 @@ export default async function BoltCardSection({
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">Bolt Card</h3>
-        {isAdmin && !boltUserId && <IssueCardButton participantId={participantId} />}
+        {isAdmin && (!boltUserId || (boltUser && !boltUser.card)) && (
+          <IssueCardButton participantId={participantId} />
+        )}
       </div>
 
       {!boltUserId && (

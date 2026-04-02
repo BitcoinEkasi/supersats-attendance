@@ -15,18 +15,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const participant = await prisma.participant.findUnique({ where: { id } });
   if (!participant) return Response.json({ error: "Participant not found" }, { status: 404 });
-  if (participant.boltUserId) {
-    return Response.json({ error: "Participant already has a card" }, { status: 409 });
-  }
 
   let boltUserId: number;
-  try {
-    const displayName = `${participant.fullNames} ${participant.surname}`;
-    const boltUser = await createBoltUser(participant.tskId, displayName);
-    boltUserId = boltUser.id;
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return Response.json({ error: `Failed to create bolt user: ${msg}` }, { status: 502 });
+
+  if (participant.boltUserId) {
+    // Bolt user already exists — just create a new card
+    boltUserId = Number(participant.boltUserId);
+  } else {
+    try {
+      const displayName = `${participant.fullNames} ${participant.surname}`;
+      const boltUser = await createBoltUser(participant.tskId, displayName);
+      boltUserId = boltUser.id;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return Response.json({ error: `Failed to create bolt user: ${msg}` }, { status: 502 });
+    }
   }
 
   try {
