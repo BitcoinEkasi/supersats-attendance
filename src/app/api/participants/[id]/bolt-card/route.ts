@@ -7,11 +7,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { cardId } = await req.json() as { cardId?: string };
-
-  if (!cardId?.trim()) {
-    return Response.json({ error: "cardId is required" }, { status: 400 });
-  }
 
   const participant = await prisma.participant.findUnique({ where: { id } });
   if (!participant) return Response.json({ error: "Participant not found" }, { status: 404 });
@@ -33,7 +28,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   try {
-    await createBoltCard(boltUserId, cardId.trim());
+    await createBoltCard(boltUserId);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return Response.json({ error: `Failed to create bolt card: ${msg}` }, { status: 502 });
@@ -41,7 +36,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   await prisma.participant.update({
     where: { id },
-    data: { boltUserId: String(boltUserId), boltCardId: cardId.trim() },
+    data: { boltUserId: String(boltUserId) },
   });
 
   return Response.json({ boltUserId });

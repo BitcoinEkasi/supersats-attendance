@@ -139,8 +139,8 @@ export default async function ParticipantDetailPage({
             {participant.boltUserId && (
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
                 <span className="text-gray-400">Bolt Card</span>
-                {participant.boltCardId && (
-                  <span className="font-mono text-xs text-gray-500">{participant.boltCardId}</span>
+                {boltUser?.card?.card_id && (
+                  <span className="font-mono text-xs text-gray-500">{boltUser.card.card_id}</span>
                 )}
                 {boltUser && (
                   <span className="text-sm text-gray-500">
