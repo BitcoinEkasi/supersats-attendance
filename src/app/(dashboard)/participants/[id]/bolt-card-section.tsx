@@ -43,7 +43,7 @@ export default async function BoltCardSection({
 
       {boltUser && (
         <div className="mt-4 space-y-4">
-          {/* Balance + card status */}
+          {/* Balance + card status + deeplink */}
           <div className="flex items-center gap-4">
             <div>
               <p className="text-3xl font-bold text-gray-900">
@@ -56,6 +56,14 @@ export default async function BoltCardSection({
               {boltUser.card?.card_id && (
                 <span className="font-mono text-xs text-gray-400">{boltUser.card.card_id}</span>
               )}
+              <a
+                href={boltUser.magic_link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex items-center gap-1 rounded-md bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-700 hover:bg-orange-100"
+              >
+                View Card ↗
+              </a>
             </div>
           </div>
 

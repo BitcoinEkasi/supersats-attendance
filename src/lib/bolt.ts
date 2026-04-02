@@ -38,6 +38,7 @@ export interface BoltUser {
   display_name: string;
   balance_sats: number;
   ln_address: string | null;
+  magic_link_url: string;
   card: BoltCard | null;
   transactions: BoltTransaction[];
 }
