@@ -30,12 +30,32 @@ export default function EditParticipantForm({ participant }: { participant: Part
 
   useEffect(() => {
     if (!isDirty) return;
-    const handler = (e: BeforeUnloadEvent) => {
+
+    // Block browser close / refresh
+    const beforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
     };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
+    window.addEventListener('beforeunload', beforeUnload);
+
+    // Block in-app link navigation (sidebar, back buttons, etc.)
+    const handleClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a');
+      if (!anchor || !anchor.href) return;
+      // Only intercept same-origin or relative navigation, not external links
+      if (anchor.target === '_blank') return;
+      const confirmed = window.confirm('You have unsaved changes. Leave without saving?');
+      if (!confirmed) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload);
+      document.removeEventListener('click', handleClick, true);
+    };
   }, [isDirty]);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [selectedGrade, setSelectedGrade] = useState<string>(participant.grade || "");
