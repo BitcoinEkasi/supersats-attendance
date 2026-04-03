@@ -27,8 +27,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
   }
 
+  let setupToken: string;
   try {
-    await createBoltCard(boltUserId);
+    const card = await createBoltCard(boltUserId);
+    setupToken = card.setup_token;
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return Response.json({ error: `Failed to create bolt card: ${msg}` }, { status: 502 });
@@ -39,5 +41,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     data: { boltUserId: String(boltUserId) },
   });
 
-  return Response.json({ boltUserId });
+  const boltPublicUrl = process.env.NEXT_PUBLIC_BOLT_URL ?? '';
+  return Response.json({ boltUserId, setupToken, boltPublicUrl });
 }

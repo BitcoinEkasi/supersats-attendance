@@ -58,8 +58,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">TSK Rewards</h1>
-          <p className="mt-1 text-sm text-gray-500">Attendance & Rewards Management</p>
+          <h1 className="text-2xl font-bold text-gray-900">TSK Participation & Performance</h1>
+          <p className="mt-1 text-sm text-gray-500">Participation & Performance Management</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getExpectedGrade } from "@/lib/sa-id";
 import CertificationsSection from "./certifications-section";
@@ -26,6 +26,17 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [selectedGrade, setSelectedGrade] = useState<string>(participant.grade || "");
   const [idError, setIdError] = useState("");
@@ -60,6 +71,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
       setIndemnityFormUrl(data.path);
       setIndemnityUploadedAt(new Date().toISOString());
       setSaved(false);
+      setIsDirty(true);
     } else {
       setError(data.error || "Upload failed");
     }
@@ -78,6 +90,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
       setIdDocumentUrl(data.path);
       setIdDocUploadedAt(new Date().toISOString());
       setSaved(false);
+      setIsDirty(true);
     } else {
       setError(data.error || "Upload failed");
     }
@@ -99,6 +112,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
       setError(result.error);
     } else {
       setSaved(true);
+      setIsDirty(false);
       router.refresh();
     }
     setLoading(false);
@@ -112,7 +126,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h3 className="text-lg font-semibold text-gray-900">Edit Participant</h3>
-      <form onSubmit={handleSubmit} onChange={() => setSaved(false)} className="mt-4 space-y-4">
+      {isDirty && (
+        <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          You have unsaved changes — save before leaving this page.
+        </div>
+      )}
+      <form onSubmit={handleSubmit} onChange={() => { setSaved(false); setIsDirty(true); }} className="mt-4 space-y-4">
         {error && (
           <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
         )}

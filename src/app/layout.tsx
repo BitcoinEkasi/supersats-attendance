@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TSK Rewards - Attendance & Rewards",
-  description: "Attendance tracking and satoshi rewards management",
+  title: "TSK Participation & Performance",
+  description: "Participation tracking and performance management",
 };
 
 export default function RootLayout({

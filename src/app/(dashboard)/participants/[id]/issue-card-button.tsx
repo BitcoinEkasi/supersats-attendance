@@ -25,7 +25,14 @@ export default function IssueCardButton({ participantId }: { participantId: stri
       return;
     }
 
+    const { setupToken, boltPublicUrl } = await res.json();
     router.refresh();
+
+    // Open programmer app immediately with the setup URL
+    if (setupToken && boltPublicUrl) {
+      const setupUrl = `${boltPublicUrl}/api/card/setup/${setupToken}`;
+      window.location.href = `boltcard://program?url=${encodeURIComponent(setupUrl)}`;
+    }
   }
 
   return (

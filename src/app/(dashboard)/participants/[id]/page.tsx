@@ -7,6 +7,7 @@ import ChangeRequestForm from "../change-request-form";
 import PerformanceEventsSection from "./performance-events-section";
 import ResolveButton from "./resolve-button";
 import BoltCardSection from "./bolt-card-section";
+import SchoolReportsSection from "./school-reports-section";
 import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
@@ -45,6 +46,7 @@ export default async function ParticipantDetailPage({
       },
       certifications: { orderBy: { uploadedAt: "desc" } },
       performanceEvents: { orderBy: { eventDate: "desc" } },
+      schoolReports: { orderBy: { year: "desc" } },
     },
   });
 
@@ -375,6 +377,16 @@ export default async function ParticipantDetailPage({
           </div>
         </div>
       </div>
+
+      {/* School Reports — full width */}
+      {role === "ADMINISTRATOR" && (
+        <div className="mt-6">
+          <SchoolReportsSection
+            participantId={participant.id}
+            reports={participant.schoolReports}
+          />
+        </div>
+      )}
 
       {/* Performance Events — full width at bottom */}
       <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">

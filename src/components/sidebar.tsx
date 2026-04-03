@@ -59,7 +59,7 @@ export default function Sidebar({ role }: { role?: UserRole }) {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       <div className="flex h-16 items-center border-b border-gray-200 px-6">
-        <h1 className="text-lg font-bold text-orange-600">TSK Rewards</h1>
+        <h1 className="text-lg font-bold text-orange-600">TSK Participation & Performance</h1>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
