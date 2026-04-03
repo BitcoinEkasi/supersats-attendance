@@ -65,6 +65,14 @@ export default async function BoltCardSection({
               {boltUser.card?.card_id && (
                 <span className="font-mono text-xs text-gray-400">{boltUser.card.card_id}</span>
               )}
+              <a
+                href={`${process.env.NEXT_PUBLIC_BOLT_URL}/admin/users/${boltUser.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex items-center gap-1 rounded-md bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-700 hover:bg-orange-100"
+              >
+                View on Bolt ↗
+              </a>
             </div>
           </div>
 
