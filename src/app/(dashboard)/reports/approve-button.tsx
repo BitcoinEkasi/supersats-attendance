@@ -16,12 +16,14 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
 
   async function handleApprove() {
     if (!confirm("Approve this report? This confirms that the month's results have been reviewed and are correct.")) return;
     setLoading(true);
     setError("");
+    setNotice("");
     const res = await fetch(`/api/reports/${reportId}/approve`, { method: "POST" });
     const result = await res.json();
     setLoading(false);
@@ -31,9 +33,16 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
     }
     if (result.invoice) {
       setInvoice(result.invoice);
-    }
-    if (result.invoice_error) {
+    } else if (result.invoice_error) {
       setError(`Approved, but failed to create payout invoice: ${result.invoice_error}`);
+    } else {
+      // No eligible participants (none have bolt accounts linked yet)
+      const ineligible = result.ineligible_count ?? 0;
+      setNotice(
+        ineligible > 0
+          ? `Report approved. ${ineligible} qualifying participant${ineligible !== 1 ? "s" : ""} have no bolt account linked — issue bolt cards first, then re-generate and re-approve the report.`
+          : "Report approved. No qualifying participants this month."
+      );
     }
     router.refresh();
   }
@@ -41,6 +50,7 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
   return (
     <div>
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+      {notice && <p className="mb-2 text-sm text-amber-700">{notice}</p>}
       <button
         onClick={handleApprove}
         disabled={loading || disabled}

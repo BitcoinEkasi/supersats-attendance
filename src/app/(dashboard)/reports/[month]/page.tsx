@@ -7,6 +7,7 @@ import ExportButton from "./export-button";
 import ApproveButton from "../approve-button";
 import ReportTable from "./report-table";
 import PayoutInvoicePanel from "../payout-invoice-panel";
+import CreatePayoutButton from "../create-payout-button";
 
 export default async function ReportDetailPage({
   params,
@@ -138,6 +139,11 @@ export default async function ReportDetailPage({
           totalSats={report.totalPayoutSats}
           initialStatus={report.payoutStatus}
         />
+      )}
+
+      {/* Create payout button (shown when approved but no invoice yet) */}
+      {report.status === "APPROVED" && report.payoutStatus === "unpaid" && role === "ADMINISTRATOR" && (
+        <CreatePayoutButton reportId={report.id} />
       )}
 
       <ReportTable entries={report.entries.map(e => ({
