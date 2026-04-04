@@ -344,6 +344,57 @@ export default async function ParticipantDetailPage({
             prefetchedBoltUser={boltUser}
           />
 
+          {/* Monthly Rewards History */}
+          {monthlyReportEntries.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h3 className="text-lg font-semibold text-gray-900">Monthly Rewards History</h3>
+              <table className="mt-4 w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-gray-500">
+                    <th className="pb-2">Month</th>
+                    <th className="pb-2">Attendance</th>
+                    <th className="pb-2">Reward</th>
+                    <th className="pb-2">Payout</th>
+                    <th className="pb-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyReportEntries.map((entry) => {
+                    const pct = Number(entry.percentage);
+                    const isJC = participant.isJuniorCoach;
+                    return (
+                      <tr key={entry.id} className="border-b last:border-0">
+                        <td className="py-2 font-medium">{entry.report.month}</td>
+                        <td className="py-2">{entry.attended}/{entry.totalEvents} ({pct.toFixed(1)}%)</td>
+                        <td className="py-2">
+                          {isJC ? (
+                            <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Junior Coach</span>
+                          ) : entry.rewardSats === 0 ? (
+                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
+                          ) : (
+                            <span className="text-orange-600 font-medium">⚡ {entry.rewardSats.toLocaleString()} sats</span>
+                          )}
+                        </td>
+                        <td className="py-2">
+                          {entry.rewardSats > 0 && !isJC && (
+                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${entry.payoutStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                              {entry.payoutStatus === "paid" ? "Paid" : "Pending"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2">
+                          <a href={`/participants/${id}?month=${entry.report.month}`} className="text-xs text-orange-600 hover:underline">
+                            View Events
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Attendance Summary</h3>
             <p className="mt-1 text-xs text-gray-400">Last 3 months</p>
@@ -449,60 +500,6 @@ export default async function ParticipantDetailPage({
             participantId={participant.id}
             reports={participant.schoolReports}
           />
-        </div>
-      )}
-
-      {/* Monthly Rewards History */}
-      {monthlyReportEntries.length > 0 && (
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-          <h3 className="text-lg font-semibold text-gray-900">Monthly Rewards History</h3>
-          <table className="mt-4 w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-gray-500">
-                <th className="pb-2">Month</th>
-                <th className="pb-2">Attendance</th>
-                <th className="pb-2">Reward</th>
-                <th className="pb-2">Payout</th>
-                <th className="pb-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyReportEntries.map((entry) => {
-                const pct = Number(entry.percentage);
-                const isJC = participant.isJuniorCoach;
-                return (
-                  <tr key={entry.id} className="border-b last:border-0">
-                    <td className="py-2 font-medium">{entry.report.month}</td>
-                    <td className="py-2">{entry.attended}/{entry.totalEvents} ({pct.toFixed(1)}%)</td>
-                    <td className="py-2">
-                      {isJC ? (
-                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Junior Coach</span>
-                      ) : entry.rewardSats === 0 ? (
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
-                      ) : (
-                        <span className="text-orange-600 font-medium">⚡ {entry.rewardSats.toLocaleString()} sats</span>
-                      )}
-                    </td>
-                    <td className="py-2">
-                      {entry.rewardSats > 0 && !isJC && (
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${entry.payoutStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                          {entry.payoutStatus === "paid" ? "Paid" : "Pending"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2">
-                      <a
-                        href={`/participants/${id}?month=${entry.report.month}`}
-                        className="text-xs text-orange-600 hover:underline"
-                      >
-                        View Events
-                      </a>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       )}
 
