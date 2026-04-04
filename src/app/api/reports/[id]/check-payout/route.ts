@@ -14,16 +14,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const batchStatus = await getPayoutBatchStatus(report.batchId);
 
   if (batchStatus?.status === "paid" && report.payoutStatus !== "paid") {
-    await prisma.$transaction([
-      prisma.monthlyReport.update({
-        where: { id },
-        data: { payoutStatus: "paid" },
-      }),
-      prisma.monthlyReportEntry.updateMany({
-        where: { reportId: id, rewardSats: { gt: 0 } },
-        data: { payoutStatus: "paid" },
-      }),
-    ]);
+    await prisma.monthlyReport.update({ where: { id }, data: { payoutStatus: "paid" } });
+    await prisma.monthlyReportEntry.updateMany({
+      where: { reportId: id, rewardSats: { gt: 0 } },
+      data: { payoutStatus: "paid" },
+    });
     return Response.json({ payout_status: "paid", batch_status: batchStatus });
   }
 
