@@ -36,6 +36,12 @@ export default function PayoutInvoicePanel({
     }).then((url) => setGeneratedQr(url));
   }, [paymentRequest, qrBase64]);
 
+  // Auto-check status on mount so a page refresh reflects payment automatically
+  useEffect(() => {
+    if (initialStatus === "paid") return;
+    checkStatus();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function checkStatus() {
     setChecking(true);
     const res = await fetch(`/api/reports/${reportId}/check-payout`);
