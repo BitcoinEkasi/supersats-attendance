@@ -6,6 +6,7 @@ import { getSASTNow } from "@/lib/sast";
 import ExportButton from "./export-button";
 import ApproveButton from "../approve-button";
 import ReportTable from "./report-table";
+import PayoutInvoicePanel from "../payout-invoice-panel";
 
 export default async function ReportDetailPage({
   params,
@@ -127,6 +128,17 @@ export default async function ReportDetailPage({
           ))}
         </div>
       </div>
+
+      {/* Payout invoice panel (shown after approval when invoice exists) */}
+      {report.status === "APPROVED" && report.payoutStatus !== "unpaid" && report.paymentRequest && (
+        <PayoutInvoicePanel
+          reportId={report.id}
+          paymentRequest={report.paymentRequest}
+          qrBase64=""
+          totalSats={report.totalPayoutSats}
+          initialStatus={report.payoutStatus}
+        />
+      )}
 
       <ReportTable entries={report.entries.map(e => ({
         ...e,

@@ -177,13 +177,18 @@ model SchoolReport {
 }
 
 model MonthlyReport {
-  id          String       @id @default(uuid())
-  month       String
-  status      ReportStatus @default(PENDING)
-  generatedAt DateTime     @default(now()) @map("generated_at")
-  generatedBy String       @map("generated_by")
-  approvedAt  DateTime?    @map("approved_at")
-  approvedBy  String?      @map("approved_by")
+  id              String       @id @default(uuid())
+  month           String
+  status          ReportStatus @default(PENDING)
+  generatedAt     DateTime     @default(now()) @map("generated_at")
+  generatedBy     String       @map("generated_by")
+  approvedAt      DateTime?    @map("approved_at")
+  approvedBy      String?      @map("approved_by")
+  paymentRequest  String?      @map("payment_request")
+  paymentHash     String?      @map("payment_hash")
+  payoutStatus    String       @default("unpaid") @map("payout_status")
+  totalPayoutSats Int          @default(0) @map("total_payout_sats")
+  batchId         Int?         @map("batch_id")
 
   entries MonthlyReportEntry[]
 

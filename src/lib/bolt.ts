@@ -106,6 +106,28 @@ export function satsToZar(sats: number, zarPerSat: number): string {
   return `R ${zar.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+export async function createPayoutBatch(params: {
+  memo: string;
+  payouts: { user_id: number; amount_sats: number; description?: string }[];
+}): Promise<{ batch_id: number; payment_hash: string; payment_request: string; total_sats: number; qr_base64: string }> {
+  const res = await boltFetch('/api/v1/payout/batch', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bolt createPayoutBatch ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
+export async function getPayoutBatchStatus(batchId: number): Promise<{ status: string; paid_at: number | null; item_count: number } | null> {
+  const res = await boltFetch(`/api/v1/payout/batch/${batchId}`);
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export async function getBoltUser(boltUserId: string): Promise<BoltUser | null> {
   try {
     const res = await boltFetch(`/api/v1/users/${boltUserId}`);
