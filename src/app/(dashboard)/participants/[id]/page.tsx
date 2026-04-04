@@ -23,10 +23,12 @@ const categoryLabels: Record<string, string> = {
 
 export default async function ParticipantDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) {
-  const { id } = await params;
+  const [{ id }, { month: filterMonth }] = await Promise.all([params, searchParams]);
   const session = await auth();
   const role = session?.user?.role;
 
@@ -58,9 +60,36 @@ export default async function ParticipantDetailPage({
   const threeMonthsAgoYear = month - 2 <= 0 ? year - 1 : year;
   const threeMonthsAgoYM = `${threeMonthsAgoYear}-${String(threeMonthsAgoMonth).padStart(2, "0")}`;
 
-  const [last3mEvents, last3mAttended] = await Promise.all([
+  const [last3mEvents, last3mAttended, monthlyReportEntries, filterMonthEvents] = await Promise.all([
     prisma.attendanceRecord.count({ where: { participantId: id, event: { date: { gte: getStartOfSASTMonth(threeMonthsAgoYM) } } } }),
     prisma.attendanceRecord.count({ where: { participantId: id, present: true, event: { date: { gte: getStartOfSASTMonth(threeMonthsAgoYM) } } } }),
+    prisma.monthlyReportEntry.findMany({
+      where: { participantId: id },
+      include: { report: { select: { id: true, month: true, status: true } } },
+      orderBy: { report: { month: "desc" } },
+      take: 12,
+    }),
+    filterMonth
+      ? prisma.attendanceRecord.findMany({
+          where: {
+            participantId: id,
+            event: {
+              date: {
+                gte: getStartOfSASTMonth(filterMonth),
+                lt: getStartOfSASTMonth(
+                  (() => {
+                    const [y, m] = filterMonth.split("-").map(Number);
+                    const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+                    return next;
+                  })()
+                ),
+              },
+            },
+          },
+          include: { event: { select: { date: true, category: true } } },
+          orderBy: { event: { date: "asc" } },
+        })
+      : Promise.resolve(null),
   ]);
 
   const last3mPct = last3mEvents > 0 ? (last3mAttended / last3mEvents) * 100 : 0;
@@ -334,6 +363,41 @@ export default async function ParticipantDetailPage({
             </div>
           </div>
 
+          {filterMonth && filterMonthEvents && (
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">Events — {filterMonth}</h3>
+                <a href={`/participants/${id}`} className="text-xs text-gray-500 hover:text-gray-700">Clear filter ×</a>
+              </div>
+              {filterMonthEvents.length === 0 ? (
+                <p className="text-sm text-gray-500">No events recorded for this month.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-gray-500">
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Category</th>
+                      <th className="pb-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filterMonthEvents.map((record) => (
+                      <tr key={record.id} className="border-b last:border-0">
+                        <td className="py-2">{record.event.date.toISOString().split("T")[0]}</td>
+                        <td className="py-2 text-gray-600">{categoryLabels[record.event.category] || record.event.category}</td>
+                        <td className="py-2">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${record.present ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                            {record.present ? "Present" : "Absent"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Recent Attendance</h3>
             {participant.attendanceRecords.length === 0 ? (
@@ -385,6 +449,60 @@ export default async function ParticipantDetailPage({
             participantId={participant.id}
             reports={participant.schoolReports}
           />
+        </div>
+      )}
+
+      {/* Monthly Rewards History */}
+      {monthlyReportEntries.length > 0 && (
+        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+          <h3 className="text-lg font-semibold text-gray-900">Monthly Rewards History</h3>
+          <table className="mt-4 w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-gray-500">
+                <th className="pb-2">Month</th>
+                <th className="pb-2">Attendance</th>
+                <th className="pb-2">Reward</th>
+                <th className="pb-2">Payout</th>
+                <th className="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyReportEntries.map((entry) => {
+                const pct = Number(entry.percentage);
+                const isJC = participant.isJuniorCoach;
+                return (
+                  <tr key={entry.id} className="border-b last:border-0">
+                    <td className="py-2 font-medium">{entry.report.month}</td>
+                    <td className="py-2">{entry.attended}/{entry.totalEvents} ({pct.toFixed(1)}%)</td>
+                    <td className="py-2">
+                      {isJC ? (
+                        <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Junior Coach</span>
+                      ) : entry.rewardSats === 0 ? (
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
+                      ) : (
+                        <span className="text-orange-600 font-medium">⚡ {entry.rewardSats.toLocaleString()} sats</span>
+                      )}
+                    </td>
+                    <td className="py-2">
+                      {entry.rewardSats > 0 && !isJC && (
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${entry.payoutStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                          {entry.payoutStatus === "paid" ? "Paid" : "Pending"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2">
+                      <a
+                        href={`/participants/${id}?month=${entry.report.month}`}
+                        className="text-xs text-orange-600 hover:underline"
+                      >
+                        View Events
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 

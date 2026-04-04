@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { REWARD_TIERS } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 
 type Entry = {
   id: string;
+  participantId: string;
   totalEvents: number;
   attended: number;
   percentage: string | number;
@@ -22,7 +24,7 @@ type Entry = {
   };
 };
 
-export default function ReportTable({ entries }: { entries: Entry[] }) {
+export default function ReportTable({ entries, reportMonth }: { entries: Entry[]; reportMonth: string }) {
   const [search, setSearch] = useState("");
 
   const q = search.trim().toLowerCase();
@@ -70,12 +72,13 @@ export default function ReportTable({ entries }: { entries: Entry[] }) {
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attendance %</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Reward (sats)</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody>
           {filtered.length === 0 ? (
             <tr>
-              <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-400">
+              <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-400">
                 No participants match your search.
               </td>
             </tr>
@@ -107,17 +110,21 @@ export default function ReportTable({ entries }: { entries: Entry[] }) {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        entry.payoutStatus === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : entry.payoutStatus === "approved"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                    {p.isJuniorCoach ? null : entry.rewardSats === 0 ? (
+                      <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
+                    ) : entry.payoutStatus === "paid" ? (
+                      <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Paid</span>
+                    ) : (
+                      <span className="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">Pending</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/participants/${entry.participantId}?month=${reportMonth}`}
+                      className="text-xs text-orange-600 hover:underline whitespace-nowrap"
                     >
-                      {entry.payoutStatus}
-                    </span>
+                      View Events
+                    </Link>
                   </td>
                 </tr>
               );

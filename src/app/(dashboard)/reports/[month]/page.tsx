@@ -146,19 +146,22 @@ export default async function ReportDetailPage({
         <CreatePayoutButton reportId={report.id} />
       )}
 
-      <ReportTable entries={report.entries.map(e => ({
-        ...e,
-        percentage: e.percentage.toString(),
-        participant: {
-          tskId: e.participant.tskId,
-          surname: e.participant.surname,
-          fullNames: e.participant.fullNames,
-          knownAs: e.participant.knownAs,
-          dateOfBirth: e.participant.dateOfBirth,
-          gender: e.participant.gender,
-          isJuniorCoach: e.participant.isJuniorCoach,
-        },
-      }))} />
+      <ReportTable
+        reportMonth={report.month}
+        entries={report.entries.map(e => ({
+          ...e,
+          percentage: e.percentage.toString(),
+          participant: {
+            tskId: e.participant.tskId,
+            surname: e.participant.surname,
+            fullNames: e.participant.fullNames,
+            knownAs: e.participant.knownAs,
+            dateOfBirth: e.participant.dateOfBirth,
+            gender: e.participant.gender,
+            isJuniorCoach: e.participant.isJuniorCoach,
+          },
+        }))}
+      />
     </div>
   );
 }
