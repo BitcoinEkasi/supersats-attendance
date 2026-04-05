@@ -505,7 +505,7 @@ export default async function ParticipantDetailPage({
 
       {/* Performance Events — full width at bottom */}
       <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="text-lg font-semibold text-gray-900">Performance Events</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Competitive Events</h3>
         <div className="mt-4">
           <PerformanceEventsSection
             participantId={participant.id}

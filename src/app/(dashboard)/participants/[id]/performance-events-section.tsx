@@ -61,7 +61,7 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
   return (
     <div className="space-y-3">
       {events.length === 0 && !adding && (
-        <p className="text-sm text-gray-400">No performance events recorded yet.</p>
+        <p className="text-sm text-gray-400">No competitive events recorded yet.</p>
       )}
 
       {events.map((ev) => (
