@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
@@ -6,7 +6,9 @@ import AttendanceCapture from "./attendance-capture";
 import CategorySelect from "./category-select";
 import NoteInput from "./note-input";
 import LogoutButton from "./logout-button";
-import { getStartOfSASTToday } from "@/lib/sast";
+import MidnightRedirect from "./midnight-redirect";
+import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
+import { fmtDate } from "@/lib/format-date";
 import { fmtDate } from "@/lib/format-date";
 
 const categoryLabels: Record<string, string> = {
@@ -39,6 +41,15 @@ export default async function EventAttendancePage({
 
   if (!event) notFound();
 
+  // Marshalls may only access today's session
+  if (isMobile) {
+    const todayStart = getStartOfSASTToday();
+    const todayEnd = getEndOfSASTToday();
+    if (event.date < todayStart || event.date > todayEnd) {
+      redirect("/attendance");
+    }
+  }
+
   // Eligible participants: registered on or before the event date,
   // and either ACTIVE or RETIRED with retiredAt on or after the event date.
   const eventDate = event.date;
@@ -60,6 +71,7 @@ export default async function EventAttendancePage({
   if (isMobile) {
     return (
       <div className="flex flex-col">
+        <MidnightRedirect />
         {/* Minimal event header */}
         <div className="flex items-start justify-between border-b border-gray-100 bg-white px-4 py-4">
           <div>

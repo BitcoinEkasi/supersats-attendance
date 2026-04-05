@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { EventCategory } from "@prisma/client";
 import { getSASTDateString } from "@/lib/sast";
@@ -19,6 +19,20 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // For mobile: refresh the page at SAST midnight so the date label updates
+  useEffect(() => {
+    if (!mobile) return;
+    const SAST_OFFSET_MS = 2 * 60 * 60 * 1000;
+    const now = Date.now();
+    const sastNow = now + SAST_OFFSET_MS;
+    const d = new Date(sastNow);
+    const nextMidnightUTC =
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1) - SAST_OFFSET_MS;
+    const ms = nextMidnightUTC - now;
+    const timer = setTimeout(() => router.refresh(), ms);
+    return () => clearTimeout(timer);
+  }, [mobile, router]);
 
   async function handleMobileCreate() {
     if (!selected) return;
