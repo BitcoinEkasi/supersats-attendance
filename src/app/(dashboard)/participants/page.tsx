@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import ParticipantSearch from "./participant-search";
 import ParticipantsExportButton from "./participants-export-button";
-import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
+import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 
@@ -125,9 +125,21 @@ export default async function ParticipantsPage({
                     <span>Division {getDivisionLabel(p.dateOfBirth, p.gender)}</span>
                   </div>
 
-                  {/* Joined */}
+                  {/* Joined / Retired */}
                   <div className="mt-0.5 text-xs text-gray-500">
-                    Joined {fmtDate(p.registrationDate)}, active for {formatTenure(p.registrationDate)}
+                    {p.status === "ACTIVE" ? (
+                      <>Joined {fmtDate(p.registrationDate)}, active for {formatTenure(p.registrationDate)}</>
+                    ) : p.retiredAt ? (
+                      <>
+                        Joined {fmtDate(p.registrationDate)}
+                        <span className="mx-1 text-gray-300">·</span>
+                        <span className="text-red-500">Retired on {fmtDate(p.retiredAt)}</span>
+                        <span className="mx-1 text-gray-300">·</span>
+                        after {formatDuration(p.registrationDate, p.retiredAt)}
+                      </>
+                    ) : (
+                      <>Joined {fmtDate(p.registrationDate)}</>
+                    )}
                   </div>
 
                   {/* Bolt card */}
