@@ -8,7 +8,7 @@ import PerformanceEventsSection from "./performance-events-section";
 import ResolveButton from "./resolve-button";
 import BoltCardSection from "./bolt-card-section";
 import SchoolReportsSection from "./school-reports-section";
-import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
+import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import Image from "next/image";
@@ -167,16 +167,16 @@ export default async function ParticipantDetailPage({
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               {participant.status === "ACTIVE" ? (
                 <span>Active from {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, {formatTenure(participant.registrationDate)}</span>
+              ) : participant.retiredAt ? (
+                <span>
+                  Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}
+                  <span className="mx-1.5 text-gray-300">·</span>
+                  <span className="text-red-500">Retired on {participant.retiredAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                  <span className="mx-1.5 text-gray-300">·</span>
+                  after {formatDuration(participant.registrationDate, participant.retiredAt)}
+                </span>
               ) : (
-                <>
-                  <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
-                  {participant.retiredAt && (
-                    <>
-                      <span className="text-gray-300">·</span>
-                      <span className="text-red-500">Retired on {participant.retiredAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
-                    </>
-                  )}
-                </>
+                <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
               )}
             </div>
             {participant.boltUserId && (

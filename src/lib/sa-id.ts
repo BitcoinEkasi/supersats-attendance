@@ -94,6 +94,18 @@ export function getDivisionLabel(dob: Date, gender: "MALE" | "FEMALE"): string {
   return `${division} ${gender === "MALE" ? "Boys" : "Girls"}`;
 }
 
+export function formatDuration(from: Date, to: Date): string {
+  let years = to.getUTCFullYear() - from.getUTCFullYear();
+  let months = to.getUTCMonth() - from.getUTCMonth();
+  let days = to.getUTCDate() - from.getUTCDate();
+  if (days < 0) { months--; days += new Date(to.getUTCFullYear(), to.getUTCMonth(), 0).getUTCDate(); }
+  if (months < 0) { years--; months += 12; }
+  const parts = [];
+  if (years > 0) parts.push(years === 1 ? "1 year" : `${years} years`);
+  if (days > 0) parts.push(days === 1 ? "1 day" : `${days} days`);
+  return parts.length > 0 ? parts.join(" and ") : "0 days";
+}
+
 export function formatTenure(registrationDate: Date): string {
   const now = getSASTNow();
   let years = now.year - registrationDate.getUTCFullYear();
