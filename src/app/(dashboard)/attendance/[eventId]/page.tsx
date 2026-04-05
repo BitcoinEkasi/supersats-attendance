@@ -25,10 +25,7 @@ export default async function EventAttendancePage({
   const session = await auth();
   const isMobile = session?.user?.role === "MARSHALL";
 
-  // Participants registered strictly before today (SAST)
-  const today = getStartOfSASTToday();
-
-  const [event, participants] = await Promise.all([
+  const [event] = await Promise.all([
     prisma.event.findUnique({
       where: { id: eventId },
       include: {
@@ -37,20 +34,27 @@ export default async function EventAttendancePage({
         },
       },
     }),
-    prisma.participant.findMany({
-      where: {
-        status: "ACTIVE",
-        registrationDate: { lt: today },
-      },
-      select: {
-        id: true, surname: true, fullNames: true, knownAs: true,
-        profilePicture: true, dateOfBirth: true, gender: true, isJuniorCoach: true,
-      },
-      orderBy: [{ surname: "asc" }],
-    }),
   ]);
 
   if (!event) notFound();
+
+  // Eligible participants: registered on or before the event date,
+  // and either ACTIVE or RETIRED with retiredAt on or after the event date.
+  const eventDate = event.date;
+  const participants = await prisma.participant.findMany({
+    where: {
+      registrationDate: { lte: eventDate },
+      OR: [
+        { status: "ACTIVE" },
+        { status: "RETIRED", retiredAt: { gte: eventDate } },
+      ],
+    },
+    select: {
+      id: true, surname: true, fullNames: true, knownAs: true,
+      profilePicture: true, dateOfBirth: true, gender: true, isJuniorCoach: true,
+    },
+    orderBy: [{ surname: "asc" }],
+  });
 
   if (isMobile) {
     return (

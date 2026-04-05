@@ -165,7 +165,19 @@ export default async function ParticipantDetailPage({
               <span>Division {getDivisionLabel(participant.dateOfBirth, participant.gender)}</span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-              <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(participant.registrationDate)}</span>
+              {participant.status === "ACTIVE" ? (
+                <span>Active from {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, {formatTenure(participant.registrationDate)}</span>
+              ) : (
+                <>
+                  <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                  {participant.retiredAt && (
+                    <>
+                      <span className="text-gray-300">·</span>
+                      <span className="text-red-500">Retired on {participant.retiredAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                    </>
+                  )}
+                </>
+              )}
             </div>
             {participant.boltUserId && (
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">

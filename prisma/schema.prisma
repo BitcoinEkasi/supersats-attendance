@@ -71,6 +71,7 @@ model Participant {
   wetsuiteSize     String?           @map("wetsuit_size")
   notes            String?
   status           ParticipantStatus @default(ACTIVE)
+  retiredAt        DateTime?         @map("retired_at")
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 

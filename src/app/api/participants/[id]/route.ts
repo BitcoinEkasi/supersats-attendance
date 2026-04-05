@@ -38,7 +38,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Status-only update
   if (body.status && Object.keys(body).length === 1) {
     try {
-      await prisma.participant.update({ where: { id }, data: { status: body.status as ParticipantStatus } });
+      const data: { status: ParticipantStatus; retiredAt?: Date | null } = { status: body.status as ParticipantStatus };
+      if (body.status === "RETIRED") data.retiredAt = new Date();
+      if (body.status === "ACTIVE") data.retiredAt = null;
+      await prisma.participant.update({ where: { id }, data });
       return Response.json({ success: true });
     } catch {
       return Response.json({ error: "Failed to update status" }, { status: 500 });
@@ -69,6 +72,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         gender: parsed.gender,
         dateOfBirth: parsed.dob,
         status: body.status as ParticipantStatus,
+        ...(body.status === "RETIRED" ? { retiredAt: new Date() } : {}),
+        ...(body.status === "ACTIVE" ? { retiredAt: null } : {}),
         isJuniorCoach: body.isJuniorCoach === "on" || body.isJuniorCoach === true,
         ethnicity: body.ethnicity?.trim() || null,
         language: body.language?.trim() || null,
