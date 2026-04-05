@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Certification, CertificationType } from "@prisma/client";
+import { fmtDate } from "@/lib/format-date";
 
 const CERT_TYPES: { type: CertificationType; label: string }[] = [
   { type: "SAFEGUARDING", label: "Safeguarding" },
@@ -81,7 +82,7 @@ export default function CertificationsSection({ participantId, certifications, i
               </div>
               {cert && (
                 <span className="text-xs text-gray-400">
-                  {new Date(cert.uploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}
+                  {fmtDate(new Date(cert.uploadedAt))}
                 </span>
               )}
               <div className="flex items-center gap-2">

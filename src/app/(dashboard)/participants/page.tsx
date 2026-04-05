@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import ParticipantSearch from "./participant-search";
 import ParticipantsExportButton from "./participants-export-button";
 import { formatTenure, calculateAge, getDivisionLabel } from "@/lib/sa-id";
+import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 
 const statusColors: Record<string, string> = {
@@ -117,7 +118,7 @@ export default async function ParticipantsPage({
 
                   {/* Born · Age · Division */}
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
-                    <span>Born on {p.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                    <span>Born on {fmtDate(p.dateOfBirth)}</span>
                     <span className="text-gray-300">·</span>
                     <span>Age {calculateAge(p.dateOfBirth)}</span>
                     <span className="text-gray-300">·</span>
@@ -126,7 +127,7 @@ export default async function ParticipantsPage({
 
                   {/* Joined */}
                   <div className="mt-0.5 text-xs text-gray-500">
-                    Joined {p.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, active for {formatTenure(p.registrationDate)}
+                    Joined {fmtDate(p.registrationDate)}, active for {formatTenure(p.registrationDate)}
                   </div>
 
                   {/* Bolt card */}

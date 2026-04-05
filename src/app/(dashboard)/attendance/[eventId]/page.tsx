@@ -7,6 +7,7 @@ import CategorySelect from "./category-select";
 import NoteInput from "./note-input";
 import LogoutButton from "./logout-button";
 import { getStartOfSASTToday } from "@/lib/sast";
+import { fmtDate } from "@/lib/format-date";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -63,7 +64,7 @@ export default async function EventAttendancePage({
         <div className="flex items-start justify-between border-b border-gray-100 bg-white px-4 py-4">
           <div>
             <p className="font-semibold text-gray-900">
-              {event.date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+              {event.date.toLocaleDateString("en-GB", { weekday: "long" })} {fmtDate(event.date)}
             </p>
             <CategorySelect eventId={event.id} category={event.category} />
             <NoteInput eventId={event.id} note={event.note} />
@@ -89,7 +90,7 @@ export default async function EventAttendancePage({
         </Link>
         <span className="text-gray-300">/</span>
         <h2 className="text-xl font-bold text-gray-900">
-          {event.date.toISOString().split("T")[0]} — {categoryLabels[event.category] || event.category}
+          {fmtDate(event.date)} — {categoryLabels[event.category] || event.category}
         </h2>
       </div>
 

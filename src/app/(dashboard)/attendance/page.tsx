@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
+import { fmtDate } from "@/lib/format-date";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -87,7 +88,7 @@ export default async function AttendancePage() {
                     const complete = marked >= activeCount;
                     return (
                       <tr key={event.id} className="border-b last:border-0">
-                        <td className="px-4 py-3 font-medium">{event.date.toISOString().split("T")[0]}</td>
+                        <td className="px-4 py-3 font-medium">{fmtDate(event.date)}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
                             {categoryLabels[event.category] || event.category}

@@ -9,6 +9,7 @@ import ResolveButton from "./resolve-button";
 import BoltCardSection from "./bolt-card-section";
 import SchoolReportsSection from "./school-reports-section";
 import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/lib/sa-id";
+import { fmtDate } from "@/lib/format-date";
 import { getSASTNow, getStartOfSASTMonth } from "@/lib/sast";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import Image from "next/image";
@@ -158,7 +159,7 @@ export default async function ParticipantDetailPage({
               )}
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-              <span>Born on {participant.dateOfBirth.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+              <span>Born on {fmtDate(participant.dateOfBirth)}</span>
               <span className="text-gray-300">·</span>
               <span>Age {calculateAge(participant.dateOfBirth)}</span>
               <span className="text-gray-300">·</span>
@@ -166,17 +167,17 @@ export default async function ParticipantDetailPage({
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               {participant.status === "ACTIVE" ? (
-                <span>Active from {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}, {formatTenure(participant.registrationDate)}</span>
+                <span>Active from {fmtDate(participant.registrationDate)}, {formatTenure(participant.registrationDate)}</span>
               ) : participant.retiredAt ? (
                 <span>
-                  Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}
+                  Joined {fmtDate(participant.registrationDate)}
                   <span className="mx-1.5 text-gray-300">·</span>
-                  <span className="text-red-500">Retired on {participant.retiredAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                  <span className="text-red-500">Retired on {fmtDate(participant.retiredAt)}</span>
                   <span className="mx-1.5 text-gray-300">·</span>
                   after {formatDuration(participant.registrationDate, participant.retiredAt)}
                 </span>
               ) : (
-                <span>Joined {participant.registrationDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/(\d+)$/, "'$1")}</span>
+                <span>Joined {fmtDate(participant.registrationDate)}</span>
               )}
             </div>
             {participant.boltUserId && (
@@ -229,12 +230,12 @@ export default async function ParticipantDetailPage({
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500">Active From</dt>
-                <dd className="font-medium">{participant.registrationDate.toISOString().split("T")[0]}</dd>
+                <dd className="font-medium">{fmtDate(participant.registrationDate)}</dd>
               </div>
               {participant.status === "RETIRED" && participant.retiredAt && (
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Retired On</dt>
-                  <dd className="font-medium text-red-600">{participant.retiredAt.toISOString().split("T")[0]}</dd>
+                  <dd className="font-medium text-red-600">{fmtDate(participant.retiredAt)}</dd>
                 </div>
               )}
               {participant.ethnicity && (
@@ -345,7 +346,7 @@ export default async function ParticipantDetailPage({
                     <p className="text-sm text-gray-700">{req.notes}</p>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-xs text-gray-500">
-                        By {req.requestedBy} · {req.createdAt.toLocaleDateString()}
+                        By {req.requestedBy} · {fmtDate(req.createdAt)}
                       </span>
                       <ResolveButton requestId={req.id} />
                     </div>
@@ -452,7 +453,7 @@ export default async function ParticipantDetailPage({
                   <tbody>
                     {filterMonthEvents.map((record) => (
                       <tr key={record.id} className="border-b last:border-0">
-                        <td className="py-2">{record.event.date.toISOString().split("T")[0]}</td>
+                        <td className="py-2">{fmtDate(record.event.date)}</td>
                         <td className="py-2 text-gray-600">{categoryLabels[record.event.category] || record.event.category}</td>
                         <td className="py-2">
                           <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${record.present ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getExpectedGrade } from "@/lib/sa-id";
+import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
 import type { Participant, Certification, PerformanceEvent } from "@prisma/client";
 
@@ -213,7 +214,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               )}
             </div>
             {idDocUploadedAt && (
-              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(idDocUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+              <p className="mt-1 text-xs text-gray-400">Uploaded {fmtDate(new Date(idDocUploadedAt))}</p>
             )}
             <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
             <input type="hidden" name="idDocumentUrl" value={idDocumentUrl} />
@@ -273,7 +274,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               )}
             </div>
             {indemnityUploadedAt && (
-              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(indemnityUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+              <p className="mt-1 text-xs text-gray-400">Uploaded {fmtDate(new Date(indemnityUploadedAt))}</p>
             )}
             <input ref={indemnityInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIndemnityChange} className="hidden" />
             <input type="hidden" name="indemnityFormUrl" value={indemnityFormUrl} />
@@ -417,10 +418,10 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <option value="RETIRED">Retired</option>
                 </select>
                 {participant.status === "ACTIVE" && (
-                  <p className="mt-1 text-xs text-gray-500">Active from {participant.registrationDate.toISOString().split("T")[0]}</p>
+                  <p className="mt-1 text-xs text-gray-500">Active from {fmtDate(participant.registrationDate)}</p>
                 )}
                 {participant.status === "RETIRED" && participant.retiredAt && (
-                  <p className="mt-1 text-xs text-red-500">Retired on {participant.retiredAt.toISOString().split("T")[0]}</p>
+                  <p className="mt-1 text-xs text-red-500">Retired on {fmtDate(participant.retiredAt)}</p>
                 )}
               </div>
               <div className="flex items-end pb-2">

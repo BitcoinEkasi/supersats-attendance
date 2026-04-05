@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
+import { fmtDate } from "@/lib/format-date";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -80,7 +81,7 @@ export default async function DashboardPage() {
               <tbody>
                 {recentEvents.map((event) => (
                   <tr key={event.id} className="border-b last:border-0">
-                    <td className="py-2">{event.date.toISOString().split("T")[0]}</td>
+                    <td className="py-2">{fmtDate(event.date)}</td>
                     <td className="py-2 text-gray-600">
                       {categoryLabels[event.category] || event.category}
                     </td>

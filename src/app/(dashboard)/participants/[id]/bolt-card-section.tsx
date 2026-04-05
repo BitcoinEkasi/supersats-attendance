@@ -1,4 +1,5 @@
 import { getBoltUser, getZarPerSat, satsToZar, type BoltUser } from "@/lib/bolt";
+import { fmtDate } from "@/lib/format-date";
 import IssueCardButton from "./issue-card-button";
 
 function CardStatusBadge({ card }: { card: BoltUser["card"] }) {
@@ -95,9 +96,7 @@ export default async function BoltCardSection({
                     {boltUser.transactions.map((tx) => (
                       <tr key={tx.id} className="border-b last:border-0">
                         <td className="py-1.5 text-gray-500 whitespace-nowrap">
-                          {new Date(tx.created_at * 1000).toLocaleDateString("en-GB", {
-                            day: "2-digit", month: "short", year: "2-digit",
-                          })}
+                          {fmtDate(new Date(tx.created_at * 1000))}
                         </td>
                         <td className="py-1.5 text-gray-600 max-w-[150px] truncate">
                           {tx.description ?? tx.type}

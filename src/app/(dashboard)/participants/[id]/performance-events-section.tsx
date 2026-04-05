@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PerformanceEvent } from "@prisma/client";
+import { fmtDate } from "@/lib/format-date";
 
 interface Props {
   participantId: string;
@@ -70,7 +71,7 @@ export default function PerformanceEventsSection({ participantId, events }: Prop
             <p className="text-sm font-medium text-gray-700">{ev.eventName}</p>
             <p className="text-xs text-gray-500">{ev.result}</p>
             <p className="text-xs text-gray-400">
-              {new Date(ev.eventDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+              {fmtDate(new Date(ev.eventDate))}
               {ev.location && <span> · {ev.location}</span>}
               {ev.division && <span> · {ev.division}</span>}
             </p>

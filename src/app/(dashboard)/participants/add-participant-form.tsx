@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { fmtDate } from "@/lib/format-date";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -210,7 +211,7 @@ export default function AddParticipantForm() {
               )}
             </div>
             {idDocUploadedAt && (
-              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(idDocUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+              <p className="mt-1 text-xs text-gray-400">Uploaded {fmtDate(new Date(idDocUploadedAt))}</p>
             )}
             <input ref={idDocInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIdDocChange} className="hidden" />
           </div>
@@ -268,7 +269,7 @@ export default function AddParticipantForm() {
               )}
             </div>
             {indemnityUploadedAt && (
-              <p className="mt-1 text-xs text-gray-400">Uploaded {new Date(indemnityUploadedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+              <p className="mt-1 text-xs text-gray-400">Uploaded {fmtDate(new Date(indemnityUploadedAt))}</p>
             )}
             <input ref={indemnityInputRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleIndemnityChange} className="hidden" />
           </div>
