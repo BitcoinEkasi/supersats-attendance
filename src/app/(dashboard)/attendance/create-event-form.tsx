@@ -121,7 +121,7 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-gray-900">Create Event</h3>
+      <h3 className="text-lg font-semibold text-gray-900">Create Session</h3>
       <form onSubmit={handleDesktopSubmit} className="mt-4 space-y-4">
         {desktopError && (
           <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{desktopError}</div>

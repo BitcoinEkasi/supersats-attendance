@@ -64,11 +64,11 @@ export default async function AttendancePage() {
         <div className="lg:col-span-2">
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
             <div className="border-b px-4 py-3">
-              <h3 className="font-semibold text-gray-900">Events</h3>
+              <h3 className="font-semibold text-gray-900">Sessions</h3>
             </div>
             {events.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-gray-500">
-                No events yet. Create one to start capturing attendance.
+                No sessions yet. Create one to start capturing attendance.
               </p>
             ) : (
               <table className="w-full text-sm">
