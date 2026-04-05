@@ -9,7 +9,6 @@ import LogoutButton from "./logout-button";
 import MidnightRedirect from "./midnight-redirect";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
-import { fmtDate } from "@/lib/format-date";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
