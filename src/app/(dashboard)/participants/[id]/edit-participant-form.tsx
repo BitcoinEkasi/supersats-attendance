@@ -416,6 +416,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <option value="ACTIVE">Active</option>
                   <option value="RETIRED">Retired</option>
                 </select>
+                {participant.status === "ACTIVE" && (
+                  <p className="mt-1 text-xs text-gray-500">Active from {participant.registrationDate.toISOString().split("T")[0]}</p>
+                )}
+                {participant.status === "RETIRED" && participant.retiredAt && (
+                  <p className="mt-1 text-xs text-red-500">Retired on {participant.retiredAt.toISOString().split("T")[0]}</p>
+                )}
               </div>
               <div className="flex items-end pb-2">
                 <label className="flex items-center gap-2 cursor-pointer">

@@ -228,9 +228,15 @@ export default async function ParticipantDetailPage({
                 <dd className="font-mono font-medium">{participant.idNumber}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Date From</dt>
+                <dt className="text-gray-500">Active From</dt>
                 <dd className="font-medium">{participant.registrationDate.toISOString().split("T")[0]}</dd>
               </div>
+              {participant.status === "RETIRED" && participant.retiredAt && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Retired On</dt>
+                  <dd className="font-medium text-red-600">{participant.retiredAt.toISOString().split("T")[0]}</dd>
+                </div>
+              )}
               {participant.ethnicity && (
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Ethnicity</dt>
