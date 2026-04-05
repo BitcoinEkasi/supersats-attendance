@@ -102,8 +102,8 @@ export function formatDuration(from: Date, to: Date): string {
   if (months < 0) { years--; months += 12; }
   const parts = [];
   if (years > 0) parts.push(years === 1 ? "1 year" : `${years} years`);
-  if (days > 0) parts.push(days === 1 ? "1 day" : `${days} days`);
-  return parts.length > 0 ? parts.join(" and ") : "0 days";
+  if (months > 0) parts.push(months === 1 ? "1 month" : `${months} months`);
+  return parts.length > 0 ? parts.join(" and ") : "0 months";
 }
 
 export function formatTenure(registrationDate: Date): string {
