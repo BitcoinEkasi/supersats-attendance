@@ -187,9 +187,6 @@ export default async function ParticipantsPage({
           )}
         </div>
 
-        <p className="mt-3 text-sm text-gray-500">
-          {participants.length} participant{participants.length !== 1 ? "s" : ""}
-        </p>
       </div>
     </div>
   );
