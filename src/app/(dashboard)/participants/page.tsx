@@ -6,19 +6,16 @@ import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 
-const statusColors: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-700",
-  RETIRED: "bg-gray-100 text-gray-600",
-};
-
 export default async function ParticipantsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>;
+  searchParams: Promise<{ search?: string; tab?: string }>;
 }) {
-  const { search } = await searchParams;
+  const { search, tab: tabParam } = await searchParams;
+  const tab = tabParam === "retired" ? "retired" : "active";
+  const statusFilter = tab === "retired" ? "RETIRED" : "ACTIVE";
 
-  const where = search
+  const searchWhere = search
     ? {
         OR: [
           { tskId: { contains: search, mode: "insensitive" as const } },
@@ -28,6 +25,8 @@ export default async function ParticipantsPage({
         ],
       }
     : {};
+
+  const where = { status: statusFilter as "ACTIVE" | "RETIRED", ...searchWhere };
 
   const [participants, activeCount, retiredCount] = await Promise.all([
     prisma.participant.findMany({ where, orderBy: [{ surname: "asc" }, { fullNames: "asc" }] }),
@@ -42,28 +41,50 @@ export default async function ParticipantsPage({
   ]);
   const boltMap = new Map(boltResults.map(({ id, user }) => [id, user]));
 
+  const activeTabCls = "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors";
+  const activeSelected = "bg-white text-gray-900 shadow-sm border border-gray-200";
+  const activeUnselected = "text-gray-500 hover:text-gray-700";
+
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
-          <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-700">{activeCount} active</span>
-          {retiredCount > 0 && (
-            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-500">{retiredCount} retired</span>
-          )}
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900">Participants</h2>
         <ParticipantsExportButton />
       </div>
 
-      <div className="mt-6">
-        <ParticipantSearch initialSearch={search || ""} />
+      {/* Tabs */}
+      <div className="mt-4 flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+        <Link
+          href="/participants"
+          className={`${activeTabCls} ${tab === "active" ? activeSelected : activeUnselected}`}
+        >
+          Active
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tab === "active" ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
+            {activeCount}
+          </span>
+        </Link>
+        <Link
+          href="/participants?tab=retired"
+          className={`${activeTabCls} ${tab === "retired" ? activeSelected : activeUnselected}`}
+        >
+          Retired
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tab === "retired" ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-500"}`}>
+            {retiredCount}
+          </span>
+        </Link>
+      </div>
+
+      <div className="mt-4">
+        <ParticipantSearch initialSearch={search || ""} tab={tab} />
 
         <div className="mt-4 space-y-2">
           {participants.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-500">
               {search
                 ? "No participants match your search."
-                : "No participants yet. Use \"Add Participant\" in the menu."}
+                : tab === "retired"
+                  ? "No retired participants yet."
+                  : "No participants yet. Use \"Add Participant\" in the menu."}
             </div>
           ) : (
             participants.map((p) => (
@@ -101,9 +122,6 @@ export default async function ParticipantsPage({
                   {/* TSK ID + badges */}
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                     <span className="font-mono text-xs text-gray-500">{p.tskId}</span>
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[p.status] || "bg-gray-100 text-gray-600"}`}>
-                      {p.status.charAt(0) + p.status.slice(1).toLowerCase()}
-                    </span>
                     {p.tskStatus && (
                       <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
                         {p.tskStatus}

@@ -5,8 +5,10 @@ import { useState, useEffect, useRef } from "react";
 
 export default function ParticipantSearch({
   initialSearch,
+  tab,
 }: {
   initialSearch: string;
+  tab: string;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState(initialSearch);
@@ -15,13 +17,16 @@ export default function ParticipantSearch({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const params = search ? `?search=${encodeURIComponent(search)}` : "";
-      router.push(`/participants${params}`);
+      const params = new URLSearchParams();
+      if (tab && tab !== "active") params.set("tab", tab);
+      if (search) params.set("search", search);
+      const qs = params.toString();
+      router.push(`/participants${qs ? `?${qs}` : ""}`);
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [search, router]);
+  }, [search, tab, router]);
 
   return (
     <div className="relative">
