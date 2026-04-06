@@ -146,7 +146,7 @@ export default async function ParticipantsPage({
                   {/* Joined / Retired */}
                   <div className="mt-0.5 text-xs text-gray-500">
                     {p.status === "ACTIVE" ? (
-                      <>Joined {fmtDate(p.registrationDate)}, active for {formatTenure(p.registrationDate)}</>
+                      <>Active from {fmtDate(p.registrationDate)}, {formatTenure(p.registrationDate)}</>
                     ) : p.retiredAt ? (
                       <>
                         Joined {fmtDate(p.registrationDate)}
