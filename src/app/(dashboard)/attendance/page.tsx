@@ -46,8 +46,6 @@ export default async function AttendancePage() {
   }
 
   // Desktop layout
-  const todayStart = getStartOfSASTToday();
-  const todayEnd = getEndOfSASTToday();
   const [events, activeCount, todayEvent] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
