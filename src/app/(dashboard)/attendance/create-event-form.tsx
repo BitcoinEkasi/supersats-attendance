@@ -125,7 +125,9 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
       }),
     });
     const result = await res.json();
-    if (result.error) {
+    if (res.status === 409 && result.existingId) {
+      router.push(`/attendance/${result.existingId}`);
+    } else if (result.error) {
       setDesktopError(result.error);
       setDesktopLoading(false);
     } else {

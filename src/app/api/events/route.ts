@@ -34,6 +34,16 @@ export async function POST(req: Request) {
 
   const dateStr = date === "today" ? getSASTDateString() : date;
 
+  // One session per day
+  const existing = await prisma.event.findFirst({
+    where: {
+      date: new Date(dateStr + "T12:00:00.000Z"),
+    },
+  });
+  if (existing) {
+    return Response.json({ error: "A session already exists for this date", existingId: existing.id }, { status: 409 });
+  }
+
   try {
     const event = await prisma.event.create({
       data: {

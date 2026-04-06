@@ -46,7 +46,9 @@ export default async function AttendancePage() {
   }
 
   // Desktop layout
-  const [events, activeCount] = await Promise.all([
+  const todayStart = getStartOfSASTToday();
+  const todayEnd = getEndOfSASTToday();
+  const [events, activeCount, todayEvent] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
       take: 30,
@@ -55,6 +57,7 @@ export default async function AttendancePage() {
       },
     }),
     prisma.participant.count({ where: { status: "ACTIVE" } }),
+    prisma.event.findFirst({ where: { date: { gte: todayStart, lte: todayEnd } } }),
   ]);
 
   return (
@@ -113,7 +116,22 @@ export default async function AttendancePage() {
             )}
           </div>
         </div>
-        <CreateEventForm />
+        {todayEvent ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+            <h3 className="text-lg font-semibold text-gray-900">Today&apos;s Session</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              A session is already active for {fmtDate(todayEvent.date)}.
+            </p>
+            <Link
+              href={`/attendance/${todayEvent.id}`}
+              className="mt-4 flex w-full items-center justify-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+            >
+              Open Session
+            </Link>
+          </div>
+        ) : (
+          <CreateEventForm />
+        )}
       </div>
     </div>
   );
