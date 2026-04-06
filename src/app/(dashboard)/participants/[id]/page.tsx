@@ -98,11 +98,6 @@ export default async function ParticipantDetailPage({
   const boltUser = participant.boltUserId ? await getBoltUser(participant.boltUserId) : null;
   const zarPerSat = boltUser ? await getZarPerSat() : null;
 
-  const statusColors: Record<string, string> = {
-    ACTIVE: "bg-green-100 text-green-700",
-    RETIRED: "bg-gray-100 text-gray-600",
-  };
-
   return (
     <div className="-m-6 flex h-full flex-col">
       {/* Pinned ID card — outside scroll area */}
@@ -138,15 +133,8 @@ export default async function ParticipantDetailPage({
                 <span className="ml-2 text-lg font-normal text-gray-500">({participant.knownAs})</span>
               )}
             </h2>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="font-mono text-sm text-gray-500">{participant.tskId}</span>
-              <span
-                className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                  statusColors[participant.status] || "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {participant.status.charAt(0) + participant.status.slice(1).toLowerCase()}
-              </span>
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span className="font-mono text-xs text-gray-500">{participant.tskId}</span>
               {participant.tskStatus && (
                 <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
                   {participant.tskStatus}
