@@ -11,7 +11,7 @@ interface InvoiceData {
   ineligible_count: number;
 }
 
-export default function CreatePayoutButton({ reportId }: { reportId: string }) {
+export default function CreatePayoutButton({ reportId, createPayoutUrl, checkUrl }: { reportId: string; createPayoutUrl?: string; checkUrl?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
@@ -19,7 +19,7 @@ export default function CreatePayoutButton({ reportId }: { reportId: string }) {
   async function handleCreate() {
     setLoading(true);
     setError("");
-    const res = await fetch(`/api/reports/${reportId}/create-payout`, { method: "POST" });
+    const res = await fetch(createPayoutUrl ?? `/api/reports/${reportId}/create-payout`, { method: "POST" });
     const result = await res.json();
     setLoading(false);
     if (result.error) {
@@ -41,6 +41,7 @@ export default function CreatePayoutButton({ reportId }: { reportId: string }) {
         eligibleCount={invoice.eligible_count}
         ineligibleCount={invoice.ineligible_count}
         initialStatus="invoiced"
+        checkUrl={checkUrl}
       />
     );
   }

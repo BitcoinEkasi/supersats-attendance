@@ -11,6 +11,8 @@ interface PayoutInvoicePanelProps {
   eligibleCount?: number;
   ineligibleCount?: number;
   initialStatus: string; // "invoiced" | "paid"
+  checkUrl?: string;
+  paidMessage?: string;
 }
 
 export default function PayoutInvoicePanel({
@@ -21,6 +23,8 @@ export default function PayoutInvoicePanel({
   eligibleCount,
   ineligibleCount,
   initialStatus,
+  checkUrl,
+  paidMessage,
 }: PayoutInvoicePanelProps) {
   const [status, setStatus] = useState(initialStatus);
   const [checking, setChecking] = useState(false);
@@ -44,7 +48,7 @@ export default function PayoutInvoicePanel({
 
   async function checkStatus() {
     setChecking(true);
-    const res = await fetch(`/api/reports/${reportId}/check-payout`);
+    const res = await fetch(checkUrl ?? `/api/reports/${reportId}/check-payout`);
     const data = await res.json();
     setStatus(data.payout_status);
     setChecking(false);
@@ -123,7 +127,7 @@ export default function PayoutInvoicePanel({
 
       {status === "paid" && (
         <p className="text-sm text-green-700">
-          Payment received. {eligibleCount ?? ""} participant cards have been topped up with their monthly reward sats.
+          {paidMessage ?? `Payment received. ${eligibleCount ?? ""} participant cards have been topped up.`}
         </p>
       )}
     </div>

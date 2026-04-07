@@ -12,7 +12,7 @@ interface InvoiceData {
   ineligible_count: number;
 }
 
-export default function ApproveButton({ reportId, disabled = false }: { reportId: string; disabled?: boolean }) {
+export default function ApproveButton({ reportId, disabled = false, approveUrl, checkUrl, confirmMessage, label }: { reportId: string; disabled?: boolean; approveUrl?: string; checkUrl?: string; confirmMessage?: string; label?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,11 +20,11 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
 
   async function handleApprove() {
-    if (!confirm("Approve this report? This confirms that the month's results have been reviewed and are correct.")) return;
+    if (!confirm(confirmMessage ?? "Approve this report? This confirms that the results have been reviewed and are correct.")) return;
     setLoading(true);
     setError("");
     setNotice("");
-    const res = await fetch(`/api/reports/${reportId}/approve`, { method: "POST" });
+    const res = await fetch(approveUrl ?? `/api/reports/${reportId}/approve`, { method: "POST" });
     const result = await res.json();
     setLoading(false);
     if (result.error) {
@@ -57,7 +57,7 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
         title={disabled ? "Month is not yet complete" : undefined}
         className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {loading ? "Approving..." : "Approve Report"}
+        {loading ? "Approving..." : (label ?? "Approve Report")}
       </button>
       {invoice && (
         <PayoutInvoicePanel
@@ -68,6 +68,7 @@ export default function ApproveButton({ reportId, disabled = false }: { reportId
           eligibleCount={invoice.eligible_count}
           ineligibleCount={invoice.ineligible_count}
           initialStatus="invoiced"
+          checkUrl={checkUrl}
         />
       )}
     </div>

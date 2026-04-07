@@ -83,13 +83,15 @@ model Participant {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
-  attendanceRecords    AttendanceRecord[]
-  monthlyReportEntries MonthlyReportEntry[]
-  changeRequests       ParticipantChangeRequest[]
-  certifications       Certification[]
-  performanceEvents    PerformanceEvent[]
-  schoolReports        SchoolReport[]
-  tskReviews           TskReview[]
+  attendanceRecords     AttendanceRecord[]
+  monthlyReportEntries  MonthlyReportEntry[]
+  changeRequests        ParticipantChangeRequest[]
+  certifications        Certification[]
+  performanceEvents     PerformanceEvent[]
+  schoolReports         SchoolReport[]
+  tskReviews            TskReview[]
+  academicPayoutEntries AcademicPayoutEntry[]
+  specialPayoutEntries  SpecialPayoutEntry[]
 
   @@map("participants")
 }
@@ -236,4 +238,74 @@ model MonthlyReportEntry {
 
   @@unique([reportId, participantId])
   @@map("monthly_report_entries")
+}
+
+model AcademicPayout {
+  id              String       @id @default(uuid())
+  year            Int
+  term            Int
+  status          ReportStatus @default(PENDING)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  createdBy       String       @map("created_by")
+  approvedAt      DateTime?    @map("approved_at")
+  approvedBy      String?      @map("approved_by")
+  paymentRequest  String?      @map("payment_request")
+  paymentHash     String?      @map("payment_hash")
+  payoutStatus    String       @default("unpaid") @map("payout_status")
+  totalPayoutSats Int          @default(0) @map("total_payout_sats")
+  batchId         Int?         @map("batch_id")
+  entries         AcademicPayoutEntry[]
+
+  @@unique([year, term])
+  @@map("academic_payouts")
+}
+
+model AcademicPayoutEntry {
+  id            String         @id @default(uuid())
+  payoutId      String         @map("payout_id")
+  participantId String         @map("participant_id")
+  gradePercent  Float          @map("grade_percent")
+  rewardSats    Int            @map("reward_sats")
+  payoutStatus  String         @default("pending") @map("payout_status")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  payout        AcademicPayout @relation(fields: [payoutId], references: [id])
+  participant   Participant    @relation(fields: [participantId], references: [id])
+
+  @@unique([payoutId, participantId])
+  @@map("academic_payout_entries")
+}
+
+model SpecialPayout {
+  id              String       @id @default(uuid())
+  title           String
+  status          ReportStatus @default(PENDING)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  createdBy       String       @map("created_by")
+  approvedAt      DateTime?    @map("approved_at")
+  approvedBy      String?      @map("approved_by")
+  paymentRequest  String?      @map("payment_request")
+  paymentHash     String?      @map("payment_hash")
+  payoutStatus    String       @default("unpaid") @map("payout_status")
+  totalPayoutSats Int          @default(0) @map("total_payout_sats")
+  batchId         Int?         @map("batch_id")
+  entries         SpecialPayoutEntry[]
+
+  @@map("special_payouts")
+}
+
+model SpecialPayoutEntry {
+  id            String        @id @default(uuid())
+  payoutId      String        @map("payout_id")
+  participantId String        @map("participant_id")
+  amountSats    Int           @map("amount_sats")
+  note          String?
+  payoutStatus  String        @default("pending") @map("payout_status")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  payout        SpecialPayout @relation(fields: [payoutId], references: [id])
+  participant   Participant   @relation(fields: [participantId], references: [id])
+
+  @@unique([payoutId, participantId])
+  @@map("special_payout_entries")
 }
