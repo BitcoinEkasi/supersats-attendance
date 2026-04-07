@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import ApproveButton from "../../reports/approve-button";
 import CreatePayoutButton from "../../reports/create-payout-button";
 import PayoutInvoicePanel from "../../reports/payout-invoice-panel";
+import RefreshButton from "../../reports/refresh-button";
 import { REWARD_TIERS } from "@/lib/rewards";
 
 export default async function SchoolGradesDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,6 +50,9 @@ export default async function SchoolGradesDetailPage({ params }: { params: Promi
             <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">Approved</span>
           ) : (
             <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-700">Pending Approval</span>
+          )}
+          {role === "ADMINISTRATOR" && payout.status === "PENDING" && (
+            <RefreshButton refreshUrl={`/api/academic-payouts/${id}/refresh`} />
           )}
           {role === "ADMINISTRATOR" && payout.status === "PENDING" && (
             <ApproveButton

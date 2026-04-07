@@ -9,6 +9,7 @@ import ApproveButton from "../approve-button";
 import ReportTable from "./report-table";
 import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
+import RefreshButton from "../refresh-button";
 
 export default async function ReportDetailPage({
   params,
@@ -87,6 +88,9 @@ export default async function ReportDetailPage({
             </span>
           )}
           <ExportButton reportId={report.id} month={report.month} />
+          {role === "ADMINISTRATOR" && report.status === "PENDING" && (
+            <RefreshButton refreshUrl={`/api/reports/${report.id}/refresh`} />
+          )}
           {role === "ADMINISTRATOR" && report.status === "PENDING" && (
             <ApproveButton reportId={report.id} disabled={!monthComplete} />
           )}
