@@ -39,6 +39,7 @@ export interface BoltUser {
   display_name: string;
   balance_sats: number;
   ln_address: string | null;
+  ln_payout_address: string | null;
   magic_link_url: string;
   card: BoltCard | null;
   transactions: BoltTransaction[];
@@ -127,6 +128,13 @@ export async function getPayoutBatchStatus(batchId: number): Promise<{ status: s
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
+}
+
+export async function updateBoltUserAddress(boltUserId: number, lnPayoutAddress: string | null): Promise<void> {
+  await boltFetch(`/api/v1/users/${boltUserId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ ln_payout_address: lnPayoutAddress }),
+  });
 }
 
 export async function payLnAddress(boltUserId: number, params: {
