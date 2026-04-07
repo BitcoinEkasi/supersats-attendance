@@ -1,6 +1,7 @@
 import { getBoltUser, getZarPerSat, satsToZar, type BoltUser } from "@/lib/bolt";
 import IssueCardButton from "./issue-card-button";
 import TransactionsList from "./transactions-list";
+import PaymentMethodSettings from "./payment-method-settings";
 
 function CardStatusBadge({ card }: { card: BoltUser["card"] }) {
   if (!card) return null;
@@ -45,6 +46,15 @@ export default async function BoltCardSection({
           <IssueCardButton participantId={participantId} />
         )}
       </div>
+
+      {/* Payment method selector — admin only */}
+      {isAdmin && (
+        <PaymentMethodSettings
+          participantId={participantId}
+          paymentMethod={paymentMethod ?? "BOLT_CARD"}
+          lightningAddress={lightningAddress ?? null}
+        />
+      )}
 
       {/* Lightning Address UI */}
       {isLnAddress && (
