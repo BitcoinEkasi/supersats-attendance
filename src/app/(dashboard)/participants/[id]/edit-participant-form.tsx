@@ -145,17 +145,21 @@ export default function EditParticipantForm({ participant }: { participant: Part
     "mt-1 block w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600";
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-gray-900">Personal Details</h3>
+    <div className="space-y-6">
       {isDirty && (
-        <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           You have unsaved changes — save before leaving this page.
         </div>
       )}
-      <form onSubmit={handleSubmit} onChange={() => { setSaved(false); setIsDirty(true); }} className="mt-4 space-y-4">
+      <form onSubmit={handleSubmit} onChange={() => { setSaved(false); setIsDirty(true); }} className="space-y-6">
         {error && (
           <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>
         )}
+
+        {/* ── Personal Details card ── */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h3 className="text-lg font-semibold text-gray-900">Personal Details</h3>
+          <div className="mt-4 space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Surname *</label>
@@ -407,6 +411,14 @@ export default function EditParticipantForm({ participant }: { participant: Part
           </div>
         </div>
 
+          </div>{/* end Personal Details fields */}
+        </div>{/* end Personal Details card */}
+
+        {/* ── Participation and Performance card ── */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h3 className="text-lg font-semibold text-gray-900">Participation and Performance</h3>
+          <div className="mt-4 space-y-4">
+
         <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
           <div className="space-y-4">
@@ -513,6 +525,18 @@ export default function EditParticipantForm({ participant }: { participant: Part
         <input type="hidden" name="profilePicture" value={profileLinkUrl} />
         <input type="hidden" name="notes" value={participant.notes || ""} />
 
+            <div className="border-t pt-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Certifications</p>
+              <CertificationsSection
+                participantId={participant.id}
+                certifications={participant.certifications}
+                inline
+              />
+            </div>
+
+          </div>{/* end Participation and Performance fields */}
+        </div>{/* end Participation and Performance card */}
+
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
           <button
             type="submit"
@@ -535,15 +559,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
           </button>
         </div>
       </form>
-
-      <div className="border-t pt-4">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Certifications</p>
-        <CertificationsSection
-          participantId={participant.id}
-          certifications={participant.certifications}
-          inline
-        />
-      </div>
     </div>
   );
 }
