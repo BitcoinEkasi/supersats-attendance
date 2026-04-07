@@ -35,6 +35,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const body = await req.json();
 
+  // Notes-only update
+  if ("notes" in body && Object.keys(body).length === 1) {
+    await prisma.participant.update({ where: { id }, data: { notes: body.notes?.trim() || null } });
+    return Response.json({ success: true });
+  }
+
   // Status-only update
   if (body.status && Object.keys(body).length === 1) {
     try {

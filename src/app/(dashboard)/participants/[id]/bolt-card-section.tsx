@@ -1,6 +1,6 @@
 import { getBoltUser, getZarPerSat, satsToZar, type BoltUser } from "@/lib/bolt";
-import { fmtDate } from "@/lib/format-date";
 import IssueCardButton from "./issue-card-button";
+import TransactionsList from "./transactions-list";
 
 function CardStatusBadge({ card }: { card: BoltUser["card"] }) {
   if (!card) return null;
@@ -33,7 +33,7 @@ export default async function BoltCardSection({
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Bolt Card</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Rewards</h3>
         {isAdmin && (!boltUserId || (boltUser && !boltUser.card)) && (
           <IssueCardButton participantId={participantId} />
         )}
@@ -80,36 +80,7 @@ export default async function BoltCardSection({
           {/* Transaction history */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Recent Transactions</p>
-            {boltUser.transactions.length === 0 ? (
-              <p className="text-sm text-gray-500">No transactions yet.</p>
-            ) : (
-              <div className="max-h-52 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-white">
-                    <tr className="border-b text-left text-gray-500">
-                      <th className="pb-1.5">Date</th>
-                      <th className="pb-1.5">Description</th>
-                      <th className="pb-1.5 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {boltUser.transactions.map((tx) => (
-                      <tr key={tx.id} className="border-b last:border-0">
-                        <td className="py-1.5 text-gray-500 whitespace-nowrap">
-                          {fmtDate(new Date(tx.created_at * 1000))}
-                        </td>
-                        <td className="py-1.5 text-gray-600 max-w-[150px] truncate">
-                          {tx.description ?? tx.type}
-                        </td>
-                        <td className={`py-1.5 text-right font-medium ${tx.type === "refill" ? "text-green-600" : "text-red-600"}`}>
-                          {tx.type === "refill" ? "+" : "-"}{tx.amount_sats.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <TransactionsList transactions={boltUser.transactions} />
           </div>
         </div>
       )}

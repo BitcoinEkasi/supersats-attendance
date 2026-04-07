@@ -146,7 +146,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-semibold text-gray-900">Edit Participant</h3>
+      <h3 className="text-lg font-semibold text-gray-900">Personal Details</h3>
       {isDirty && (
         <div className="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           You have unsaved changes — save before leaving this page.
@@ -408,87 +408,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
         </div>
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select name="status" defaultValue={participant.status} className={inputCls}>
-                  <option value="ACTIVE">Active</option>
-                  <option value="RETIRED">Retired</option>
-                </select>
-                {participant.status === "ACTIVE" && (
-                  <p className="mt-1 text-xs text-gray-500">Active from {fmtDate(participant.registrationDate)}</p>
-                )}
-                {participant.status === "RETIRED" && participant.retiredAt && (
-                  <p className="mt-1 text-xs text-red-500">Retired on {fmtDate(participant.retiredAt)}</p>
-                )}
-              </div>
-              <div className="flex items-end pb-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isJuniorCoach"
-                    defaultChecked={participant.isJuniorCoach}
-                    className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Junior Coach</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Level</label>
-              <select name="tskStatus" defaultValue={participant.tskStatus || ""} className={inputCls}>
-                <option value="">— select —</option>
-                <option value="Turtle">Turtle (Grom)</option>
-                <option value="Seal">Seal (Intermediate)</option>
-                <option value="Dolphin">Dolphin (Advanced)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Profile Link</label>
-              <input
-                type="url"
-                value={profileLinkUrl}
-                onChange={(e) => { setProfileLinkUrl(e.target.value); setSaved(false); }}
-                placeholder="https://..."
-                className={inputCls}
-              />
-            </div>
-          </div>
-        </div>
-
-        <input type="hidden" name="profilePicture" value={profileLinkUrl} />
-
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className={`rounded-full px-6 py-3 text-sm font-medium text-white shadow-lg disabled:opacity-50 transition-colors ${
-              saved ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
-            }`}
-          >
-            {loading ? "Saving…" : saved ? "Changes Saved" : "Save Changes"}
-          </button>
-          <button
-            type="button"
-            onClick={() => document.getElementById("scroll-container")?.scrollTo({ top: 0, behavior: "smooth" })}
-            className="rounded-full bg-gray-700 p-3 text-white shadow-lg hover:bg-gray-800"
-            aria-label="Scroll to top"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -535,14 +454,85 @@ export default function EditParticipantForm({ participant }: { participant: Part
         </div>
 
         <div className="border-t pt-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Notes</p>
-          <textarea
-            name="notes"
-            rows={4}
-            defaultValue={participant.notes || ""}
-            placeholder="Add any notes about this participant…"
-            className={inputCls}
-          />
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" defaultValue={participant.status} className={inputCls}>
+                  <option value="ACTIVE">Active</option>
+                  <option value="RETIRED">Retired</option>
+                </select>
+                {participant.status === "ACTIVE" && (
+                  <p className="mt-1 text-xs text-gray-500">Active from {fmtDate(participant.registrationDate)}</p>
+                )}
+                {participant.status === "RETIRED" && participant.retiredAt && (
+                  <p className="mt-1 text-xs text-red-500">Retired on {fmtDate(participant.retiredAt)}</p>
+                )}
+              </div>
+              <div className="flex items-end pb-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="isJuniorCoach"
+                    defaultChecked={participant.isJuniorCoach}
+                    className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Junior Coach</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">TSK Level</label>
+              <select name="tskStatus" defaultValue={participant.tskStatus || ""} className={inputCls}>
+                <option value="">— select —</option>
+                <option value="Turtle">Turtle (Grom)</option>
+                <option value="Seal">Seal (Intermediate)</option>
+                <option value="Dolphin">Dolphin (Advanced)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Profile Link</label>
+              <input
+                type="url"
+                value={profileLinkUrl}
+                onChange={(e) => { setProfileLinkUrl(e.target.value); setSaved(false); }}
+                placeholder="https://..."
+                className={inputCls}
+              />
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" name="profilePicture" value={profileLinkUrl} />
+        <input type="hidden" name="notes" value={participant.notes || ""} />
+
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className={`rounded-full px-6 py-3 text-sm font-medium text-white shadow-lg disabled:opacity-50 transition-colors ${
+              saved ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
+            }`}
+          >
+            {loading ? "Saving…" : saved ? "Changes Saved" : "Save Changes"}
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById("scroll-container")?.scrollTo({ top: 0, behavior: "smooth" })}
+            className="rounded-full bg-gray-700 p-3 text-white shadow-lg hover:bg-gray-800"
+            aria-label="Scroll to top"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
       </form>
 

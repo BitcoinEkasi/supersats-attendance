@@ -12,6 +12,8 @@ import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import MonthlyAttendanceHistory from "./monthly-attendance-history";
+import NotesSection from "./notes-section";
+import TskReviewsSection from "./tsk-reviews-section";
 import Image from "next/image";
 
 export default async function ParticipantDetailPage({
@@ -33,6 +35,7 @@ export default async function ParticipantDetailPage({
       certifications: { orderBy: { uploadedAt: "desc" } },
       performanceEvents: { orderBy: { eventDate: "desc" } },
       schoolReports: { orderBy: { year: "desc" } },
+      tskReviews: { orderBy: { reviewDate: "desc" } },
     },
   });
 
@@ -338,6 +341,13 @@ export default async function ParticipantDetailPage({
             isJuniorCoach={participant.isJuniorCoach}
           />
 
+          {role === "ADMINISTRATOR" && (
+            <NotesSection
+              participantId={participant.id}
+              initialNotes={participant.notes}
+            />
+          )}
+
         </div>
       </div>
 
@@ -347,6 +357,16 @@ export default async function ParticipantDetailPage({
           <SchoolReportsSection
             participantId={participant.id}
             reports={participant.schoolReports}
+          />
+        </div>
+      )}
+
+      {/* TSK Reviews — full width */}
+      {role === "ADMINISTRATOR" && (
+        <div className="mt-6">
+          <TskReviewsSection
+            participantId={participant.id}
+            reviews={participant.tskReviews}
           />
         </div>
       )}

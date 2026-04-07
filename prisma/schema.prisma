@@ -81,6 +81,7 @@ model Participant {
   certifications       Certification[]
   performanceEvents    PerformanceEvent[]
   schoolReports        SchoolReport[]
+  tskReviews           TskReview[]
 
   @@map("participants")
 }
@@ -175,6 +176,19 @@ model SchoolReport {
 
   @@unique([participantId, year])
   @@map("school_reports")
+}
+
+model TskReview {
+  id            String   @id @default(uuid())
+  participantId String   @map("participant_id")
+  reviewDate    DateTime @map("review_date")
+  documentUrl   String?  @map("document_url")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@map("tsk_reviews")
 }
 
 model MonthlyReport {
