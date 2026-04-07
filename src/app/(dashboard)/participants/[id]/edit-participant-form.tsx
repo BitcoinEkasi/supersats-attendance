@@ -500,9 +500,8 @@ export default function EditParticipantForm({ participant }: { participant: Part
               <div>
                 <label className="block text-sm font-medium text-gray-700">Payment Method</label>
                 <select
-                  name="paymentMethod"
                   value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  onChange={(e) => { setPaymentMethod(e.target.value); setSaved(false); setIsDirty(true); }}
                   className={inputCls}
                 >
                   <option value="BOLT_CARD">Bolt Card</option>
@@ -513,19 +512,17 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Lightning Address</label>
                   <input
-                    name="lightningAddress"
                     type="text"
                     value={lightningAddress}
-                    onChange={(e) => setLightningAddress(e.target.value)}
+                    onChange={(e) => { setLightningAddress(e.target.value); setSaved(false); setIsDirty(true); }}
                     placeholder="user@wallet.com"
                     className={inputCls}
                   />
                 </div>
               )}
             </div>
-            {paymentMethod === "BOLT_CARD" && (
-              <input type="hidden" name="lightningAddress" value="" />
-            )}
+            <input type="hidden" name="paymentMethod" value={paymentMethod} />
+            <input type="hidden" name="lightningAddress" value={lightningAddress} />
           </div>
         </div>
 
