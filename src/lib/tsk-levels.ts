@@ -4,7 +4,7 @@ export const TSK_LEVELS = [
   { value: "Seal Intermediate",    tagline: "Catching green waves and turning" },
   { value: "Seal Proficient",      tagline: "Linking moves with control and flow" },
   { value: "Dolphin Advanced",     tagline: "Generating speed and adding style" },
-  { value: "Dolphin Seasoned",     tagline: "Flowing through sections with power and confidence" },
+  { value: "Dolphin Refined",      tagline: "Flowing through sections with power and confidence" },
   { value: "Dolphin Professional", tagline: "Powered up and touring team ready" },
 ] as const;
 
