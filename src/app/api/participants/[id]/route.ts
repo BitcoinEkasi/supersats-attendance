@@ -81,6 +81,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ...(body.status === "RETIRED" ? { retiredAt: new Date() } : {}),
         ...(body.status === "ACTIVE" ? { retiredAt: null } : {}),
         isJuniorCoach: body.isJuniorCoach === "on" || body.isJuniorCoach === true,
+        juniorCoachLevel: (body.isJuniorCoach === "on" || body.isJuniorCoach === true) && body.juniorCoachLevel
+          ? parseInt(body.juniorCoachLevel) || null
+          : null,
         ethnicity: body.ethnicity?.trim() || null,
         language: body.language?.trim() || null,
         school: body.school?.trim() || null,

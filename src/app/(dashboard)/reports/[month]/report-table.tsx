@@ -21,6 +21,7 @@ type Entry = {
     dateOfBirth: Date | null;
     gender: "MALE" | "FEMALE" | null;
     isJuniorCoach: boolean;
+    juniorCoachLevel: number | null;
   };
 };
 
@@ -103,14 +104,15 @@ export default function ReportTable({ entries, reportMonth }: { entries: Entry[]
                     <span className={tier?.color || ""}>{pct.toFixed(1)}%</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
-                    {p.isJuniorCoach ? (
-                      <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Junior Coach</span>
-                    ) : (
-                      <>🗲 {entry.rewardSats.toLocaleString()}</>
+                    {p.isJuniorCoach && (
+                      <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        JC L{p.juniorCoachLevel ?? 1}
+                      </span>
                     )}
+                    {entry.rewardSats > 0 ? <>🗲 {entry.rewardSats.toLocaleString()}</> : null}
                   </td>
                   <td className="px-4 py-3">
-                    {p.isJuniorCoach ? null : entry.rewardSats === 0 ? (
+                    {entry.rewardSats === 0 ? (
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
                     ) : entry.payoutStatus === "paid" ? (
                       <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Paid</span>

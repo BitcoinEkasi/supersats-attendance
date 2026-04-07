@@ -60,6 +60,8 @@ export default function EditParticipantForm({ participant }: { participant: Part
     };
   }, [isDirty]);
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
+  const [isJuniorCoach, setIsJuniorCoach] = useState<boolean>(participant.isJuniorCoach);
+  const [juniorCoachLevel, setJuniorCoachLevel] = useState<string>((participant as any).juniorCoachLevel?.toString() || "");
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [paymentMethod, setPaymentMethod] = useState<string>((participant as any).paymentMethod || "BOLT_CARD");
   const [lightningAddress, setLightningAddress] = useState<string>((participant as any).lightningAddress || "");
@@ -486,20 +488,43 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <p className="mt-1 text-xs text-red-500">Retired on {fmtDate(participant.retiredAt)}</p>
                 )}
               </div>
-              <div className="flex items-end pb-2">
+              <div className="flex flex-col gap-2 pb-2">
                 {tskStatus === POD_LEVEL ? (
                   <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Dolphin Professional level</p>
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="isJuniorCoach"
-                      defaultChecked={participant.isJuniorCoach}
-                      className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Junior Coach</span>
-                  </label>
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isJuniorCoach}
+                        onChange={(e) => {
+                          setIsJuniorCoach(e.target.checked);
+                          if (!e.target.checked) setJuniorCoachLevel("");
+                          setSaved(false); setIsDirty(true);
+                        }}
+                        className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Junior Coach</span>
+                    </label>
+                    {isJuniorCoach && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600">Level</label>
+                        <select
+                          value={juniorCoachLevel}
+                          onChange={(e) => { setJuniorCoachLevel(e.target.value); setSaved(false); setIsDirty(true); }}
+                          className={inputCls}
+                        >
+                          <option value="">— select level —</option>
+                          <option value="1">Level 1 (×5)</option>
+                          <option value="2">Level 2 (×7.5)</option>
+                          <option value="3">Level 3 (×10)</option>
+                        </select>
+                      </div>
+                    )}
+                  </>
                 )}
+                <input type="hidden" name="isJuniorCoach" value={isJuniorCoach && tskStatus !== POD_LEVEL ? "on" : ""} />
+                <input type="hidden" name="juniorCoachLevel" value={juniorCoachLevel} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

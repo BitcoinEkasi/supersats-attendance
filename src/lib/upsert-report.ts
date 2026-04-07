@@ -28,7 +28,7 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
           { status: "RETIRED", retiredAt: { gte: monthStart } },
         ],
       },
-      select: { id: true, isJuniorCoach: true, retiredAt: true },
+      select: { id: true, isJuniorCoach: true, juniorCoachLevel: true, retiredAt: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -83,7 +83,11 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
       ).length;
 
       const percentage = totalEvents > 0 ? (attended / totalEvents) * 100 : 0;
-      const rewardSats = participant.isJuniorCoach ? 0 : calculateRewardSats(percentage);
+      const baseReward = calculateRewardSats(percentage);
+      const JC_MULTIPLIERS: Record<number, number> = { 1: 5, 2: 7.5, 3: 10 };
+      const rewardSats = participant.isJuniorCoach
+        ? Math.round(baseReward * (JC_MULTIPLIERS[participant.juniorCoachLevel ?? 1] ?? 5))
+        : baseReward;
 
       await tx.monthlyReportEntry.create({
         data: {

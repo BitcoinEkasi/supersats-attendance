@@ -341,6 +341,7 @@ export default async function ParticipantDetailPage({
             entries={historyEntries}
             sessionsByMonth={sessionsByMonth}
             isJuniorCoach={participant.isJuniorCoach}
+            juniorCoachLevel={(participant as any).juniorCoachLevel ?? null}
           />
 
           {role === "ADMINISTRATOR" && (

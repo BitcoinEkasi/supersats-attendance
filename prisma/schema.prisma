@@ -53,6 +53,7 @@ model Participant {
   dateOfBirth      DateTime          @map("date_of_birth")
   boltUserId       String?           @map("bolt_user_id")
   isJuniorCoach    Boolean           @default(false) @map("is_junior_coach")
+  juniorCoachLevel Int?              @map("junior_coach_level")
   ethnicity        String?
   language         String?
   school           String?

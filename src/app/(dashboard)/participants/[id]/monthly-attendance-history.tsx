@@ -31,10 +31,12 @@ export default function MonthlyAttendanceHistory({
   entries,
   sessionsByMonth,
   isJuniorCoach,
+  juniorCoachLevel,
 }: {
   entries: Entry[];
   sessionsByMonth: Record<string, Session[]>;
   isJuniorCoach: boolean;
+  juniorCoachLevel: number | null;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -63,16 +65,19 @@ export default function MonthlyAttendanceHistory({
                   <td className="py-2 font-medium">{entry.reportMonth}</td>
                   <td className="py-2">{entry.attended}/{entry.totalEvents} ({entry.percentage.toFixed(1)}%)</td>
                   <td className="py-2">
-                    {isJuniorCoach ? (
-                      <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Junior Coach</span>
-                    ) : entry.rewardSats === 0 ? (
+                    {isJuniorCoach && (
+                      <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        JC L{juniorCoachLevel ?? 1}
+                      </span>
+                    )}
+                    {entry.rewardSats === 0 ? (
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
                     ) : (
                       <span className="text-orange-600 font-medium">⚡ {entry.rewardSats.toLocaleString()} sats</span>
                     )}
                   </td>
                   <td className="py-2">
-                    {entry.rewardSats > 0 && !isJuniorCoach && (
+                    {entry.rewardSats > 0 && (
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${entry.payoutStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
                         {entry.payoutStatus === "paid" ? "Paid" : "Pending"}
                       </span>
