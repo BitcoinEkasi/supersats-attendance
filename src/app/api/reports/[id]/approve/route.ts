@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { getSASTNow } from "@/lib/sast";
-import { createPayoutBatch } from "@/lib/bolt";
+import { createPayoutBatch, createBoltUser } from "@/lib/bolt";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -13,7 +13,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     where: { id },
     include: {
       entries: {
-        include: { participant: { select: { boltUserId: true } } },
+        include: {
+          participant: {
+            select: { boltUserId: true, tskId: true, fullNames: true, paymentMethod: true, lightningAddress: true },
+          },
+        },
       },
     },
   });
@@ -29,13 +33,27 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     data: { status: "APPROVED", approvedAt: new Date(), approvedBy: user.id },
   });
 
-  // Build payout list — only participants with rewardSats > 0 and a bolt account
-  const eligible = report.entries.filter(
-    (e) => e.rewardSats > 0 && e.participant.boltUserId
-  );
-  const ineligibleCount = report.entries.filter(
-    (e) => e.rewardSats > 0 && !e.participant.boltUserId
-  ).length;
+  // Entries with a reward
+  const rewarded = report.entries.filter((e) => e.rewardSats > 0);
+
+  // Auto-create Bolt accounts for LN address participants who don't have one yet
+  for (const e of rewarded) {
+    if (e.participant.paymentMethod === "LIGHTNING_ADDRESS" && !e.participant.boltUserId) {
+      try {
+        const bolt = await createBoltUser(e.participant.tskId, e.participant.fullNames);
+        await prisma.participant.update({
+          where: { id: e.participantId },
+          data: { boltUserId: String(bolt.id) },
+        });
+        e.participant.boltUserId = String(bolt.id);
+      } catch (err: any) {
+        console.error(`[approve] Failed to create Bolt account for ${e.participant.tskId}:`, err.message);
+      }
+    }
+  }
+
+  const eligible = rewarded.filter((e) => e.participant.boltUserId);
+  const ineligibleCount = rewarded.length - eligible.length;
 
   if (eligible.length === 0) {
     return Response.json({ success: true, invoice: null, ineligible_count: ineligibleCount });
@@ -48,6 +66,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         user_id: Number(e.participant.boltUserId),
         amount_sats: e.rewardSats,
         description: `Monthly reward – ${report.month}`,
+        payout_type: e.participant.paymentMethod === "LIGHTNING_ADDRESS" ? "ln_address" : "internal",
+        ln_address: e.participant.paymentMethod === "LIGHTNING_ADDRESS" ? (e.participant.lightningAddress ?? undefined) : undefined,
       })),
     });
 
@@ -73,7 +93,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       },
     });
   } catch (err: any) {
-    // Approval succeeded even if invoice creation fails — surface the error
     return Response.json({
       success: true,
       invoice: null,

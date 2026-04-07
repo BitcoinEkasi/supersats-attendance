@@ -35,6 +35,11 @@ enum ReportStatus {
   APPROVED
 }
 
+enum PaymentMethod {
+  BOLT_CARD
+  LIGHTNING_ADDRESS
+}
+
 model Participant {
   id               String            @id @default(uuid())
   tskId            String            @unique @map("tsk_id")
@@ -70,6 +75,8 @@ model Participant {
   shoeSize         String?           @map("shoe_size")
   wetsuiteSize     String?           @map("wetsuit_size")
   notes            String?
+  paymentMethod    PaymentMethod     @default(BOLT_CARD) @map("payment_method")
+  lightningAddress String?           @map("lightning_address")
   status           ParticipantStatus @default(ACTIVE)
   retiredAt        DateTime?         @map("retired_at")
   createdAt        DateTime          @default(now()) @map("created_at")

@@ -59,6 +59,8 @@ export default function EditParticipantForm({ participant }: { participant: Part
     };
   }, [isDirty]);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
+  const [paymentMethod, setPaymentMethod] = useState<string>((participant as any).paymentMethod || "BOLT_CARD");
+  const [lightningAddress, setLightningAddress] = useState<string>((participant as any).lightningAddress || "");
   const [selectedGrade, setSelectedGrade] = useState<string>(participant.grade || "");
   const [idError, setIdError] = useState("");
   const [idDerived, setIdDerived] = useState<{ dob: string; gender: string } | null>(() =>
@@ -494,6 +496,36 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 </label>
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+                <select
+                  name="paymentMethod"
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="BOLT_CARD">Bolt Card</option>
+                  <option value="LIGHTNING_ADDRESS">Lightning Address</option>
+                </select>
+              </div>
+              {paymentMethod === "LIGHTNING_ADDRESS" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Lightning Address</label>
+                  <input
+                    name="lightningAddress"
+                    type="text"
+                    value={lightningAddress}
+                    onChange={(e) => setLightningAddress(e.target.value)}
+                    placeholder="user@wallet.com"
+                    className={inputCls}
+                  />
+                </div>
+              )}
+            </div>
+            {paymentMethod === "BOLT_CARD" && (
+              <input type="hidden" name="lightningAddress" value="" />
+            )}
           </div>
         </div>
 

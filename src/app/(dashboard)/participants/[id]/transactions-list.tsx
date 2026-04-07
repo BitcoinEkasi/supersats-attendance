@@ -9,6 +9,7 @@ type Transaction = {
   description: string | null;
   type: string;
   amount_sats: number;
+  status?: string;
 };
 
 export default function TransactionsList({ transactions }: { transactions: Transaction[] }) {
@@ -30,8 +31,20 @@ export default function TransactionsList({ transactions }: { transactions: Trans
         <td className="py-1.5 text-gray-600 max-w-[150px] truncate">
           {tx.description ?? tx.type}
         </td>
-        <td className={`py-1.5 text-right font-medium ${tx.type === "refill" ? "text-green-600" : "text-red-600"}`}>
-          {tx.type === "refill" ? "+" : "-"}{tx.amount_sats.toLocaleString()}
+        <td className="py-1.5 text-right font-medium">
+          {tx.type === "ln_payout" ? (
+            tx.status === "paid" ? (
+              <span className="text-green-600">→ {tx.amount_sats.toLocaleString()}</span>
+            ) : tx.status === "failed" ? (
+              <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">Failed</span>
+            ) : (
+              <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">{tx.status ?? "pending"}</span>
+            )
+          ) : (
+            <span className={tx.type === "refill" ? "text-green-600" : "text-red-600"}>
+              {tx.type === "refill" ? "+" : "-"}{tx.amount_sats.toLocaleString()}
+            </span>
+          )}
         </td>
       </tr>
     );

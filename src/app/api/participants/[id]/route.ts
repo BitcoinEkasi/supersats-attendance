@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
-import type { ParticipantStatus } from "@prisma/client";
+import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth();
@@ -103,6 +103,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         shoeSize: body.shoeSize?.trim() || null,
         wetsuiteSize: body.wetsuiteSize?.trim() || null,
         notes: body.notes?.trim() || null,
+        paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
+        lightningAddress: body.lightningAddress?.trim() || null,
         ...(body.registrationDate ? { registrationDate: new Date(body.registrationDate + "T00:00:00Z") } : {}),
         ...(body.profilePicture !== undefined ? { profilePicture: body.profilePicture || null } : {}),
       },

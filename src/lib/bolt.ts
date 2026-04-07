@@ -16,9 +16,10 @@ function boltFetch(path: string, options?: RequestInit) {
 
 export interface BoltTransaction {
   id: number;
-  type: 'spend' | 'refill';
+  type: 'spend' | 'refill' | 'ln_payout';
   amount_sats: number;
   description: string | null;
+  status?: string;
   created_at: number;
 }
 
@@ -108,7 +109,7 @@ export function satsToZar(sats: number, zarPerSat: number): string {
 
 export async function createPayoutBatch(params: {
   memo: string;
-  payouts: { user_id: number; amount_sats: number; description?: string }[];
+  payouts: { user_id: number; amount_sats: number; description?: string; payout_type?: string; ln_address?: string }[];
 }): Promise<{ batch_id: number; payment_hash: string; payment_request: string; total_sats: number; qr_base64: string }> {
   const res = await boltFetch('/api/v1/payout/batch', {
     method: 'POST',
@@ -126,6 +127,22 @@ export async function getPayoutBatchStatus(batchId: number): Promise<{ status: s
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
+}
+
+export async function payLnAddress(boltUserId: number, params: {
+  ln_address: string;
+  amount_sats: number;
+  description?: string;
+}): Promise<{ status: string }> {
+  const res = await boltFetch(`/api/v1/users/${boltUserId}/ln-payout`, {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+  const body = await res.json();
+  if (!res.ok && res.status !== 502) {
+    throw new Error(`Bolt payLnAddress ${res.status}: ${JSON.stringify(body)}`);
+  }
+  return body;
 }
 
 export async function getBoltUser(boltUserId: string): Promise<BoltUser | null> {

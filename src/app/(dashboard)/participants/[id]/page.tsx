@@ -333,6 +333,8 @@ export default async function ParticipantDetailPage({
             boltUserId={participant.boltUserId ?? null}
             isAdmin={role === "ADMINISTRATOR"}
             prefetchedBoltUser={boltUser}
+            paymentMethod={(participant as any).paymentMethod ?? "BOLT_CARD"}
+            lightningAddress={(participant as any).lightningAddress ?? null}
           />
 
           <MonthlyAttendanceHistory
