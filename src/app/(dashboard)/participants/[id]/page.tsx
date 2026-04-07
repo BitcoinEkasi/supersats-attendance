@@ -12,7 +12,6 @@ import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import MonthlyAttendanceHistory from "./monthly-attendance-history";
-import { POD_LEVEL } from "@/lib/tsk-levels";
 import NotesSection from "./notes-section";
 import TskReviewsSection from "./tsk-reviews-section";
 import Image from "next/image";
@@ -342,7 +341,6 @@ export default async function ParticipantDetailPage({
             entries={historyEntries}
             sessionsByMonth={sessionsByMonth}
             isJuniorCoach={participant.isJuniorCoach}
-            isPod={participant.tskStatus === POD_LEVEL}
           />
 
           {role === "ADMINISTRATOR" && (

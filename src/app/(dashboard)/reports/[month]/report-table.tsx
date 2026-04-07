@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { REWARD_TIERS } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
-import { POD_LEVEL } from "@/lib/tsk-levels";
 
 type Entry = {
   id: string;
@@ -22,7 +21,6 @@ type Entry = {
     dateOfBirth: Date | null;
     gender: "MALE" | "FEMALE" | null;
     isJuniorCoach: boolean;
-    tskStatus: string | null;
   };
 };
 
@@ -93,7 +91,6 @@ export default function ReportTable({ entries, reportMonth }: { entries: Entry[]
               const p = entry.participant;
               const name = `${p.surname}, ${p.fullNames}${p.knownAs ? ` (${p.knownAs})` : ""}`;
 
-              const isPod = p.tskStatus === POD_LEVEL;
               return (
                 <tr key={entry.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.tskId}</td>
@@ -108,14 +105,12 @@ export default function ReportTable({ entries, reportMonth }: { entries: Entry[]
                   <td className="px-4 py-3 font-medium">
                     {p.isJuniorCoach ? (
                       <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Junior Coach</span>
-                    ) : isPod ? (
-                      <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">POD</span>
                     ) : (
                       <>🗲 {entry.rewardSats.toLocaleString()}</>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {p.isJuniorCoach || isPod ? null : entry.rewardSats === 0 ? (
+                    {p.isJuniorCoach ? null : entry.rewardSats === 0 ? (
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
                     ) : entry.payoutStatus === "paid" ? (
                       <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Paid</span>

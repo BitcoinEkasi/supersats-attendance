@@ -25,7 +25,7 @@ export default async function ReportDetailPage({
             participant: {
               select: {
                 tskId: true, surname: true, fullNames: true, knownAs: true,
-                dateOfBirth: true, gender: true, isJuniorCoach: true, tskStatus: true,
+                dateOfBirth: true, gender: true, isJuniorCoach: true,
               },
             },
           },
@@ -160,7 +160,6 @@ export default async function ReportDetailPage({
             dateOfBirth: e.participant.dateOfBirth,
             gender: e.participant.gender,
             isJuniorCoach: e.participant.isJuniorCoach,
-            tskStatus: e.participant.tskStatus,
           },
         }))}
       />

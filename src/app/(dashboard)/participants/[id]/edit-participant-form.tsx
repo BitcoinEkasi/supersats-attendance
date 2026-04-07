@@ -487,15 +487,19 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 )}
               </div>
               <div className="flex items-end pb-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="isJuniorCoach"
-                    defaultChecked={participant.isJuniorCoach}
-                    className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Junior Coach</span>
-                </label>
+                {tskStatus === POD_LEVEL ? (
+                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Dolphin Professional level</p>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="isJuniorCoach"
+                      defaultChecked={participant.isJuniorCoach}
+                      className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Junior Coach</span>
+                  </label>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -545,11 +549,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
               </select>
               {tskStatus && TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP] && (
                 <p className="mt-1 text-xs text-gray-500 italic">{TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP]}</p>
-              )}
-              {tskStatus === POD_LEVEL && (
-                <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                  POD participants do not qualify for monthly rewards. They can also serve as Junior Coach — enable that option if applicable.
-                </div>
               )}
               <input type="hidden" name="tskStatus" value={tskStatus} />
             </div>

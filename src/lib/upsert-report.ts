@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { calculateRewardSats } from "@/lib/rewards";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
-import { POD_LEVEL } from "@/lib/tsk-levels";
 
 export async function upsertMonthlyReport(month: string, generatedBy: string) {
   if (!/^\d{4}-\d{2}$/.test(month)) return;
@@ -29,7 +28,7 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
           { status: "RETIRED", retiredAt: { gte: monthStart } },
         ],
       },
-      select: { id: true, isJuniorCoach: true, tskStatus: true, retiredAt: true },
+      select: { id: true, isJuniorCoach: true, retiredAt: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -84,8 +83,7 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
       ).length;
 
       const percentage = totalEvents > 0 ? (attended / totalEvents) * 100 : 0;
-      const isPod = participant.tskStatus === POD_LEVEL;
-      const rewardSats = (participant.isJuniorCoach || isPod) ? 0 : calculateRewardSats(percentage);
+      const rewardSats = participant.isJuniorCoach ? 0 : calculateRewardSats(percentage);
 
       await tx.monthlyReportEntry.create({
         data: {
