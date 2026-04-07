@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getExpectedGrade } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
+import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL } from "@/lib/tsk-levels";
 import type { Participant, Certification, PerformanceEvent } from "@prisma/client";
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
@@ -58,6 +59,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
       document.removeEventListener('click', handleClick, true);
     };
   }, [isDirty]);
+  const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [paymentMethod, setPaymentMethod] = useState<string>((participant as any).paymentMethod || "BOLT_CARD");
   const [lightningAddress, setLightningAddress] = useState<string>((participant as any).lightningAddress || "");
@@ -531,12 +533,25 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">TSK Level</label>
-              <select name="tskStatus" defaultValue={participant.tskStatus || ""} className={inputCls}>
+              <select
+                value={tskStatus}
+                onChange={(e) => { setTskStatus(e.target.value); setSaved(false); setIsDirty(true); }}
+                className={inputCls}
+              >
                 <option value="">— select —</option>
-                <option value="Turtle">Turtle (Grom)</option>
-                <option value="Seal">Seal (Intermediate)</option>
-                <option value="Dolphin">Dolphin (Advanced)</option>
+                {TSK_LEVELS.map((l) => (
+                  <option key={l.value} value={l.value}>{l.value}</option>
+                ))}
               </select>
+              {tskStatus && TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP] && (
+                <p className="mt-1 text-xs text-gray-500 italic">{TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP]}</p>
+              )}
+              {tskStatus === POD_LEVEL && (
+                <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  POD participants do not qualify for monthly rewards. They can also serve as Junior Coach — enable that option if applicable.
+                </div>
+              )}
+              <input type="hidden" name="tskStatus" value={tskStatus} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Profile Link</label>
