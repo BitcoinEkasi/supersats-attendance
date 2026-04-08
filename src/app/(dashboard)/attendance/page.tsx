@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
+import DeleteEventButton from "./delete-event-button";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 
@@ -46,7 +47,7 @@ export default async function AttendancePage() {
   }
 
   // Desktop layout
-  const [events, activeCount, todayEvent] = await Promise.all([
+  const [events, activeCount, todayEvent, approvedMonths] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
       take: 30,
@@ -56,7 +57,12 @@ export default async function AttendancePage() {
     }),
     prisma.participant.count({ where: { status: "ACTIVE" } }),
     prisma.event.findFirst({ where: { date: { gte: todayStart, lte: todayEnd } } }),
+    prisma.monthlyReport.findMany({
+      where: { status: "APPROVED" },
+      select: { month: true },
+    }),
   ]);
+  const approvedMonthSet = new Set(approvedMonths.map((r) => r.month));
 
   return (
     <div>
@@ -87,6 +93,8 @@ export default async function AttendancePage() {
                   {events.map((event) => {
                     const marked = event._count.attendanceRecords;
                     const complete = marked >= activeCount;
+                    const eventMonth = `${event.date.getUTCFullYear()}-${String(event.date.getUTCMonth() + 1).padStart(2, "0")}`;
+                    const isApproved = approvedMonthSet.has(eventMonth);
                     return (
                       <tr key={event.id} className="border-b last:border-0">
                         <td className="px-4 py-3 font-medium">{fmtDate(event.date)}</td>
@@ -102,9 +110,14 @@ export default async function AttendancePage() {
                         </td>
                         <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
                         <td className="px-4 py-3">
-                          <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
-                            {complete ? "View" : "Capture"}
-                          </Link>
+                          <div className="flex items-center gap-3">
+                            <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
+                              {complete ? "View" : "Capture"}
+                            </Link>
+                            {!isApproved && (
+                              <DeleteEventButton eventId={event.id} eventDate={fmtDate(event.date)} />
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

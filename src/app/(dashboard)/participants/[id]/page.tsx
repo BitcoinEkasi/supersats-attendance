@@ -145,7 +145,14 @@ export default async function ParticipantDetailPage({
                 <span>
                   Joined {fmtDate(participant.registrationDate)}
                   <span className="mx-1.5 text-gray-300">·</span>
-                  <span className="text-red-500">Retired on {fmtDate(participant.retiredAt)}</span>
+                  <span className="text-red-500">
+                    Retired on {fmtDate(participant.retiredAt)}
+                    {(participant as any).retiredReason && (
+                      <> — {(participant as any).retiredReason === "Other"
+                        ? ((participant as any).retiredReasonOther || "Other")
+                        : (participant as any).retiredReason}</>
+                    )}
+                  </span>
                   <span className="mx-1.5 text-gray-300">·</span>
                   after {formatDuration(participant.registrationDate, participant.retiredAt)}
                 </span>

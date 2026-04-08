@@ -7,7 +7,16 @@ import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
 import TskLevelHistorySection from "./tsk-level-history-section";
 import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL } from "@/lib/tsk-levels";
-import type { Participant, Certification, PerformanceEvent, TskLevelHistory } from "@prisma/client";
+import type { Participant, Certification, PerformanceEvent, TskLevelHistory, ParticipantStatus } from "@prisma/client";
+
+const RETIRED_REASONS = [
+  "At age 18",
+  "Relocated",
+  "Poor attendance",
+  "Lack of interest",
+  "Negative attitude or behavior",
+  "Other",
+] as const;
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   if (!/^\d{13}$/.test(id)) return null;
@@ -60,6 +69,9 @@ export default function EditParticipantForm({ participant }: { participant: Part
       document.removeEventListener('click', handleClick, true);
     };
   }, [isDirty]);
+  const [participantStatus, setParticipantStatus] = useState<ParticipantStatus>(participant.status);
+  const [retiredReason, setRetiredReason] = useState<string>((participant as any).retiredReason || "");
+  const [retiredReasonOther, setRetiredReasonOther] = useState<string>((participant as any).retiredReasonOther || "");
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
   const [isJuniorCoach, setIsJuniorCoach] = useState<boolean>(participant.isJuniorCoach);
   const [juniorCoachLevel, setJuniorCoachLevel] = useState<string>((participant as any).juniorCoachLevel?.toString() || "");
@@ -427,7 +439,14 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <div className="mt-4 space-y-4">
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
+          <div className="mb-3 flex items-center gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
+            {(participant as any).measurementsUpdatedAt && (
+              <span className="text-xs text-gray-400">
+                Last updated: {fmtDate(new Date((participant as any).measurementsUpdatedAt))}
+              </span>
+            )}
+          </div>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -476,17 +495,49 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <select name="status" defaultValue={participant.status} className={inputCls}>
-                  <option value="ACTIVE">Active</option>
-                  <option value="RETIRED">Retired</option>
-                </select>
-                {participant.status === "ACTIVE" && (
-                  <p className="mt-1 text-xs text-gray-500">Active from {fmtDate(participant.registrationDate)}</p>
-                )}
-                {participant.status === "RETIRED" && participant.retiredAt && (
-                  <p className="mt-1 text-xs text-red-500">Retired on {fmtDate(participant.retiredAt)}</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <select
+                    name="status"
+                    value={participantStatus}
+                    onChange={(e) => { setParticipantStatus(e.target.value as ParticipantStatus); setSaved(false); setIsDirty(true); }}
+                    className={inputCls}
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="RETIRED">Retired</option>
+                  </select>
+                  {participantStatus === "ACTIVE" && (
+                    <p className="mt-1 text-xs text-gray-500">Active from {fmtDate(participant.registrationDate)}</p>
+                  )}
+                  {participantStatus === "RETIRED" && participant.retiredAt && (
+                    <p className="mt-1 text-xs text-red-500">Retired on {fmtDate(participant.retiredAt)}</p>
+                  )}
+                </div>
+                {participantStatus === "RETIRED" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Reason for retirement</label>
+                    <select
+                      name="retiredReason"
+                      value={retiredReason}
+                      onChange={(e) => { setRetiredReason(e.target.value); setSaved(false); setIsDirty(true); }}
+                      className={inputCls}
+                    >
+                      <option value="">— select reason —</option>
+                      {RETIRED_REASONS.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                    {retiredReason === "Other" && (
+                      <input
+                        name="retiredReasonOther"
+                        value={retiredReasonOther}
+                        onChange={(e) => { setRetiredReasonOther(e.target.value); setSaved(false); setIsDirty(true); }}
+                        placeholder="Please describe…"
+                        className={`${inputCls} mt-2`}
+                      />
+                    )}
+                  </div>
                 )}
               </div>
               <div className="flex flex-col gap-2 pb-2">

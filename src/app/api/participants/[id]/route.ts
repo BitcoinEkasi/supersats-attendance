@@ -41,12 +41,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ success: true });
   }
 
-  // Status-only update
-  if (body.status && Object.keys(body).length === 1) {
+  // Status-only update (legacy path — full form update now handles status too)
+  if (body.status && Object.keys(body).filter((k) => !["status", "retiredReason", "retiredReasonOther"].includes(k)).length === 0) {
     try {
-      const data: { status: ParticipantStatus; retiredAt?: Date | null } = { status: body.status as ParticipantStatus };
-      if (body.status === "RETIRED") data.retiredAt = new Date();
-      if (body.status === "ACTIVE") data.retiredAt = null;
+      const data: Record<string, unknown> = { status: body.status as ParticipantStatus };
+      if (body.status === "RETIRED") {
+        data.retiredAt = new Date();
+        data.retiredReason = body.retiredReason?.trim() || null;
+        data.retiredReasonOther = body.retiredReason === "Other" ? (body.retiredReasonOther?.trim() || null) : null;
+      }
+      if (body.status === "ACTIVE") { data.retiredAt = null; data.retiredReason = null; data.retiredReasonOther = null; }
       await prisma.participant.update({ where: { id }, data });
       return Response.json({ success: true });
     } catch {
@@ -68,8 +72,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const newTskStatus = body.tskStatus?.trim() || null;
-  const existing = await prisma.participant.findUnique({ where: { id }, select: { tskStatus: true } });
+  const existing = await prisma.participant.findUnique({
+    where: { id },
+    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true },
+  });
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
+
+  const newWeightKg = body.weightKg ? parseFloat(body.weightKg) || null : null;
+  const newHeightCm = body.heightCm ? parseFloat(body.heightCm) || null : null;
+  const newTshirtSize = body.tshirtSize?.trim() || null;
+  const newShoeSize = body.shoeSize?.trim() || null;
+  const newWetsuiteSize = body.wetsuiteSize?.trim() || null;
+  const measurementsChanged = existing && (
+    existing.weightKg !== newWeightKg ||
+    existing.heightCm !== newHeightCm ||
+    existing.tshirtSize !== newTshirtSize ||
+    existing.shoeSize !== newShoeSize ||
+    existing.wetsuiteSize !== newWetsuiteSize
+  );
 
   try {
     await prisma.participant.update({
@@ -82,8 +102,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         gender: parsed.gender,
         dateOfBirth: parsed.dob,
         status: body.status as ParticipantStatus,
-        ...(body.status === "RETIRED" ? { retiredAt: new Date() } : {}),
-        ...(body.status === "ACTIVE" ? { retiredAt: null } : {}),
+        ...(body.status === "RETIRED" ? {
+          retiredAt: new Date(),
+          retiredReason: body.retiredReason?.trim() || null,
+          retiredReasonOther: body.retiredReason === "Other" ? (body.retiredReasonOther?.trim() || null) : null,
+        } : {}),
+        ...(body.status === "ACTIVE" ? { retiredAt: null, retiredReason: null, retiredReasonOther: null } : {}),
         isJuniorCoach: body.isJuniorCoach === "on" || body.isJuniorCoach === true,
         juniorCoachLevel: (body.isJuniorCoach === "on" || body.isJuniorCoach === true) && body.juniorCoachLevel
           ? parseInt(body.juniorCoachLevel) || null
@@ -105,11 +129,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         indemnityUploadedAt: body.indemnityUploadedAt ? new Date(body.indemnityUploadedAt) : null,
         tskStatus: newTskStatus,
         ...(tskStatusChanged ? { tskStatusUpdatedAt: new Date() } : {}),
-        weightKg: body.weightKg ? parseFloat(body.weightKg) || null : null,
-        heightCm: body.heightCm ? parseFloat(body.heightCm) || null : null,
-        tshirtSize: body.tshirtSize?.trim() || null,
-        shoeSize: body.shoeSize?.trim() || null,
-        wetsuiteSize: body.wetsuiteSize?.trim() || null,
+        weightKg: newWeightKg,
+        heightCm: newHeightCm,
+        tshirtSize: newTshirtSize,
+        shoeSize: newShoeSize,
+        wetsuiteSize: newWetsuiteSize,
+        ...(measurementsChanged ? { measurementsUpdatedAt: new Date() } : {}),
         notes: body.notes?.trim() || null,
         paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
         lightningAddress: body.lightningAddress?.trim() || null,

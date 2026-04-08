@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
+import { upsertMonthlyReport } from "@/lib/upsert-report";
+import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import type { EventCategory } from "@prisma/client";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +22,52 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   if (!event) return Response.json({ error: "Not found" }, { status: 404 });
   return Response.json(event);
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await requireAuth(["ADMINISTRATOR"]);
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+
+  const event = await prisma.event.findUnique({ where: { id }, select: { id: true, date: true } });
+  if (!event) return Response.json({ error: "Not found" }, { status: 404 });
+
+  // Derive the month string (YYYY-MM) in the same UTC noon convention used throughout
+  const d = event.date;
+  const month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+
+  // Block deletion if the month's report has already been approved
+  const report = await prisma.monthlyReport.findUnique({
+    where: { month },
+    select: { status: true },
+  });
+  if (report?.status === "APPROVED") {
+    return Response.json(
+      { error: "This session belongs to an approved report and cannot be deleted." },
+      { status: 409 }
+    );
+  }
+
+  // Delete attendance records then the event
+  await prisma.$transaction([
+    prisma.attendanceRecord.deleteMany({ where: { eventId: id } }),
+    prisma.event.delete({ where: { id } }),
+  ]);
+
+  // Re-calculate the monthly report (skips automatically if no events remain)
+  const monthStart = getStartOfSASTMonth(month);
+  const monthEnd = getEndOfSASTMonth(month);
+  const remaining = await prisma.event.count({ where: { date: { gte: monthStart, lte: monthEnd } } });
+  if (remaining > 0) {
+    await upsertMonthlyReport(month, user.id);
+  } else if (report) {
+    // No events left — reset the report to empty
+    await prisma.monthlyReportEntry.deleteMany({ where: { report: { month } } });
+    await prisma.monthlyReport.update({ where: { month }, data: { status: "PENDING", approvedAt: null, approvedBy: null } });
+  }
+
+  return Response.json({ success: true });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

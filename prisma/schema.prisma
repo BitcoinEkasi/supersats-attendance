@@ -79,8 +79,11 @@ model Participant {
   notes            String?
   paymentMethod    PaymentMethod     @default(BOLT_CARD) @map("payment_method")
   lightningAddress String?           @map("lightning_address")
+  measurementsUpdatedAt DateTime?     @map("measurements_updated_at")
   status           ParticipantStatus @default(ACTIVE)
   retiredAt        DateTime?         @map("retired_at")
+  retiredReason    String?           @map("retired_reason")
+  retiredReasonOther String?         @map("retired_reason_other")
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
