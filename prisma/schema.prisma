@@ -70,6 +70,7 @@ model Participant {
   indemnityFormUrl     String?       @map("indemnity_form_url")
   indemnityUploadedAt  DateTime?     @map("indemnity_uploaded_at")
   tskStatus        String?           @map("tsk_status")
+  tskStatusUpdatedAt DateTime?       @map("tsk_status_updated_at")
   weightKg         Float?            @map("weight_kg")
   heightCm         Float?            @map("height_cm")
   tshirtSize       String?           @map("tshirt_size")

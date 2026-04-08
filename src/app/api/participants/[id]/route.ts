@@ -67,6 +67,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ error: parsed.error }, { status: 400 });
   }
 
+  const newTskStatus = body.tskStatus?.trim() || null;
+  const existing = await prisma.participant.findUnique({ where: { id }, select: { tskStatus: true } });
+  const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
+
   try {
     await prisma.participant.update({
       where: { id },
@@ -99,7 +103,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         idDocumentUploadedAt: body.idDocumentUploadedAt ? new Date(body.idDocumentUploadedAt) : null,
         indemnityFormUrl: body.indemnityFormUrl?.trim() || null,
         indemnityUploadedAt: body.indemnityUploadedAt ? new Date(body.indemnityUploadedAt) : null,
-        tskStatus: body.tskStatus?.trim() || null,
+        tskStatus: newTskStatus,
+        ...(tskStatusChanged ? { tskStatusUpdatedAt: new Date() } : {}),
         weightKg: body.weightKg ? parseFloat(body.weightKg) || null : null,
         heightCm: body.heightCm ? parseFloat(body.heightCm) || null : null,
         tshirtSize: body.tshirtSize?.trim() || null,

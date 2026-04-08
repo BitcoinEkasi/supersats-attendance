@@ -59,17 +59,6 @@ export default async function BoltCardSection({
       {/* Lightning Address UI */}
       {isLnAddress && (
         <div className="mt-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700">
-              ⚡ Lightning Address
-            </span>
-            {lightningAddress && (
-              <span className="font-mono text-sm text-gray-700">{lightningAddress}</span>
-            )}
-            {!lightningAddress && (
-              <span className="text-sm text-gray-400">No address set</span>
-            )}
-          </div>
           {boltUser && (
             <div>
               <div className="flex items-center justify-between">

@@ -499,28 +499,28 @@ export default function EditParticipantForm({ participant }: { participant: Part
                         checked={isJuniorCoach}
                         onChange={(e) => {
                           setIsJuniorCoach(e.target.checked);
-                          if (!e.target.checked) setJuniorCoachLevel("");
+                          if (e.target.checked) {
+                            if (!juniorCoachLevel) setJuniorCoachLevel("1");
+                          } else {
+                            setJuniorCoachLevel("");
+                          }
                           setSaved(false); setIsDirty(true);
                         }}
                         className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       <span className="text-sm font-medium text-gray-700">Junior Coach</span>
-                    </label>
-                    {isJuniorCoach && (
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600">Level</label>
+                      {isJuniorCoach && (
                         <select
                           value={juniorCoachLevel}
                           onChange={(e) => { setJuniorCoachLevel(e.target.value); setSaved(false); setIsDirty(true); }}
-                          className={inputCls}
+                          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
                         >
-                          <option value="">— select level —</option>
                           <option value="1">Level 1 (×5)</option>
                           <option value="2">Level 2 (×7.5)</option>
                           <option value="3">Level 3 (×10)</option>
                         </select>
-                      </div>
-                    )}
+                      )}
+                    </label>
                   </>
                 )}
                 <input type="hidden" name="isJuniorCoach" value={isJuniorCoach && tskStatus !== POD_LEVEL ? "on" : ""} />
@@ -574,6 +574,9 @@ export default function EditParticipantForm({ participant }: { participant: Part
               </select>
               {tskStatus && TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP] && (
                 <p className="mt-1 text-xs text-gray-500 italic">{TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP]}</p>
+              )}
+              {(participant as any).tskStatusUpdatedAt && (
+                <p className="mt-1 text-xs text-gray-400">Level updated {fmtDate(new Date((participant as any).tskStatusUpdatedAt))}</p>
               )}
               <input type="hidden" name="tskStatus" value={tskStatus} />
             </div>

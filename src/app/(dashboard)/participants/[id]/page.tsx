@@ -152,7 +152,14 @@ export default async function ParticipantDetailPage({
                 <span>Joined {fmtDate(participant.registrationDate)}</span>
               )}
             </div>
-            {participant.boltUserId && (
+            {(participant as any).paymentMethod === "LIGHTNING_ADDRESS" ? (
+              (participant as any).lightningAddress && (
+                <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
+                  <span className="text-gray-400">⚡ Lightning</span>
+                  <span className="font-mono text-xs text-gray-600">{(participant as any).lightningAddress}</span>
+                </div>
+              )
+            ) : participant.boltUserId && (
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
                 <span className="text-gray-400">Bolt Card</span>
                 {boltUser?.card?.card_id && (
@@ -276,7 +283,14 @@ export default async function ParticipantDetailPage({
                   <dd className="font-medium">{participant.housingType}</dd>
                 </div>
               )}
-              {participant.boltUserId && (
+              {(participant as any).paymentMethod === "LIGHTNING_ADDRESS" ? (
+                (participant as any).lightningAddress && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Lightning Address</dt>
+                    <dd className="font-mono text-sm">{(participant as any).lightningAddress}</dd>
+                  </div>
+                )
+              ) : participant.boltUserId && (
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Bolt Card</dt>
                   <dd><span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">Issued</span></dd>
