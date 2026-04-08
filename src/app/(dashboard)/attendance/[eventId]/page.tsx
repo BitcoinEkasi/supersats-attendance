@@ -5,7 +5,6 @@ import Link from "next/link";
 import AttendanceCapture from "./attendance-capture";
 import CategorySelect from "./category-select";
 import NoteInput from "./note-input";
-import LogoutButton from "./logout-button";
 import MidnightRedirect from "./midnight-redirect";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
@@ -80,7 +79,6 @@ export default async function EventAttendancePage({
             <CategorySelect eventId={event.id} category={event.category} />
             <NoteInput eventId={event.id} note={event.note} />
           </div>
-          <LogoutButton />
         </div>
 
         <AttendanceCapture
