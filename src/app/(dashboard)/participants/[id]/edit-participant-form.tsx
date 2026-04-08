@@ -569,9 +569,15 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 className={inputCls}
               >
                 <option value="">— select —</option>
-                {TSK_LEVELS.map((l) => (
-                  <option key={l.value} value={l.value}>{l.value}</option>
-                ))}
+                {TSK_LEVELS.map((l, i) => {
+                  const currentIdx = TSK_LEVELS.findIndex((x) => x.value === tskStatus);
+                  const disabled = currentIdx >= 0 && i < currentIdx;
+                  return (
+                    <option key={l.value} value={l.value} disabled={disabled}>
+                      {l.value}{disabled ? " ↑ already passed" : ""}
+                    </option>
+                  );
+                })}
               </select>
               <input type="hidden" name="tskStatus" value={tskStatus} />
             </div>
