@@ -17,19 +17,19 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
 
   const eventIds = events.map((e) => e.id);
 
-  // Include participants who were fully active throughout this month:
-  // registered before month end AND either still ACTIVE or retired strictly after the month ended.
-  // Participants who retired during this month are excluded entirely — reward forfeited.
+  // Include participants who were active at any point during this month:
+  // registered before month end AND either still ACTIVE or retired on/after month start.
+  // Participants retired in a previous month are excluded.
   const [participants, records] = await Promise.all([
     prisma.participant.findMany({
       where: {
         registrationDate: { lte: monthEnd },
         OR: [
           { status: "ACTIVE" },
-          { status: "RETIRED", retiredAt: { gt: monthEnd } },
+          { status: "RETIRED", retiredAt: { gte: monthStart } },
         ],
       },
-      select: { id: true, isJuniorCoach: true, juniorCoachLevel: true },
+      select: { id: true, isJuniorCoach: true, juniorCoachLevel: true, retiredAt: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -73,8 +73,13 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      const totalEvents = events.length;
-      const attended = events.filter((e) =>
+      // For retired participants, only count events up to their retirement date
+      const eligibleEvents = participant.retiredAt
+        ? events.filter((e) => e.date <= participant.retiredAt!)
+        : events;
+
+      const totalEvents = eligibleEvents.length;
+      const attended = eligibleEvents.filter((e) =>
         attendedSet.get(participant.id)?.has(e.id)
       ).length;
 
