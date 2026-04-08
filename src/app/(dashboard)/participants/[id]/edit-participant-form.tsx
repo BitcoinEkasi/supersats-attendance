@@ -439,14 +439,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
           <div className="mt-4 space-y-4">
 
         <div className="border-t pt-4">
-          <div className="mb-3 flex items-center gap-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
-            {(participant as any).measurementsUpdatedAt && (
-              <span className="text-xs text-gray-400">
-                Last updated: {fmtDate(new Date((participant as any).measurementsUpdatedAt))}
-              </span>
-            )}
-          </div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -488,6 +481,9 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 </select>
               </div>
             </div>
+            {(participant as any).measurementsUpdatedAt && (
+              <p className="text-xs text-gray-400">Last updated: {fmtDate(new Date((participant as any).measurementsUpdatedAt))}</p>
+            )}
           </div>
         </div>
 
