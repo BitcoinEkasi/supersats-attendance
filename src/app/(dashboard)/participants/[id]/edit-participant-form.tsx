@@ -445,10 +445,16 @@ export default function EditParticipantForm({ participant }: { participant: Part
               <div>
                 <label className="block text-sm font-medium text-gray-700">Weight (kg)</label>
                 <input name="weightKg" type="number" step="0.1" min="0" defaultValue={participant.weightKg ?? ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 65.5" />
+                {(participant as any).weightUpdatedAt && (
+                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).weightUpdatedAt))}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Height (cm)</label>
                 <input name="heightCm" type="number" step="0.1" min="0" defaultValue={participant.heightCm ?? ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 170" />
+                {(participant as any).heightUpdatedAt && (
+                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).heightUpdatedAt))}</p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -463,10 +469,16 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <option>XL</option>
                   <option>XXL</option>
                 </select>
+                {(participant as any).tshirtSizeUpdatedAt && (
+                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).tshirtSizeUpdatedAt))}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Shoe Size (UK)</label>
                 <input name="shoeSize" defaultValue={participant.shoeSize || ""} className={inputCls} placeholder="e.g. 8" />
+                {(participant as any).shoeSizeUpdatedAt && (
+                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).shoeSizeUpdatedAt))}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Wetsuit Size</label>
@@ -479,11 +491,11 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <option>XL</option>
                   <option>XXL</option>
                 </select>
+                {(participant as any).wetsuiteUpdatedAt && (
+                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).wetsuiteUpdatedAt))}</p>
+                )}
               </div>
             </div>
-            {(participant as any).measurementsUpdatedAt && (
-              <p className="text-xs text-gray-400">Last updated: {fmtDate(new Date((participant as any).measurementsUpdatedAt))}</p>
-            )}
           </div>
         </div>
 

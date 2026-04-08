@@ -78,18 +78,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
 
+  const now = new Date();
   const newWeightKg = body.weightKg ? parseFloat(body.weightKg) || null : null;
   const newHeightCm = body.heightCm ? parseFloat(body.heightCm) || null : null;
   const newTshirtSize = body.tshirtSize?.trim() || null;
   const newShoeSize = body.shoeSize?.trim() || null;
   const newWetsuiteSize = body.wetsuiteSize?.trim() || null;
-  const measurementsChanged = existing && (
-    existing.weightKg !== newWeightKg ||
-    existing.heightCm !== newHeightCm ||
-    existing.tshirtSize !== newTshirtSize ||
-    existing.shoeSize !== newShoeSize ||
-    existing.wetsuiteSize !== newWetsuiteSize
-  );
+  const weightChanged    = existing && existing.weightKg !== newWeightKg;
+  const heightChanged    = existing && existing.heightCm !== newHeightCm;
+  const tshirtChanged    = existing && existing.tshirtSize !== newTshirtSize;
+  const shoeChanged      = existing && existing.shoeSize !== newShoeSize;
+  const wetsuiteChanged  = existing && existing.wetsuiteSize !== newWetsuiteSize;
+  const measurementsChanged = weightChanged || heightChanged || tshirtChanged || shoeChanged || wetsuiteChanged;
 
   try {
     await prisma.participant.update({
@@ -130,11 +130,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         tskStatus: newTskStatus,
         ...(tskStatusChanged ? { tskStatusUpdatedAt: new Date() } : {}),
         weightKg: newWeightKg,
+        ...(weightChanged   ? { weightUpdatedAt: now }    : {}),
         heightCm: newHeightCm,
+        ...(heightChanged   ? { heightUpdatedAt: now }    : {}),
         tshirtSize: newTshirtSize,
+        ...(tshirtChanged   ? { tshirtSizeUpdatedAt: now } : {}),
         shoeSize: newShoeSize,
+        ...(shoeChanged     ? { shoeSizeUpdatedAt: now }  : {}),
         wetsuiteSize: newWetsuiteSize,
-        ...(measurementsChanged ? { measurementsUpdatedAt: new Date() } : {}),
+        ...(wetsuiteChanged ? { wetsuiteUpdatedAt: now }  : {}),
+        ...(measurementsChanged ? { measurementsUpdatedAt: now } : {}),
         notes: body.notes?.trim() || null,
         paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
         lightningAddress: body.lightningAddress?.trim() || null,
