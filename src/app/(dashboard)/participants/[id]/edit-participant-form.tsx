@@ -73,15 +73,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [retiredReason, setRetiredReason] = useState<string>((participant as any).retiredReason || "");
   const [retiredReasonOther, setRetiredReasonOther] = useState<string>((participant as any).retiredReasonOther || "");
 
-  const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-  const initSize = (val: string | null) => STANDARD_SIZES.includes(val ?? "") ? (val ?? "") : val ? "Other" : "";
-  const initCustom = (val: string | null) => STANDARD_SIZES.includes(val ?? "") || !val ? "" : val;
-
-  const [tshirtSize, setTshirtSize] = useState(() => initSize(participant.tshirtSize));
-  const [tshirtCustom, setTshirtCustom] = useState(() => initCustom(participant.tshirtSize));
-  const [wetsuiteSize, setWetsuiteSize] = useState(() => initSize(participant.wetsuiteSize));
-  const [wetsuiteCustom, setWetsuiteCustom] = useState(() => initCustom(participant.wetsuiteSize));
-
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
   const [isJuniorCoach, setIsJuniorCoach] = useState<boolean>(participant.isJuniorCoach);
   const [juniorCoachLevel, setJuniorCoachLevel] = useState<string>((participant as any).juniorCoachLevel?.toString() || "");
@@ -470,29 +461,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">T-Shirt Size</label>
-                <select
-                  value={tshirtSize}
-                  onChange={(e) => { setTshirtSize(e.target.value); if (e.target.value !== "Other") setTshirtCustom(""); setSaved(false); setIsDirty(true); }}
-                  className={inputCls}
-                >
-                  <option value="">— select —</option>
-                  <option>XS</option>
-                  <option>S</option>
-                  <option>M</option>
-                  <option>L</option>
-                  <option>XL</option>
-                  <option>XXL</option>
-                  <option value="Other">Other (custom)</option>
-                </select>
-                {tshirtSize === "Other" && (
-                  <input
-                    value={tshirtCustom}
-                    onChange={(e) => { setTshirtCustom(e.target.value); setSaved(false); setIsDirty(true); }}
-                    placeholder="Enter custom size…"
-                    className={`${inputCls} mt-2`}
-                  />
-                )}
-                <input type="hidden" name="tshirtSize" value={tshirtSize === "Other" ? tshirtCustom : tshirtSize} />
+                <input name="tshirtSize" defaultValue={participant.tshirtSize || ""} className={inputCls} placeholder="e.g. M, L, 32" />
                 {(participant as any).tshirtSizeUpdatedAt && (
                   <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).tshirtSizeUpdatedAt))}</p>
                 )}
@@ -506,29 +475,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Wetsuit Size</label>
-                <select
-                  value={wetsuiteSize}
-                  onChange={(e) => { setWetsuiteSize(e.target.value); if (e.target.value !== "Other") setWetsuiteCustom(""); setSaved(false); setIsDirty(true); }}
-                  className={inputCls}
-                >
-                  <option value="">— select —</option>
-                  <option>XS</option>
-                  <option>S</option>
-                  <option>M</option>
-                  <option>L</option>
-                  <option>XL</option>
-                  <option>XXL</option>
-                  <option value="Other">Other (custom)</option>
-                </select>
-                {wetsuiteSize === "Other" && (
-                  <input
-                    value={wetsuiteCustom}
-                    onChange={(e) => { setWetsuiteCustom(e.target.value); setSaved(false); setIsDirty(true); }}
-                    placeholder="Enter custom size…"
-                    className={`${inputCls} mt-2`}
-                  />
-                )}
-                <input type="hidden" name="wetsuiteSize" value={wetsuiteSize === "Other" ? wetsuiteCustom : wetsuiteSize} />
+                <input name="wetsuiteSize" defaultValue={participant.wetsuiteSize || ""} className={inputCls} placeholder="e.g. M, L, 32" />
                 {(participant as any).wetsuiteUpdatedAt && (
                   <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).wetsuiteUpdatedAt))}</p>
                 )}
