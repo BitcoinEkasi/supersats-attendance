@@ -138,7 +138,7 @@ export default function SessionsTable({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
-                          Open
+                          View
                         </Link>
                         {!isApproved && (
                           <DeleteEventButton eventId={event.id} eventDate={event.dateLabel} />
