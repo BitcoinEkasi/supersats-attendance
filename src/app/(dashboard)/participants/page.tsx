@@ -160,8 +160,15 @@ export default async function ParticipantsPage({
                     )}
                   </div>
 
-                  {/* Bolt card */}
-                  {p.boltUserId && (
+                  {/* Payment info */}
+                  {(p as any).paymentMethod === "LIGHTNING_ADDRESS" ? (
+                    (p as any).lightningAddress && (
+                      <div className="mt-0.5 text-xs text-gray-500">
+                        <span className="text-gray-400">⚡ Lightning</span>
+                        <span className="ml-1 font-mono text-gray-600">{(p as any).lightningAddress}</span>
+                      </div>
+                    )
+                  ) : p.boltUserId && (
                     <div className="mt-0.5 text-xs text-gray-500">
                       <span className="text-gray-400">Bolt Card</span>
                       {(() => {
