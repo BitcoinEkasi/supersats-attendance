@@ -3,25 +3,9 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
-import DeleteEventButton from "./delete-event-button";
+import SessionsTable from "./sessions-table";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
-
-const categoryLabels: Record<string, string> = {
-  SURFING: "Surfing",
-  FITNESS: "Fitness",
-  SKATING: "Skating",
-  BEACH_CLEAN_UP: "Beach Clean Up",
-  OTHER: "Other",
-};
-
-const categoryColors: Record<string, string> = {
-  SURFING: "bg-blue-100 text-blue-700",
-  FITNESS: "bg-green-100 text-green-700",
-  SKATING: "bg-purple-100 text-purple-700",
-  BEACH_CLEAN_UP: "bg-yellow-100 text-yellow-700",
-  OTHER: "bg-gray-100 text-gray-600",
-};
 
 export default async function AttendancePage() {
   const session = await auth();
@@ -32,7 +16,6 @@ export default async function AttendancePage() {
   const todayEnd = getEndOfSASTToday();
 
   if (isMobile) {
-    // If there's already an event today, go straight to it
     const todayEvent = await prisma.event.findFirst({
       where: { date: { gte: todayStart, lte: todayEnd } },
       orderBy: { createdAt: "desc" },
@@ -42,7 +25,6 @@ export default async function AttendancePage() {
       redirect(`/attendance/${todayEvent.id}`);
     }
 
-    // No event yet — show category picker
     return <CreateEventForm mobile />;
   }
 
@@ -50,7 +32,6 @@ export default async function AttendancePage() {
   const [events, activeCount, todayEvent, approvedMonths] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
-      take: 30,
       include: {
         _count: { select: { attendanceRecords: { where: { present: true } } } },
       },
@@ -62,7 +43,16 @@ export default async function AttendancePage() {
       select: { month: true },
     }),
   ]);
-  const approvedMonthSet = new Set(approvedMonths.map((r) => r.month));
+
+  const eventRows = events.map((e) => ({
+    id: e.id,
+    date: e.date.toISOString(),
+    dateLabel: fmtDate(e.date),
+    category: e.category,
+    note: e.note,
+    presentCount: e._count.attendanceRecords,
+    monthKey: `${e.date.getUTCFullYear()}-${String(e.date.getUTCMonth() + 1).padStart(2, "0")}`,
+  }));
 
   return (
     <div>
@@ -74,57 +64,11 @@ export default async function AttendancePage() {
             <div className="border-b px-4 py-3">
               <h3 className="font-semibold text-gray-900">Sessions</h3>
             </div>
-            {events.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-gray-500">
-                No sessions yet. Create one to start capturing attendance.
-              </p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="border-b bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500">Marked</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500">Note</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.map((event) => {
-                    const marked = event._count.attendanceRecords;
-                    const complete = marked >= activeCount;
-                    const eventMonth = `${event.date.getUTCFullYear()}-${String(event.date.getUTCMonth() + 1).padStart(2, "0")}`;
-                    const isApproved = approvedMonthSet.has(eventMonth);
-                    return (
-                      <tr key={event.id} className="border-b last:border-0">
-                        <td className="px-4 py-3 font-medium">{fmtDate(event.date)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
-                            {categoryLabels[event.category] || event.category}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={complete ? "text-green-600 font-medium" : "text-amber-600"}>
-                            {marked}/{activeCount}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
-                              {complete ? "View" : "Capture"}
-                            </Link>
-                            {!isApproved && (
-                              <DeleteEventButton eventId={event.id} eventDate={fmtDate(event.date)} />
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
+            <SessionsTable
+              events={eventRows}
+              activeCount={activeCount}
+              approvedMonths={approvedMonths.map((r) => r.month)}
+            />
           </div>
         </div>
         {todayEvent ? (
