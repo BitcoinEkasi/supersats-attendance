@@ -491,7 +491,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               </div>
               <div className="flex flex-col gap-2 pb-2">
                 {tskStatus === POD_LEVEL ? (
-                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Dolphin Professional level</p>
+                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Shark Elite level</p>
                 ) : (
                   <>
                     <label className="flex items-center gap-2 cursor-pointer">

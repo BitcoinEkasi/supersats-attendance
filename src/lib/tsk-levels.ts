@@ -5,9 +5,9 @@ export const TSK_LEVELS = [
   { value: "Seal Proficient",      tagline: "Linking moves with control and flow" },
   { value: "Dolphin Advanced",     tagline: "Generating speed and adding style" },
   { value: "Dolphin Refined",      tagline: "Flowing through sections with power and confidence" },
-  { value: "Dolphin Professional", tagline: "Powered up and touring team ready" },
+  { value: "Shark Elite",          tagline: "Powered up and touring team ready" },
 ] as const;
 
 export const TSK_LEVEL_MAP = Object.fromEntries(TSK_LEVELS.map((l) => [l.value, l.tagline]));
 
-export const POD_LEVEL = "Dolphin Professional";
+export const POD_LEVEL = "Shark Elite";
