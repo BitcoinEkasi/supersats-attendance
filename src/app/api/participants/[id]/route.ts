@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
+import { upsertMonthlyReport } from "@/lib/upsert-report";
 import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
+
+function currentMonthStr() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth();
@@ -52,6 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
       if (body.status === "ACTIVE") { data.retiredAt = null; data.retiredReason = null; data.retiredReasonOther = null; }
       await prisma.participant.update({ where: { id }, data });
+      if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
       return Response.json({ success: true });
     } catch {
       return Response.json({ error: "Failed to update status" }, { status: 500 });
@@ -152,6 +159,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         data: { participantId: id, level: newTskStatus, changedAt: new Date() },
       });
     }
+    if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
 
     return Response.json({ success: true });
   } catch (e: unknown) {
