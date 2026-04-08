@@ -91,6 +91,7 @@ model Participant {
   performanceEvents     PerformanceEvent[]
   schoolReports         SchoolReport[]
   tskReviews            TskReview[]
+  tskLevelHistory       TskLevelHistory[]
   academicPayoutEntries AcademicPayoutEntry[]
   specialPayoutEntries  SpecialPayoutEntry[]
 
@@ -309,4 +310,15 @@ model SpecialPayoutEntry {
 
   @@unique([payoutId, participantId])
   @@map("special_payout_entries")
+}
+
+model TskLevelHistory {
+  id            String      @id @default(uuid())
+  participantId String      @map("participant_id")
+  level         String
+  changedAt     DateTime    @map("changed_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@map("tsk_level_history")
 }

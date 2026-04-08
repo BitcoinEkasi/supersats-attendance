@@ -117,6 +117,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ...(body.profilePicture !== undefined ? { profilePicture: body.profilePicture || null } : {}),
       },
     });
+    if (tskStatusChanged && newTskStatus) {
+      await prisma.tskLevelHistory.create({
+        data: { participantId: id, level: newTskStatus, changedAt: new Date() },
+      });
+    }
+
     return Response.json({ success: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "";
