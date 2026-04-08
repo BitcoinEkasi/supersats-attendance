@@ -14,7 +14,6 @@ import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import MonthlyAttendanceHistory from "./monthly-attendance-history";
 import NotesSection from "./notes-section";
 import TskReviewsSection from "./tsk-reviews-section";
-import TskLevelHistorySection from "./tsk-level-history-section";
 import Image from "next/image";
 
 export default async function ParticipantDetailPage({
@@ -369,16 +368,6 @@ export default async function ParticipantDetailPage({
 
         </div>
       </div>
-
-      {/* TSK Level History — full width */}
-      {role === "ADMINISTRATOR" && (
-        <div className="mt-6">
-          <TskLevelHistorySection
-            participantId={participant.id}
-            history={participant.tskLevelHistory.map((h) => ({ ...h, changedAt: h.changedAt.toISOString() }))}
-          />
-        </div>
-      )}
 
       {/* School Reports — full width */}
       {role === "ADMINISTRATOR" && (

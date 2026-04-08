@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { getExpectedGrade } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
+import TskLevelHistorySection from "./tsk-level-history-section";
 import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL } from "@/lib/tsk-levels";
-import type { Participant, Certification, PerformanceEvent } from "@prisma/client";
+import type { Participant, Certification, PerformanceEvent, TskLevelHistory } from "@prisma/client";
 
 function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   if (!/^\d{13}$/.test(id)) return null;
@@ -23,7 +24,7 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   };
 }
 
-export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[] } }) {
+export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] } }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -572,12 +573,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   <option key={l.value} value={l.value}>{l.value}</option>
                 ))}
               </select>
-              {tskStatus && TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP] && (
-                <p className="mt-1 text-xs text-gray-500 italic">{TSK_LEVEL_MAP[tskStatus as keyof typeof TSK_LEVEL_MAP]}</p>
-              )}
-              {(participant as any).tskStatusUpdatedAt && (
-                <p className="mt-1 text-xs text-gray-400">Level updated {fmtDate(new Date((participant as any).tskStatusUpdatedAt))}</p>
-              )}
               <input type="hidden" name="tskStatus" value={tskStatus} />
             </div>
             <div>
@@ -590,6 +585,12 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 className={inputCls}
               />
             </div>
+          </div>
+          <div className="mt-4">
+            <TskLevelHistorySection
+              participantId={participant.id}
+              history={participant.tskLevelHistory.map((h) => ({ ...h, changedAt: h.changedAt.toISOString() }))}
+            />
           </div>
         </div>
 

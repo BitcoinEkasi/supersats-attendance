@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fmtDate } from "@/lib/format-date";
-import { TSK_LEVELS } from "@/lib/tsk-levels";
+import { TSK_LEVELS, TSK_LEVEL_MAP } from "@/lib/tsk-levels";
 
 type HistoryEntry = { id: string; level: string; changedAt: string | Date };
 
@@ -115,6 +115,9 @@ export default function TskLevelHistorySection({
                 <div className="flex flex-1 items-start justify-between pb-4">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{entry.level}</p>
+                    {TSK_LEVEL_MAP[entry.level as keyof typeof TSK_LEVEL_MAP] && (
+                      <p className="text-xs italic text-gray-400">{TSK_LEVEL_MAP[entry.level as keyof typeof TSK_LEVEL_MAP]}</p>
+                    )}
                     <p className="mt-0.5 text-xs text-gray-500">
                       {fmtDate(from)}
                       {" → "}
