@@ -39,11 +39,9 @@ export type EventRow = {
 
 export default function SessionsTable({
   events,
-  activeCount,
   approvedMonths,
 }: {
   events: EventRow[];
-  activeCount: number;
   approvedMonths: string[];
 }) {
   const approvedSet = new Set(approvedMonths);
@@ -123,7 +121,6 @@ export default function SessionsTable({
               {/* Session rows */}
               {isOpen && sessions.map((event) => {
                 const isApproved = approvedSet.has(event.monthKey);
-                const complete = event.presentCount >= activeCount;
                 return (
                   <tr key={event.id} className="border-b last:border-0">
                     <td className="px-4 py-3 pl-10 font-medium">{event.dateLabel}</td>
@@ -133,15 +130,15 @@ export default function SessionsTable({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={complete ? "text-green-600 font-medium" : "text-amber-600"}>
-                        {event.presentCount}/{activeCount}
+                      <span className="text-gray-800 font-medium">
+                        {event.presentCount}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
-                          {complete ? "View" : "Capture"}
+                          Open
                         </Link>
                         {!isApproved && (
                           <DeleteEventButton eventId={event.id} eventDate={event.dateLabel} />

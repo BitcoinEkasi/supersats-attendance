@@ -29,14 +29,13 @@ export default async function AttendancePage() {
   }
 
   // Desktop layout
-  const [events, activeCount, todayEvent, approvedMonths] = await Promise.all([
+  const [events, todayEvent, approvedMonths] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
       include: {
         _count: { select: { attendanceRecords: { where: { present: true } } } },
       },
     }),
-    prisma.participant.count({ where: { status: "ACTIVE" } }),
     prisma.event.findFirst({ where: { date: { gte: todayStart, lte: todayEnd } } }),
     prisma.monthlyReport.findMany({
       where: { status: "APPROVED" },
@@ -66,7 +65,6 @@ export default async function AttendancePage() {
             </div>
             <SessionsTable
               events={eventRows}
-              activeCount={activeCount}
               approvedMonths={approvedMonths.map((r) => r.month)}
             />
           </div>
