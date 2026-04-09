@@ -547,8 +547,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
                         onChange={(e) => {
                           setIsJuniorCoach(e.target.checked);
                           if (e.target.checked) {
-                            // Free Surfers resume at Level 3 only
-                            setJuniorCoachLevel(tskStatus === FREE_SURFER_LEVEL ? "3" : (juniorCoachLevel || "1"));
+                            setJuniorCoachLevel(juniorCoachLevel || "1");
                           } else {
                             setJuniorCoachLevel("");
                           }
@@ -557,9 +556,6 @@ export default function EditParticipantForm({ participant }: { participant: Part
                         className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                       />
                       <span className="text-sm font-medium text-gray-700">Junior Coach</span>
-                      {tskStatus === FREE_SURFER_LEVEL && (
-                        <span className="text-xs text-gray-400 italic">(Level 3 only)</span>
-                      )}
                       {isJuniorCoach && (
                         <select
                           value={juniorCoachLevel}
@@ -569,12 +565,10 @@ export default function EditParticipantForm({ participant }: { participant: Part
                           {([1, 2, 3] as const).map((lvl) => {
                             const savedLevel = (participant as any).juniorCoachLevel ?? 0;
                             const isDowngrade = savedLevel > 0 && lvl < savedLevel;
-                            const freeSurferLocked = tskStatus === FREE_SURFER_LEVEL && lvl < 3;
-                            const disabled = isDowngrade || freeSurferLocked;
                             return (
-                              <option key={lvl} value={String(lvl)} disabled={disabled}>
+                              <option key={lvl} value={String(lvl)} disabled={isDowngrade}>
                                 {lvl === 1 ? "Level 1 (×5)" : lvl === 2 ? "Level 2 (×7.5)" : "Level 3 (×10)"}
-                                {isDowngrade && !freeSurferLocked ? " ↑ already passed" : ""}
+                                {isDowngrade ? " ↑ already passed" : ""}
                               </option>
                             );
                           })}
