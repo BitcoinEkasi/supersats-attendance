@@ -25,6 +25,7 @@ function levelColor(level: string): string {
   if (level.startsWith("Seal")) return "bg-green-500";
   if (level.startsWith("Dolphin")) return "bg-blue-500";
   if (level.startsWith("Shark")) return "bg-purple-500";
+  if (level === "Free Surfer") return "bg-teal-500";
   return "bg-gray-400";
 }
 

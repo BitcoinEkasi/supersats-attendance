@@ -37,6 +37,7 @@ export default async function ParticipantDetailPage({
       schoolReports: { orderBy: { year: "desc" } },
       tskReviews: { orderBy: { reviewDate: "desc" } },
       tskLevelHistory: { orderBy: { changedAt: "asc" } },
+      juniorCoachHistory: { orderBy: { startedAt: "asc" } },
     },
   });
 

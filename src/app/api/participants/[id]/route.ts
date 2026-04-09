@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
+import { POD_LEVEL, FREE_SURFER_LEVEL } from "@/lib/tsk-levels";
 import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
 
 function currentMonthStr() {
@@ -81,9 +82,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const newTskStatus = body.tskStatus?.trim() || null;
   const existing = await prisma.participant.findUnique({
     where: { id },
-    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true },
+    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isJuniorCoach: true, juniorCoachLevel: true },
   });
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
+
+  const newIsJuniorCoach = body.isJuniorCoach === "on" || body.isJuniorCoach === true;
+  const newJcLevel = (newIsJuniorCoach && body.juniorCoachLevel) ? parseInt(body.juniorCoachLevel) || null : null;
+  const existingJc = existing?.isJuniorCoach ?? false;
+  const existingJcLevel = existing?.juniorCoachLevel ?? null;
+
+  // Enforce forward-only JC level progression
+  if (existingJc && newIsJuniorCoach && existingJcLevel && newJcLevel && newJcLevel < existingJcLevel) {
+    return Response.json({ error: "Junior Coach level cannot be reduced. Untick to remove Junior Coach status." }, { status: 400 });
+  }
 
   const now = new Date();
   const newWeightKg = body.weightKg ? parseFloat(body.weightKg) || null : null;
@@ -159,6 +170,34 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         data: { participantId: id, level: newTskStatus, changedAt: new Date() },
       });
     }
+
+    // Handle JC history tracking
+    const jcStarted = !existingJc && newIsJuniorCoach && newJcLevel;
+    const jcEnded = existingJc && !newIsJuniorCoach;
+    const jcLevelChanged = existingJc && newIsJuniorCoach && newJcLevel && existingJcLevel !== newJcLevel;
+
+    if (jcEnded || jcLevelChanged) {
+      const openEntry = await prisma.juniorCoachHistory.findFirst({
+        where: { participantId: id, endedAt: null },
+        orderBy: { startedAt: "desc" },
+      });
+      if (openEntry) {
+        let endReason = "manual";
+        if (newTskStatus === POD_LEVEL) endReason = "shark_elite";
+        else if (newTskStatus === FREE_SURFER_LEVEL) endReason = "free_surfer";
+        else if (jcLevelChanged) endReason = "promoted";
+        await prisma.juniorCoachHistory.update({
+          where: { id: openEntry.id },
+          data: { endedAt: now, endReason },
+        });
+      }
+    }
+    if (jcStarted || jcLevelChanged) {
+      await prisma.juniorCoachHistory.create({
+        data: { participantId: id, level: newJcLevel!, startedAt: now },
+      });
+    }
+
     if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
 
     return Response.json({ success: true });

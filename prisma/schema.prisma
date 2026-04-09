@@ -100,6 +100,7 @@ model Participant {
   schoolReports         SchoolReport[]
   tskReviews            TskReview[]
   tskLevelHistory       TskLevelHistory[]
+  juniorCoachHistory    JuniorCoachHistory[]
   academicPayoutEntries AcademicPayoutEntry[]
   specialPayoutEntries  SpecialPayoutEntry[]
 
@@ -329,4 +330,17 @@ model TskLevelHistory {
   participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@map("tsk_level_history")
+}
+
+model JuniorCoachHistory {
+  id            String      @id @default(uuid())
+  participantId String      @map("participant_id")
+  level         Int
+  startedAt     DateTime    @map("started_at")
+  endedAt       DateTime?   @map("ended_at")
+  endReason     String?     @map("end_reason")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@map("junior_coach_history")
 }

@@ -6,7 +6,9 @@ import { getExpectedGrade } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
 import TskLevelHistorySection from "./tsk-level-history-section";
-import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL } from "@/lib/tsk-levels";
+import JcHistorySection from "./jc-history-section";
+import type { JcHistoryEntry } from "./jc-history-section";
+import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL, FREE_SURFER_LEVEL } from "@/lib/tsk-levels";
 import type { Participant, Certification, PerformanceEvent, TskLevelHistory, ParticipantStatus } from "@prisma/client";
 
 const RETIRED_REASONS = [
@@ -33,7 +35,7 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   };
 }
 
-export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] } }) {
+export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[]; juniorCoachHistory?: JcHistoryEntry[] } }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -534,8 +536,8 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 )}
               </div>
               <div className="flex flex-col gap-2 pb-2">
-                {tskStatus === POD_LEVEL ? (
-                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Shark Elite level</p>
+                {(tskStatus === POD_LEVEL || tskStatus === FREE_SURFER_LEVEL) ? (
+                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at {tskStatus} level</p>
                 ) : (
                   <>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -560,17 +562,27 @@ export default function EditParticipantForm({ participant }: { participant: Part
                           onChange={(e) => { setJuniorCoachLevel(e.target.value); setSaved(false); setIsDirty(true); }}
                           className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
                         >
-                          <option value="1">Level 1 (×5)</option>
-                          <option value="2">Level 2 (×7.5)</option>
-                          <option value="3">Level 3 (×10)</option>
+                          {([1, 2, 3] as const).map((lvl) => {
+                            const savedLevel = (participant as any).juniorCoachLevel ?? 0;
+                            const isDowngrade = savedLevel > 0 && lvl < savedLevel;
+                            return (
+                              <option key={lvl} value={String(lvl)} disabled={isDowngrade}>
+                                {lvl === 1 ? "Level 1 (×5)" : lvl === 2 ? "Level 2 (×7.5)" : "Level 3 (×10)"}
+                                {isDowngrade ? " ↑ already passed" : ""}
+                              </option>
+                            );
+                          })}
                         </select>
                       )}
                     </label>
                   </>
                 )}
-                <input type="hidden" name="isJuniorCoach" value={isJuniorCoach && tskStatus !== POD_LEVEL ? "on" : ""} />
+                <input type="hidden" name="isJuniorCoach" value={isJuniorCoach && tskStatus !== POD_LEVEL && tskStatus !== FREE_SURFER_LEVEL ? "on" : ""} />
                 <input type="hidden" name="juniorCoachLevel" value={juniorCoachLevel} />
               </div>
+              {(participant as any).juniorCoachHistory?.length > 0 && (
+                <JcHistorySection history={(participant as any).juniorCoachHistory} />
+              )}
             </div>
             <input type="hidden" name="paymentMethod" value={paymentMethod} />
             <input type="hidden" name="lightningAddress" value={lightningAddress} />
@@ -590,10 +602,14 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 <option value="">— select —</option>
                 {TSK_LEVELS.map((l, i) => {
                   const currentIdx = TSK_LEVELS.findIndex((x) => x.value === tskStatus);
-                  const disabled = currentIdx >= 0 && i < currentIdx;
+                  const isFreeSurfer = l.value === FREE_SURFER_LEVEL;
+                  // Free Surfer is only reachable from Shark Elite
+                  const freeSurferLocked = isFreeSurfer && tskStatus !== POD_LEVEL && tskStatus !== FREE_SURFER_LEVEL;
+                  const disabled = (currentIdx >= 0 && i < currentIdx) || freeSurferLocked;
                   return (
                     <option key={l.value} value={l.value} disabled={disabled}>
-                      {l.value}{disabled ? " ↑ already passed" : ""}
+                      {l.value}{disabled && !freeSurferLocked ? " ↑ already passed" : ""}
+                      {freeSurferLocked ? " (Shark Elite only)" : ""}
                     </option>
                   );
                 })}
