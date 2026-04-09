@@ -33,14 +33,14 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
-      select: { participantId: true, eventId: true, present: true },
+      select: { participantId: true, eventId: true, present: true, onTour: true },
     }),
   ]);
 
   // Build per-participant set of events attended
   const attendedSet = new Map<string, Set<string>>();
   for (const record of records) {
-    if (record.present) {
+    if (record.present || record.onTour) {
       if (!attendedSet.has(record.participantId)) {
         attendedSet.set(record.participantId, new Set());
       }
