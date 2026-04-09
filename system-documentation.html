@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TSK Bitcoin Rewards Platform — System Documentation</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    background: #fff;
+    line-height: 1.65;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem 4rem;
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 2.4rem; font-weight: 800; color: #111; line-height: 1.2; }
+  h2 { font-size: 1.7rem; font-weight: 700; color: #111; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid #f7931a; }
+  h3 { font-size: 1.2rem; font-weight: 700; color: #1a1a1a; margin: 2rem 0 0.6rem; }
+  h4 { font-size: 1rem; font-weight: 700; color: #333; margin: 1.4rem 0 0.4rem; }
+  p  { margin: 0.6rem 0; }
+  ul, ol { margin: 0.5rem 0 0.5rem 1.4rem; }
+  li { margin: 0.25rem 0; }
+  strong { font-weight: 700; }
+  em { font-style: italic; }
+  a  { color: #f7931a; text-decoration: none; }
+
+  /* ── Code ── */
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.82em;
+    background: #f3f3f3;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    color: #c7254e;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+    overflow-x: auto;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  th { background: #f7931a; color: #fff; text-align: left; padding: 0.55rem 0.8rem; font-weight: 600; }
+  td { padding: 0.5rem 0.8rem; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-left: 4px solid #f7931a;
+    background: #fff8f0;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout.info { border-color: #3b82f6; background: #eff6ff; }
+  .callout.warn { border-color: #f59e0b; background: #fffbeb; }
+
+  /* ── Cover page ── */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 3rem 0 2rem;
+  }
+  .cover-logo {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+  .cover-title {
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: #111;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  .cover-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+  }
+  .cover-date {
+    font-size: 0.95rem;
+    color: #999;
+    margin-top: 0.5rem;
+  }
+  .cover-divider {
+    width: 60px;
+    height: 4px;
+    background: #f7931a;
+    border-radius: 2px;
+    margin: 1.4rem 0;
+  }
+  .cover-desc {
+    font-size: 1rem;
+    color: #444;
+    max-width: 600px;
+    line-height: 1.7;
+  }
+  .cover-urls {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    color: #666;
+  }
+  .cover-urls span {
+    display: inline-block;
+    background: #111;
+    color: #f7931a;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ── Part headers ── */
+  .part-header {
+    margin: 3rem 0 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #111 0%, #2d2d2d 100%);
+    color: #fff;
+    border-radius: 8px;
+  }
+  .part-header .part-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #f7931a;
+    margin-bottom: 0.35rem;
+  }
+  .part-header h2 {
+    color: #fff;
+    border: none;
+    margin: 0;
+    padding: 0;
+    font-size: 1.5rem;
+  }
+
+  /* ── Field grid ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.3rem 2rem;
+    margin: 0.5rem 0;
+  }
+  .field-item {
+    font-size: 0.88rem;
+    display: flex;
+    gap: 0.4rem;
+  }
+  .field-item .fname { font-family: monospace; color: #c7254e; white-space: nowrap; }
+  .field-item .fdesc { color: #555; }
+
+  /* ── Flow steps ── */
+  .flow {
+    counter-reset: flow-step;
+    list-style: none;
+    margin-left: 0;
+  }
+  .flow li {
+    counter-increment: flow-step;
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 0.6rem;
+    align-items: flex-start;
+  }
+  .flow li::before {
+    content: counter(flow-step);
+    display: inline-flex;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: #f7931a;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  /* ── Section divider ── */
+  .divider {
+    border: none;
+    border-top: 1px solid #e8e8e8;
+    margin: 2rem 0;
+  }
+
+  /* ── Print styles ── */
+  @media print {
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+    }
+    body { max-width: 100%; padding: 0; font-size: 11pt; }
+    .part-header { break-before: page; }
+    .cover { min-height: auto; }
+    h2 { break-after: avoid; }
+    h3, h4 { break-after: avoid; }
+    pre, table { break-inside: avoid; }
+    .callout { break-inside: avoid; }
+    a { color: inherit; }
+    pre { background: #f5f5f5; color: #111; border: 1px solid #ccc; }
+    pre code { color: #111; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <div class="cover-logo">₿</div>
+  <div class="cover-title">TSK Bitcoin Rewards Platform</div>
+  <div class="cover-subtitle">System Documentation</div>
+  <div class="cover-divider"></div>
+  <div class="cover-desc">
+    A comprehensive technical reference covering the TSK Rewards web application
+    and the BoltCard payment server — how they were built, how they work together,
+    and the business logic that drives them.
+  </div>
+  <div class="cover-urls">
+    <span>tsk.bitcoinekasi.xyz</span>
+    <span>bolt.bitcoinekasi.xyz</span>
+  </div>
+  <div class="cover-date">BitcoinEkasi &mdash; April 2026</div>
+</div>
+
+<hr class="divider" />
+
+<!-- ══════════════════════════════════════════════════ TABLE OF CONTENTS ══ -->
+<h2>Contents</h2>
+<ul>
+  <li><strong>Part 1</strong> &mdash; Platform Overview</li>
+  <li><strong>Part 2</strong> &mdash; TSK Rewards System (tsk.bitcoinekasi.xyz)
+    <ul>
+      <li>2.1 Data Model</li>
+      <li>2.2 Participant Management</li>
+      <li>2.3 Attendance System</li>
+      <li>2.4 Monthly Report &amp; Reward Logic</li>
+      <li>2.5 Payout Integration</li>
+      <li>2.6 Time Zone Strategy</li>
+    </ul>
+  </li>
+  <li><strong>Part 3</strong> &mdash; BoltCard Server (bolt.bitcoinekasi.xyz)
+    <ul>
+      <li>3.1 Database Schema</li>
+      <li>3.2 Card Programming Workflow</li>
+      <li>3.3 Card Tap → Payment (LNURL-W)</li>
+      <li>3.4 Balance Refill (LNURL-P)</li>
+      <li>3.5 Blink Lightning Integration</li>
+      <li>3.6 Admin Dashboard</li>
+      <li>3.7 Batch Payout API</li>
+      <li>3.8 Security</li>
+    </ul>
+  </li>
+  <li><strong>Part 4</strong> &mdash; How the Two Systems Work Together</li>
+  <li><strong>Part 5</strong> &mdash; Deployment &amp; Operations</li>
+</ul>
+
+<!-- ══════════════════════════════════════════════ PART 1 ══ -->
+<div class="part-header">
+  <div class="part-label">Part 1</div>
+  <h2>Platform Overview</h2>
+</div>
+
+<p>
+  The <strong>BitcoinEkasi TSK Bitcoin Rewards Platform</strong> is two cooperating systems that together form a complete
+  Bitcoin-powered incentive programme for a youth surf/skate/fitness club in Mossel Bay, South Africa.
+</p>
+
+<h3>1.1 What Was Built</h3>
+<table>
+  <thead><tr><th>System</th><th>Domain</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>TSK Rewards</strong></td>
+      <td>tsk.bitcoinekasi.xyz</td>
+      <td>Participant registry, attendance tracking, monthly report generation, and reward calculation. The administrative brain of the platform.</td>
+    </tr>
+    <tr>
+      <td><strong>BoltCard Server</strong></td>
+      <td>bolt.bitcoinekasi.xyz</td>
+      <td>Bitcoin balance ledger, BoltCard NFC payment handling (LNURL-W), Lightning Network address refills (LNURL-P), and batch reward disbursement. The money layer.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>1.2 Technology Stack</h3>
+<table>
+  <thead><tr><th>Layer</th><th>TSK Rewards</th><th>BoltCard Server</th></tr></thead>
+  <tbody>
+    <tr><td>Runtime</td><td>Node.js 20 / Next.js 15 (App Router)</td><td>Node.js 20 / Express 4</td></tr>
+    <tr><td>Language</td><td>TypeScript</td><td>TypeScript</td></tr>
+    <tr><td>Database</td><td>SQLite via Prisma ORM</td><td>SQLite via better-sqlite3 (synchronous)</td></tr>
+    <tr><td>Auth</td><td>NextAuth.js v5 (credentials + JWT)</td><td>JWT (HS256, jsonwebtoken)</td></tr>
+    <tr><td>Frontend</td><td>React Server Components + Tailwind CSS</td><td>React + Vite + Tailwind CSS</td></tr>
+    <tr><td>Bitcoin</td><td>Calls Bolt API for payouts</td><td>Blink GraphQL API + WebSocket</td></tr>
+    <tr><td>Container</td><td>Docker (multi-stage)</td><td>Docker (multi-stage)</td></tr>
+  </tbody>
+</table>
+
+<h3>1.3 Deployment Architecture</h3>
+<p>Both systems run on a single VPS as Docker containers orchestrated by <code>docker compose</code>, sitting behind an <strong>nginx reverse proxy</strong> that handles SSL termination (Let&rsquo;s Encrypt) and routes traffic by domain name.</p>
+
+<pre><code>Internet
+   │
+nginx (SSL termination)
+   ├── tsk.bitcoinekasi.xyz  →  TSK container :3000
+   └── bolt.bitcoinekasi.xyz →  Bolt container :3001
+                                Bolt frontend  :5173 (served via Vite in dev / nginx in prod)</code></pre>
+
+<p>CI/CD is handled by <strong>GitHub Actions</strong>: on push to <code>main</code>, each repository builds a Docker image and pushes it to the <strong>GitHub Container Registry (GHCR)</strong>. Deployment runs <code>docker compose pull &amp;&amp; docker compose up -d</code> on the VPS to roll out the new image with zero manual steps.</p>
+
+<h3>1.4 User Roles</h3>
+<table>
+  <thead><tr><th>Role</th><th>Access Level</th><th>Primary Use</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>ADMINISTRATOR</strong></td>
+      <td>Full access</td>
+      <td>Participant management, report generation &amp; approval, payout management, system configuration</td>
+    </tr>
+    <tr>
+      <td><strong>MARSHALL</strong></td>
+      <td>Attendance only</td>
+      <td>Mobile-first view of today&rsquo;s session; marks attendance; can raise participant change requests</td>
+    </tr>
+  </tbody>
+</table>
+<p>Marshalls are redirected to the current day&rsquo;s attendance session on login and see only the minimal mobile UI needed for that task.</p>
+
+<!-- ══════════════════════════════════════════════ PART 2 ══ -->
+<div class="part-header">
+  <div class="part-label">Part 2</div>
+  <h2>TSK Rewards System — tsk.bitcoinekasi.xyz</h2>
+</div>
+
+<h2>2.1 Data Model</h2>
+<p>All data lives in a SQLite database managed by Prisma. Below is every model explained in plain terms.</p>
+
+<h3>Participant</h3>
+<p>The central entity. Represents one registered youth participant (or junior coach).</p>
+<table>
+  <thead><tr><th>Field Group</th><th>Fields</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Identity</strong></td>
+      <td><code>tskId</code>, <code>surname</code>, <code>fullNames</code>, <code>knownAs</code>, <code>idNumber</code></td>
+      <td>TSK ID is auto-generated sequential (<code>TSK00001</code>). SA ID is unique, parsed for DOB + gender.</td>
+    </tr>
+    <tr>
+      <td><strong>Derived</strong></td>
+      <td><code>gender</code>, <code>dateOfBirth</code></td>
+      <td>Extracted from the 13-digit SA ID number at registration; never entered manually.</td>
+    </tr>
+    <tr>
+      <td><strong>Status</strong></td>
+      <td><code>status</code>, <code>registrationDate</code>, <code>retiredAt</code>, <code>retiredReason</code>, <code>retiredReasonOther</code></td>
+      <td>Status is <code>ACTIVE</code> or <code>RETIRED</code>. Retirement captures date, reason (dropdown), and optional free-text for "Other".</td>
+    </tr>
+    <tr>
+      <td><strong>Demographics</strong></td>
+      <td><code>ethnicity</code>, <code>language</code>, <code>housingType</code></td>
+      <td>Optional fields for programme reporting.</td>
+    </tr>
+    <tr>
+      <td><strong>School</strong></td>
+      <td><code>school</code>, <code>grade</code></td>
+      <td>Used for academic payout eligibility.</td>
+    </tr>
+    <tr>
+      <td><strong>Guardian</strong></td>
+      <td><code>guardian</code>, <code>guardianId</code>, <code>guardianRelationship</code>, <code>address</code>, <code>contact1</code>, <code>contact2</code></td>
+      <td>Emergency / parental contact information.</td>
+    </tr>
+    <tr>
+      <td><strong>Measurements</strong></td>
+      <td><code>weightKg</code>, <code>heightCm</code>, <code>tshirtSize</code>, <code>shoeSize</code>, <code>wetsuiteSize</code></td>
+      <td>Plain text / numeric. Each field has its own <code>*UpdatedAt</code> timestamp (see below).</td>
+    </tr>
+    <tr>
+      <td><strong>Measurement timestamps</strong></td>
+      <td><code>measurementsUpdatedAt</code>, <code>weightUpdatedAt</code>, <code>heightUpdatedAt</code>, <code>tshirtSizeUpdatedAt</code>, <code>shoeSizeUpdatedAt</code>, <code>wetsuiteUpdatedAt</code></td>
+      <td>Per-field timestamps updated only when that specific field changes. Allows tracking when each measurement was last recorded.</td>
+    </tr>
+    <tr>
+      <td><strong>Junior Coach</strong></td>
+      <td><code>isJuniorCoach</code>, <code>juniorCoachLevel</code></td>
+      <td>Level 1, 2, or 3 — drives reward multiplier (5×, 7.5×, 10×).</td>
+    </tr>
+    <tr>
+      <td><strong>TSK Level</strong></td>
+      <td><code>tskStatus</code>, <code>tskStatusUpdatedAt</code></td>
+      <td>Programme progression level (e.g. Grom, Gremmie, …). Full history stored in <code>TskLevelHistory</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Documents</strong></td>
+      <td><code>idDocumentUrl</code>, <code>idDocumentUploadedAt</code>, <code>indemnityFormUrl</code>, <code>indemnityUploadedAt</code>, <code>profilePicture</code></td>
+      <td>File paths served from <code>/public/uploads/participants/</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Payment</strong></td>
+      <td><code>paymentMethod</code>, <code>lightningAddress</code></td>
+      <td><code>BOLT_CARD</code> (internal credit) or <code>LIGHTNING_ADDRESS</code> (outbound LN send).</td>
+    </tr>
+    <tr>
+      <td><strong>Notes</strong></td>
+      <td><code>notes</code></td>
+      <td>Free-text admin notes; editable without triggering a report recalculation.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Event &amp; AttendanceRecord</h3>
+<table>
+  <thead><tr><th>Model</th><th>Key Fields</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Event</strong></td>
+      <td><code>id</code>, <code>date</code>, <code>category</code>, <code>note</code></td>
+      <td>One session per SAST calendar day. Category: <code>SURFING</code>, <code>FITNESS</code>, <code>SKATING</code>, <code>BEACH_CLEAN_UP</code>, <code>OTHER</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>AttendanceRecord</strong></td>
+      <td><code>participantId</code>, <code>eventId</code>, <code>present</code>, <code>onTour</code></td>
+      <td>Composite unique on <code>(participantId, eventId)</code>. <code>onTour</code> marks participants away at competitions.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>MonthlyReport &amp; MonthlyReportEntry</h3>
+<table>
+  <thead><tr><th>Model</th><th>Key Fields</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>MonthlyReport</strong></td>
+      <td><code>month</code> (YYYY-MM), <code>status</code>, <code>generatedAt</code>, <code>generatedBy</code>, <code>approvedAt</code>, <code>approvedBy</code></td>
+      <td>One row per calendar month. Status: <code>PENDING</code> → <code>APPROVED</code>. Approval resets to PENDING on any data change.</td>
+    </tr>
+    <tr>
+      <td><strong>MonthlyReportEntry</strong></td>
+      <td><code>reportId</code>, <code>participantId</code>, <code>totalEvents</code>, <code>attended</code>, <code>percentage</code>, <code>rewardSats</code></td>
+      <td>One row per participant per month. Fully replaced (delete + recreate) each time the report is regenerated.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>TskLevelHistory</h3>
+<p>An append-only audit log of TSK level changes. Each row records <code>participantId</code>, <code>level</code>, and <code>changedAt</code>. A new row is inserted whenever <code>tskStatus</code> changes on a Participant, providing a full progression timeline.</p>
+
+<h3>Certifications &amp; Documents</h3>
+<p><strong>Certification</strong> stores surf/lifesaving certificates: <code>participantId</code>, <code>certType</code>, <code>issuedAt</code>, <code>fileUrl</code>. Multiple certifications per participant.</p>
+
+<h3>TskReview &amp; PerformanceEvent</h3>
+<p><strong>TskReview</strong> is a quarterly review record: overall rating, surfing/skating/fitness scores, coach comments, and a recommendation for level advancement.</p>
+<p><strong>PerformanceEvent</strong> records competition results: event name, date, placement, and optional notes.</p>
+
+<h3>SchoolReport</h3>
+<p>Stores academic results per participant per term: <code>year</code>, <code>term</code>, <code>grade</code> (school grade), <code>percentage</code> (academic score), <code>reportFileUrl</code>. Used for academic payout calculations.</p>
+
+<h3>ParticipantChangeRequest</h3>
+<p>Allows Marshalls to flag profile corrections without edit access. Fields: <code>participantId</code>, <code>requestedBy</code>, <code>field</code>, <code>currentValue</code>, <code>proposedValue</code>, <code>reason</code>, <code>status</code> (<code>pending</code> / <code>approved</code> / <code>rejected</code>). Administrators review and resolve each request.</p>
+
+<h3>Payout Models</h3>
+<table>
+  <thead><tr><th>Model</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><strong>AcademicPayout</strong></td><td>Container for a term&rsquo;s academic reward batch (year + term). Status tracks payment lifecycle.</td></tr>
+    <tr><td><strong>AcademicPayoutEntry</strong></td><td>One row per participant in the batch: school percentage, reward sats, payment status.</td></tr>
+    <tr><td><strong>SpecialPayout</strong></td><td>Ad-hoc reward group (e.g. competition prizes). Has a title, description, and total sats.</td></tr>
+    <tr><td><strong>SpecialPayoutEntry</strong></td><td>One row per participant: reason, amount, payment status.</td></tr>
+  </tbody>
+</table>
+
+<hr class="divider" />
+
+<h2>2.2 Participant Management</h2>
+
+<h3>Registration</h3>
+<p>An Administrator enters the participant&rsquo;s SA ID number, names, and other details. The system parses the 13-digit SA ID using the Luhn checksum algorithm to:</p>
+<ul>
+  <li>Validate the number is genuine</li>
+  <li>Extract the <strong>date of birth</strong> (first 6 digits: YYMMDD)</li>
+  <li>Extract the <strong>gender</strong> (digit 7: 0–4 = Female, 5–9 = Male)</li>
+</ul>
+<p>The TSK ID (<code>TSK00001</code>, <code>TSK00002</code>, &hellip;) is auto-generated sequentially inside a database transaction to prevent duplicates under concurrent writes.</p>
+
+<h3>Profile Fields</h3>
+<p>Participant profiles are divided into logical sections: <em>Personal Details</em>, <em>School &amp; Education</em>, <em>Guardian &amp; Contact</em>, <em>Body Measurements</em>, <em>Documents</em>, <em>TSK Programme</em>, and <em>Payment</em>. Administrators edit via a full-page form; Marshalls can only raise change requests.</p>
+
+<h3>Body Measurements</h3>
+<p>Weight, height, t-shirt size, shoe size, and wetsuit size each have an independent <code>*UpdatedAt</code> timestamp. The timestamp is set to <em>now</em> only when that specific field&rsquo;s value changes — if weight is edited but height is not, only <code>weightUpdatedAt</code> advances. This lets staff see exactly when each measurement was last taken.</p>
+
+<h3>Status Lifecycle</h3>
+<p>A participant starts <code>ACTIVE</code>. When retired, the Administrator selects a reason from a standardised list:</p>
+<ul>
+  <li>At age 18</li>
+  <li>Relocated</li>
+  <li>Poor attendance</li>
+  <li>Lack of interest</li>
+  <li>Negative attitude or behaviour</li>
+  <li>Other (requires free-text explanation)</li>
+</ul>
+<p>The <code>retiredAt</code> date is set to the current timestamp. On retirement, the monthly report for the current month is automatically regenerated to reflect the change (see Section 2.4).</p>
+
+<h3>Junior Coach System</h3>
+<p>Selected participants are designated Junior Coaches at Level 1, 2, or 3. This flag directly multiplies their monthly reward:</p>
+<table>
+  <thead><tr><th>Level</th><th>Multiplier</th><th>Effect on base 10,000 sat reward</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>5×</td><td>50,000 sats</td></tr>
+    <tr><td>2</td><td>7.5×</td><td>75,000 sats</td></tr>
+    <tr><td>3</td><td>10×</td><td>100,000 sats</td></tr>
+  </tbody>
+</table>
+
+<h3>TSK Level Progression</h3>
+<p>The programme has named progression levels (e.g. Grom → Gremmie → Shredder &hellip;). Administrators advance participants through these levels on the edit form. Every change is recorded in <code>TskLevelHistory</code> as an immutable audit entry — the history is visible on the participant detail page as a timeline.</p>
+
+<h3>Change Requests</h3>
+<p>When a Marshall notices a profile error (e.g. wrong phone number), they submit a <strong>ParticipantChangeRequest</strong>. They specify the field, the current value, and the proposed correction. Administrators see a queue of pending requests and can approve (triggering the update) or reject with a note. This workflow prevents Marshalls from having direct edit access while still allowing them to surface data issues.</p>
+
+<hr class="divider" />
+
+<h2>2.3 Attendance System</h2>
+
+<h3>Session Creation</h3>
+<p>An <strong>Event</strong> (session) represents a single training day. Only one session can exist per SAST calendar day — the system enforces this with a unique index on the date field.</p>
+<p>Available categories allow tracking what type of activity was held:</p>
+<table>
+  <thead><tr><th>Category</th><th>Display Label</th></tr></thead>
+  <tbody>
+    <tr><td>SURFING</td><td>Surfing</td></tr>
+    <tr><td>FITNESS</td><td>Fitness</td></tr>
+    <tr><td>SKATING</td><td>Skating</td></tr>
+    <tr><td>BEACH_CLEAN_UP</td><td>Beach Clean Up</td></tr>
+    <tr><td>OTHER</td><td>Other</td></tr>
+  </tbody>
+</table>
+
+<h3>Role-Based Flow</h3>
+<p><strong>Marshalls</strong> see a mobile-optimised single-page view. On login, they are immediately redirected to today&rsquo;s session (if one exists) or to a stripped-down creation form. The mobile header has a single sign-out button — no sidebar, no navigation.</p>
+<p><strong>Administrators</strong> see the full attendance overview: all historical sessions grouped by month, a session creation form on the right, and a link to today&rsquo;s session if it already exists.</p>
+
+<h3>Marking Attendance</h3>
+<p>Inside a session, every ACTIVE participant is listed. Staff tap to toggle each participant between:</p>
+<ul>
+  <li><strong>Present</strong> — counted towards rewards</li>
+  <li><strong>Absent</strong> — default state, not counted</li>
+  <li><strong>On Tour</strong> — away at a competition; recorded separately, treated as absent for percentage purposes</li>
+</ul>
+<p>Changes are saved immediately on tap (optimistic UI with server sync).</p>
+
+<h3>Sessions UI — Monthly Grouping</h3>
+<p>The attendance overview groups sessions by calendar month with an expand/collapse chevron. The most recent month is open by default. Each month header shows the total number of sessions and the combined attendee count for that month. Collapsed months show only the header row.</p>
+<p>Each session row shows: date, category badge (colour-coded), attendee count (present participants only), optional note, and action links.</p>
+
+<h3>Session Deletion</h3>
+<p>Administrators can delete a session provided its month has <strong>not</strong> been approved. If the month&rsquo;s report is in <code>APPROVED</code> status, deletion is blocked with an error message. When a session is deleted:</p>
+<ol class="flow">
+  <li>All <code>AttendanceRecord</code> rows for that session are deleted.</li>
+  <li>The <code>Event</code> row is deleted.</li>
+  <li>If other sessions remain in that month, the monthly report is automatically regenerated.</li>
+  <li>If the deleted session was the only one in the month, the report is reset to <code>PENDING</code> with no entries.</li>
+</ol>
+
+<hr class="divider" />
+
+<h2>2.4 Monthly Report &amp; Reward Logic</h2>
+
+<p>This is the core business logic of the platform. Each month produces a report that says: "for each participant, here is how many sessions they attended, their attendance percentage, and how many sats they earned."</p>
+
+<h3>Report Generation — <code>upsertMonthlyReport()</code></h3>
+<p>A single idempotent function (<code>src/lib/upsert-report.ts</code>) handles all report creation and updates. It is called automatically when:</p>
+<ul>
+  <li>A new session (Event) is created</li>
+  <li>A session is deleted</li>
+  <li>A participant is marked RETIRED</li>
+</ul>
+<p>The function runs inside a database transaction and fully replaces all <code>MonthlyReportEntry</code> rows for the target month — making it safe to call repeatedly with no side effects.</p>
+
+<h3>Participant Inclusion Rules</h3>
+<p>Which participants appear in a given month&rsquo;s report is determined by these rules:</p>
+<table>
+  <thead><tr><th>Participant State</th><th>Included?</th><th>Reasoning</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>ACTIVE, registered before month end</td>
+      <td>Yes</td>
+      <td>Normal active participant.</td>
+    </tr>
+    <tr>
+      <td>ACTIVE, registered <em>after</em> month end</td>
+      <td>No</td>
+      <td>Not yet a participant during the month.</td>
+    </tr>
+    <tr>
+      <td>RETIRED, <code>retiredAt ≥ monthStart</code></td>
+      <td>Yes — for retirement month only</td>
+      <td>Was still participating at some point during the month; sessions up to retirement date count.</td>
+    </tr>
+    <tr>
+      <td>RETIRED, <code>retiredAt &lt; monthStart</code></td>
+      <td>No</td>
+      <td>Retired before this month began; fully excluded.</td>
+    </tr>
+  </tbody>
+</table>
+<div class="callout">
+  <strong>New-joiner rule:</strong> A participant who joins mid-month is included in the report. Their attendance for sessions before their registration date is naturally zero (no records exist). They are divided by the full month session count — they do not get a prorated denominator. This is intentional: the same rule applies to retired participants.
+</div>
+
+<h3>Attendance Calculation</h3>
+<pre><code>// For each participant:
+const attendableEvents = participant.retiredAt
+  ? events.filter(e => e.date <= participant.retiredAt)
+  : events;  // all month events for active participants
+
+const totalEvents = events.length;   // ALWAYS the full month count
+
+const attended = attendableEvents.filter(e =>
+  attendedSet.get(participant.id)?.has(e.id)
+).length;
+
+const percentage = (attended / totalEvents) * 100;</code></pre>
+
+<p>The key design decisions:</p>
+<ul>
+  <li><strong><code>attended</code></strong> only counts sessions up to the retirement date (retired participants cannot attend sessions after they left).</li>
+  <li><strong><code>totalEvents</code></strong> is always the full count of sessions in the month — no participant gets a smaller denominator regardless of when they joined or when they retired. This creates a fair, consistent metric.</li>
+</ul>
+
+<h3>Reward Tiers</h3>
+<table>
+  <thead><tr><th>Attendance %</th><th>Base Reward (sats)</th></tr></thead>
+  <tbody>
+    <tr><td>100%</td><td>10,000</td></tr>
+    <tr><td>95 – 99%</td><td>8,200</td></tr>
+    <tr><td>90 – 94%</td><td>6,700</td></tr>
+    <tr><td>85 – 89%</td><td>5,500</td></tr>
+    <tr><td>80 – 84%</td><td>4,500</td></tr>
+    <tr><td>75 – 79%</td><td>3,700</td></tr>
+    <tr><td>70 – 74%</td><td>3,000</td></tr>
+    <tr><td>&lt; 70%</td><td>0</td></tr>
+  </tbody>
+</table>
+
+<h3>Junior Coach Reward Multiplier</h3>
+<pre><code>const JC_MULTIPLIERS = { 1: 5, 2: 7.5, 3: 10 };
+const rewardSats = participant.isJuniorCoach
+  ? Math.round(baseReward * (JC_MULTIPLIERS[participant.juniorCoachLevel ?? 1] ?? 5))
+  : baseReward;</code></pre>
+
+<h3>Report Lifecycle</h3>
+<ol class="flow">
+  <li><strong>Generate:</strong> Report created or refreshed automatically on data changes. Status starts as <code>PENDING</code>. If the report was <code>APPROVED</code> and is regenerated, it resets to <code>PENDING</code> (approval revoked).</li>
+  <li><strong>Review:</strong> Administrator views the report — sees each participant, their attendance, percentage, and reward amount.</li>
+  <li><strong>Approve:</strong> Administrator approves the report. Blocked for the current or future months (only past months may be approved). On approval, the system creates a <strong>batch payout</strong> via the Bolt API and stores a Lightning invoice for the total.</li>
+  <li><strong>Pay:</strong> The payout transitions through statuses: <code>unpaid</code> → <code>invoiced</code> → <code>paid</code> as the Lightning payment is settled.</li>
+</ol>
+
+<hr class="divider" />
+
+<h2>2.5 Payout Integration</h2>
+
+<h3>Payment Methods</h3>
+<p>Each participant has a <code>paymentMethod</code> setting:</p>
+<ul>
+  <li><strong>BOLT_CARD</strong> — reward sats are credited as an internal balance on the BoltCard Server. The participant spends using their NFC card at point-of-sale.</li>
+  <li><strong>LIGHTNING_ADDRESS</strong> — reward sats are sent outbound via Lightning Network to the participant&rsquo;s Lightning address (e.g. <code>name@wallet.satoshi.place</code>).</li>
+</ul>
+
+<h3>Monthly Report Payout Flow</h3>
+<p>When an Administrator approves a monthly report, TSK calls the Bolt Server&rsquo;s <strong>POST /api/v1/payout/batch</strong> endpoint with a list of <code>{ userId, amountSats, payoutType }</code> items. Bolt processes the batch:</p>
+<ul>
+  <li>For <code>internal</code> items: credits the user&rsquo;s balance ledger directly.</li>
+  <li>For <code>ln_address</code> items: sends a real Lightning payment to the address and records the result.</li>
+</ul>
+
+<h3>Academic Payouts</h3>
+<p>Term-based school grade rewards separate from monthly attendance. An Administrator uploads school reports, enters each participant&rsquo;s academic percentage, and the system calculates a reward based on grade thresholds. These flow through the same Bolt batch payout mechanism.</p>
+
+<h3>Special Payouts</h3>
+<p>Ad-hoc reward batches for specific events (competition prizes, community participation, etc.). An Administrator creates a SpecialPayout with a title and description, then adds entries for individual participants with custom amounts.</p>
+
+<hr class="divider" />
+
+<h2>2.6 Time Zone Strategy</h2>
+
+<p>South Africa uses <strong>SAST (UTC+2)</strong> with no daylight-saving time. The platform stores all dates in UTC but must correctly identify which SAST calendar day each event belongs to.</p>
+
+<div class="callout">
+  <strong>Convention:</strong> All Event dates are stored as <strong>noon UTC</strong> on the SAST calendar date. For example, "Monday 7 April 2026 SAST" is stored as <code>2026-04-07T10:00:00.000Z</code>. This ensures the date never crosses midnight UTC in either direction when interpreted in SAST.
+</div>
+
+<p>Month boundary calculations in <code>src/lib/sast.ts</code>:</p>
+<ul>
+  <li><code>getStartOfSASTMonth("2026-04")</code> returns <code>2026-03-31T22:00:00.000Z</code> (midnight SAST = UTC-2h)</li>
+  <li><code>getEndOfSASTMonth("2026-04")</code> returns <code>2026-04-30T21:59:59.999Z</code> (end of last SAST day)</li>
+</ul>
+<p>All date-range queries in Prisma use these UTC boundary values, ensuring the database queries correctly capture the full SAST month regardless of when the query is executed.</p>
+
+<!-- ══════════════════════════════════════════════ PART 3 ══ -->
+<div class="part-header">
+  <div class="part-label">Part 3</div>
+  <h2>BoltCard Server — bolt.bitcoinekasi.xyz</h2>
+</div>
+
+<p>The BoltCard Server is an Express.js application that manages a Bitcoin balance ledger, handles NFC card payments, accepts Lightning Network refills, and exposes an admin dashboard and a payout API.</p>
+
+<h2>3.1 Database Schema</h2>
+<p>Eleven SQLite tables (created synchronously with better-sqlite3 on startup):</p>
+
+<table>
+  <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>admins</code></td><td>Admin user accounts. Stores hashed password (bcrypt) and display name.</td></tr>
+    <tr><td><code>users</code></td><td>Participants/cardholders. Fields: <code>username</code>, <code>display_name</code>, <code>balance_sats</code>, <code>daily_limit_sats</code>, <code>tx_limit_sats</code>, <code>lightning_address</code>, <code>external_id</code> (links to TSK participant ID).</td></tr>
+    <tr><td><code>cards</code></td><td>NFC BoltCards. One card per user. Stores all 5 AES-128 keys (K0–K4), the card&rsquo;s UID (captured on first tap), last seen counter, and enabled/disabled status.</td></tr>
+    <tr><td><code>transactions</code></td><td>Completed payment events. Records direction (debit/credit), amount, fee, memo, and Unix timestamp.</td></tr>
+    <tr><td><code>pending_refills</code></td><td>In-flight LNURL-P invoices awaiting payment. Holds Blink payment hash, amount, expiry timestamp.</td></tr>
+    <tr><td><code>pending_withdrawals</code></td><td>In-flight LNURL-W requests awaiting wallet callback. Holds one-time k1 token and amount.</td></tr>
+    <tr><td><code>api_keys</code></td><td>API keys for server-to-server calls (TSK → Bolt). Key is stored as a SHA-256 hash — the raw key is shown once at creation.</td></tr>
+    <tr><td><code>card_events</code></td><td>Append-only audit log of every card tap attempt (success, failure, reason).</td></tr>
+    <tr><td><code>payout_batches</code></td><td>Monthly/academic/special reward batches received from TSK. Tracks total sats, status, and Lightning invoice hash.</td></tr>
+    <tr><td><code>payout_batch_items</code></td><td>Individual user entries within a batch. Tracks <code>payout_type</code> (<code>internal</code> vs <code>ln_address</code>), amount, and per-item status.</td></tr>
+    <tr><td><code>ln_payouts</code></td><td>Records of outbound Lightning payments (for LN address payouts). Stores payment hash, destination address, amount, fee, status.</td></tr>
+  </tbody>
+</table>
+
+<h3>Card Keys Explained</h3>
+<p>Each BoltCard has 5 AES-128 (128-bit) keys written during programming:</p>
+<table>
+  <thead><tr><th>Key</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td><code>K0</code></td><td>Card authentication master key (used by card internally)</td></tr>
+    <tr><td><code>K1</code></td><td><strong>Session key</strong> — used by the server to decrypt the encrypted UID and tap counter from the NFC URL</td></tr>
+    <tr><td><code>K2</code></td><td><strong>CMAC key</strong> — used to verify the message authentication code in the NFC URL, preventing replay attacks</td></tr>
+    <tr><td><code>K3</code></td><td>Reserved / factory use</td></tr>
+    <tr><td><code>K4</code></td><td>Reserved / factory use</td></tr>
+  </tbody>
+</table>
+
+<hr class="divider" />
+
+<h2>3.2 Card Programming Workflow</h2>
+<p>Before a participant can use their BoltCard, it must be programmed with the server&rsquo;s keys and URL.</p>
+
+<ol class="flow">
+  <li>Administrator opens the user detail page in the Bolt admin dashboard and clicks <strong>"Generate Card QR"</strong>.</li>
+  <li>The server generates 5 random 128-bit AES keys (K0–K4) and stores them against the user&rsquo;s card record. The card UID is initially unknown.</li>
+  <li>The server constructs a configuration payload encoding the keys and the LNURL-W endpoint URL, and returns it as a QR code.</li>
+  <li>An administrator scans the QR code with the <strong>BoltCard Programmer</strong> mobile app (available for iOS/Android).</li>
+  <li>The app establishes an NFC connection with the blank card and writes all 5 keys plus the LNURL-W URL to the card&rsquo;s NTAG424 memory.</li>
+  <li>On the card&rsquo;s <strong>first tap</strong> at a payment terminal, the server decrypts the NFC payload and captures the card&rsquo;s real UID, completing registration.</li>
+</ol>
+<p>To decommission a card, the administrator generates a "wipe QR" which resets the card to factory keys.</p>
+
+<hr class="divider" />
+
+<h2>3.3 Card Tap → Payment (LNURL-W)</h2>
+<p>LNURL-Withdraw (LNURL-W) is the Lightning Network protocol for pulling a payment from a server to a wallet. When a participant taps their BoltCard at a point-of-sale terminal, the following happens:</p>
+
+<ol class="flow">
+  <li><strong>NFC tap:</strong> The card broadcasts a URL of the form <code>https://bolt.bitcoinekasi.xyz/lnurlw?p=ENCRYPTED_PAYLOAD&amp;c=CMAC</code>.</li>
+  <li><strong>Server receives /lnurlw:</strong> The server extracts <code>p</code> (AES-encrypted UID + counter) and <code>c</code> (CMAC authentication tag).</li>
+  <li><strong>Decrypt:</strong> Using the card&rsquo;s stored K1 key, the server decrypts <code>p</code> to recover the plaintext UID and 3-byte tap counter.</li>
+  <li><strong>Identify card:</strong> The server looks up the card by UID. On first tap, UID is unknown — the server identifies by the encrypted payload pattern and stores the UID.</li>
+  <li><strong>Verify CMAC:</strong> Using K2, the server recomputes the CMAC over the decrypted data and compares it to <code>c</code>. If they don&rsquo;t match, the request is rejected as tampered.</li>
+  <li><strong>Counter check:</strong> The decrypted counter must be strictly greater than the last seen counter stored in the DB. This prevents replay attacks (tapping a recorded NFC signal a second time does nothing).</li>
+  <li><strong>Return LNURL-W response:</strong> Server responds with a JSON payload containing the withdrawal parameters: <code>minWithdrawable</code>, <code>maxWithdrawable</code> (the user&rsquo;s balance up to the per-transaction limit), <code>defaultDescription</code>, and the callback URL.</li>
+  <li><strong>Wallet creates invoice:</strong> The payment terminal or wallet creates a Lightning invoice for the requested amount and sends it to <code>/lnurlw/callback?k1=TOKEN&amp;pr=INVOICE</code>.</li>
+  <li><strong>Callback processing:</strong> Server decodes the invoice to confirm the amount, checks it doesn&rsquo;t exceed the user&rsquo;s balance or daily/per-tx limits, then calls Blink&rsquo;s <code>lnInvoicePaymentSend</code> GraphQL mutation.</li>
+  <li><strong>Balance deduction:</strong> On successful payment, the user&rsquo;s <code>balance_sats</code> is decremented and a <code>transactions</code> row is inserted.</li>
+</ol>
+
+<div class="callout warn">
+  <strong>Replay prevention:</strong> The strictly-increasing counter (stored on the card&rsquo;s secure memory and verified server-side) means that even if someone records an NFC tap, re-broadcasting the same URL would fail the counter check. The CMAC further ensures the payload hasn&rsquo;t been tampered with.
+</div>
+
+<hr class="divider" />
+
+<h2>3.4 Balance Refill (LNURL-P)</h2>
+<p>Participants can top up their BoltCard balance by sending Lightning payments to their Lightning address (e.g. <code>username@bolt.bitcoinekasi.xyz</code>).</p>
+
+<ol class="flow">
+  <li><strong>Lightning address lookup:</strong> The sender&rsquo;s wallet fetches <code>https://bolt.bitcoinekasi.xyz/.well-known/lnurlp/username</code> and receives a LNURL-P metadata response.</li>
+  <li><strong>Invoice request:</strong> The sender&rsquo;s wallet requests a Lightning invoice for their chosen amount via <code>/lnurlp/username/callback?amount=MILLISATS</code>.</li>
+  <li><strong>Invoice creation:</strong> The server calls Blink&rsquo;s <code>lnInvoiceCreate</code> GraphQL mutation to create an invoice on the Blink account, then stores the invoice in <code>pending_refills</code> (with 1-hour expiry) and returns it to the sender&rsquo;s wallet.</li>
+  <li><strong>Payment:</strong> The sender pays the invoice. Blink detects the incoming payment.</li>
+  <li><strong>Real-time notification:</strong> The Blink WebSocket subscription fires a <code>LnUpdate</code> event containing the payment hash and settled amount.</li>
+  <li><strong>Balance credit:</strong> The server matches the payment hash to a <code>pending_refills</code> row, credits the corresponding user&rsquo;s <code>balance_sats</code>, inserts a <code>transactions</code> row, and removes the pending_refill entry.</li>
+</ol>
+<p>A background job runs every 30 minutes to clean up expired (unpaid) pending_refills.</p>
+
+<hr class="divider" />
+
+<h2>3.5 Blink Lightning Integration</h2>
+<p>All Lightning Network operations are handled through <strong>Blink</strong> (galoy.io), a custodial Bitcoin Lightning wallet that exposes a GraphQL API and a WebSocket subscription feed.</p>
+
+<h3>GraphQL HTTP API</h3>
+<table>
+  <thead><tr><th>Operation</th><th>Type</th><th>Used For</th></tr></thead>
+  <tbody>
+    <tr><td><code>lnInvoiceCreate</code></td><td>Mutation</td><td>Create a Lightning invoice for refills</td></tr>
+    <tr><td><code>lnInvoicePaymentSend</code></td><td>Mutation</td><td>Pay a Lightning invoice (card withdrawals)</td></tr>
+    <tr><td><code>getBalance</code></td><td>Query</td><td>Fetch current Blink account balance</td></tr>
+    <tr><td><code>getTransactions</code></td><td>Query</td><td>Fetch transaction history with counterparty details</td></tr>
+  </tbody>
+</table>
+
+<h3>WebSocket Subscription</h3>
+<p>The server maintains a persistent WebSocket connection to Blink&rsquo;s subscription endpoint, subscribing to <code>myUpdates</code>. When a payment arrives, Blink pushes a real-time <code>LnUpdate</code> event:</p>
+<pre><code>subscription {
+  myUpdates {
+    update {
+      ... on LnUpdate {
+        paymentHash
+        status
+        settlementAmount
+      }
+    }
+  }
+}</code></pre>
+<p>The server uses <code>graphql-ws</code> with <code>retryAttempts: Infinity</code> to automatically reconnect if the WebSocket drops.</p>
+
+<h3>Transaction Counterparty Extraction</h3>
+<p>The admin dashboard shows a "From/To" column on Blink transactions. The server extracts the counterparty from the <code>settlementVia</code> field:</p>
+<ul>
+  <li><strong>IntraLedger</strong> (Blink-to-Blink): shows the counterparty&rsquo;s Blink username</li>
+  <li><strong>OnChain</strong>: shows the Bitcoin transaction hash</li>
+  <li><strong>Lightning</strong>: shows "Lightning" (external LN payment; no identifying info available)</li>
+</ul>
+
+<hr class="divider" />
+
+<h2>3.6 Admin Dashboard</h2>
+<p>The Bolt admin dashboard is a React single-page application (Vite build) served alongside the Express API. It authenticates via JWT stored in <code>localStorage</code>.</p>
+
+<h3>Users Tab</h3>
+<ul>
+  <li><strong>Search bar</strong> — live filtering by username or display name as you type</li>
+  <li>Each user row shows: display name, username, card status badge (Active / Inactive / No Card), balance in sats and ZAR equivalent, and a lightning bolt icon if they have a Lightning address set</li>
+  <li>Clicking a user opens the detail panel</li>
+</ul>
+
+<h3>User Detail Panel</h3>
+<ul>
+  <li>Balance display with credit/debit controls</li>
+  <li>Transaction history (merged from <code>transactions</code> and <code>ln_payouts</code> tables, sorted by date)</li>
+  <li>Card status + card programming QR code / wipe QR code</li>
+  <li>Daily limit and per-transaction limit settings</li>
+  <li>Lightning payout button (send balance to LN address)</li>
+</ul>
+
+<h3>Blink Account Tab</h3>
+<p>A separate tab showing the main Blink account (<code>skredit@blink.sv</code>) transaction history:</p>
+<ul>
+  <li>Direction indicator (↓ receive green, ↑ send orange)</li>
+  <li>Date and time</li>
+  <li>From/To counterparty (intraledger username, on-chain hash, or "Lightning")</li>
+  <li>Amount in sats (with ZAR equivalent)</li>
+  <li>Fee in sats</li>
+  <li>Memo</li>
+  <li>Status badge (SUCCESS, PENDING, FAILED)</li>
+  <li>Refresh button to reload the latest 50 transactions</li>
+</ul>
+<p>Data is fetched lazily — only when the Blink tab is first opened.</p>
+
+<hr class="divider" />
+
+<h2>3.7 Batch Payout API</h2>
+<p>TSK calls Bolt&rsquo;s <strong>POST /api/v1/payout/batch</strong> endpoint when a monthly (or other) payout is approved. This endpoint is protected by an API key (hashed with SHA-256 in the DB).</p>
+
+<h3>Request Format</h3>
+<pre><code>POST /api/v1/payout/batch
+Authorization: Bearer &lt;api_key&gt;
+
+{
+  "batchId": "tsk-2026-03",
+  "description": "Monthly rewards — March 2026",
+  "items": [
+    { "userId": "TSK00001", "amountSats": 10000, "payoutType": "internal" },
+    { "userId": "TSK00042", "amountSats": 8200,  "payoutType": "ln_address" }
+  ]
+}</code></pre>
+
+<h3>Processing</h3>
+<ul>
+  <li><strong>internal</strong> items: balance is credited immediately to the user&rsquo;s account. A <code>payout_batch_items</code> row is marked <code>completed</code>.</li>
+  <li><strong>ln_address</strong> items: the server initiates a Lightning payment to the user&rsquo;s stored Lightning address. The outbound payment is tracked in <code>ln_payouts</code>. On WebSocket confirmation from Blink, the item is marked <code>completed</code>.</li>
+</ul>
+
+<hr class="divider" />
+
+<h2>3.8 Security</h2>
+<table>
+  <thead><tr><th>Mechanism</th><th>Implementation</th></tr></thead>
+  <tbody>
+    <tr><td>Admin authentication</td><td>JWT (HS256), 8-hour expiry, signed with <code>JWT_SECRET</code> env var</td></tr>
+    <tr><td>Password storage</td><td>bcrypt with salt rounds = 12</td></tr>
+    <tr><td>API key storage</td><td>SHA-256 hash of the raw key; raw key shown only once at creation</td></tr>
+    <tr><td>NFC replay prevention</td><td>Strictly-increasing tap counter (3 bytes, stored per card); CMAC over decrypted payload</td></tr>
+    <tr><td>NFC tamper detection</td><td>CMAC (AES-128 CBC-MAC) using K2; mismatching CMAC = rejected</td></tr>
+    <tr><td>NFC payload confidentiality</td><td>AES-128 decryption of UID + counter using K1</td></tr>
+    <tr><td>Withdrawal limits</td><td>Per-transaction limit and daily rolling limit enforced server-side before calling Blink</td></tr>
+    <tr><td>HTTPS</td><td>Let&rsquo;s Encrypt TLS via nginx reverse proxy; all traffic encrypted in transit</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════ PART 4 ══ -->
+<div class="part-header">
+  <div class="part-label">Part 4</div>
+  <h2>How the Two Systems Work Together</h2>
+</div>
+
+<p>TSK Rewards and the BoltCard Server are loosely coupled via a simple REST API. TSK is the source of truth for participants and rewards; Bolt is the source of truth for balances and card payments.</p>
+
+<h3>End-to-End Reward Flow</h3>
+
+<ol class="flow">
+  <li>
+    <strong>Attendance tracked (TSK):</strong> Throughout the month, Marshalls mark daily attendance. Each session auto-updates the monthly report entry for each participant.
+  </li>
+  <li>
+    <strong>Month closes (TSK):</strong> At the end of the month, an Administrator opens the monthly report. The report shows every participant, their attendance %, and calculated reward in sats.
+  </li>
+  <li>
+    <strong>Report approved (TSK → Bolt):</strong> Administrator clicks Approve. TSK calls <code>POST /api/v1/payout/batch</code> on the Bolt server, passing each participant&rsquo;s TSK ID (mapped to their Bolt username) and reward amount.
+  </li>
+  <li>
+    <strong>Balances credited (Bolt):</strong> Bolt processes the batch. For BOLT_CARD participants, their internal balance increases. For LIGHTNING_ADDRESS participants, Bolt sends an outbound Lightning payment.
+  </li>
+  <li>
+    <strong>Spending (Bolt):</strong> Participants with BoltCards tap to pay at community vendors, sports shops, or programme-affiliated merchants. Each tap deducts from their internal balance via LNURL-W.
+  </li>
+  <li>
+    <strong>Lightning refills (Bolt):</strong> Any Lightning-capable wallet can send sats to <code>username@bolt.bitcoinekasi.xyz</code> to top up a participant&rsquo;s balance directly, without going through TSK.
+  </li>
+</ol>
+
+<h3>Data Mapping</h3>
+<table>
+  <thead><tr><th>TSK Field</th><th>Bolt Field</th><th>How Linked</th></tr></thead>
+  <tbody>
+    <tr><td><code>participant.tskId</code></td><td><code>users.external_id</code></td><td>TSK creates/looks up the Bolt user by TSK ID when dispatching a payout batch</td></tr>
+    <tr><td><code>participant.paymentMethod</code></td><td><code>payout_batch_items.payout_type</code></td><td>BOLT_CARD → <code>internal</code>; LIGHTNING_ADDRESS → <code>ln_address</code></td></tr>
+    <tr><td><code>participant.lightningAddress</code></td><td><code>users.lightning_address</code></td><td>Synced when the Bolt user is created or updated from TSK</td></tr>
+  </tbody>
+</table>
+
+<h3>Independence</h3>
+<p>The systems can operate independently. The Bolt server has no knowledge of attendance or reward calculations — it just processes the batch it receives. TSK has no knowledge of card balances or tap history. This separation of concerns keeps each system simple and allows either to be replaced or upgraded independently.</p>
+
+<!-- ══════════════════════════════════════════════ PART 5 ══ -->
+<div class="part-header">
+  <div class="part-label">Part 5</div>
+  <h2>Deployment &amp; Operations</h2>
+</div>
+
+<h2>5.1 Docker Builds</h2>
+<p>Both systems use <strong>multi-stage Docker builds</strong> to keep the final image small:</p>
+<table>
+  <thead><tr><th>Stage</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>deps</code></td><td>Install all npm dependencies (including devDependencies for the build)</td></tr>
+    <tr><td><code>builder</code></td><td>Run the production build (<code>next build</code> for TSK, <code>tsc + vite build</code> for Bolt)</td></tr>
+    <tr><td><code>runner</code></td><td>Copy only the compiled output + production dependencies; set <code>NODE_ENV=production</code></td></tr>
+  </tbody>
+</table>
+<p>This produces lean images (~200–400 MB) without TypeScript, Vite, or build tools in the final container.</p>
+
+<h2>5.2 GitHub Actions CI</h2>
+<p>Each repository has a <code>.github/workflows/build.yml</code> file triggered on push to <code>main</code>:</p>
+<pre><code>on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/&lt;org&gt;/&lt;repo&gt;:latest</code></pre>
+
+<h2>5.3 Server Deployment</h2>
+<p>The VPS runs a single <code>docker-compose.yml</code> in the <code>/home/user/infra/</code> directory that defines both services:</p>
+<pre><code>services:
+  tsk:
+    image: ghcr.io/org/tsk_rewards:latest
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=file:/data/tsk.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=https://tsk.bitcoinekasi.xyz
+    volumes:
+      - tsk_data:/data
+      - tsk_uploads:/app/public/uploads
+
+  bolt:
+    image: ghcr.io/org/bolt:latest
+    restart: unless-stopped
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - BLINK_API_KEY=${BLINK_API_KEY}
+      - BLINK_WALLET_ID=${BLINK_WALLET_ID}
+    volumes:
+      - bolt_data:/data</code></pre>
+
+<p>To deploy a new version:</p>
+<pre><code>docker compose pull
+docker compose up -d</code></pre>
+<p>Docker Compose compares the new image digest to the running container and only restarts services where the image changed.</p>
+
+<h2>5.4 nginx Configuration</h2>
+<p>Two server blocks — one per domain. Key configuration:</p>
+<pre><code>server {
+    server_name tsk.bitcoinekasi.xyz;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+server {
+    server_name bolt.bitcoinekasi.xyz;
+
+    location /assets/ {
+        proxy_pass http://localhost:5173;
+        proxy_buffering off;   # Critical: prevents truncation of large JS bundles
+    }
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_set_header Host $host;
+    }
+}</code></pre>
+<div class="callout warn">
+  <strong>proxy_buffering off</strong> on the <code>/assets/</code> location is critical. Without it, nginx&rsquo;s default 32KB proxy buffer truncates large JavaScript bundles, causing a blank white page. Setting <code>proxy_buffering off</code> streams the file directly to the browser without buffering.
+</div>
+<p>SSL is managed by <strong>Certbot</strong> (Let&rsquo;s Encrypt), which adds the <code>ssl_certificate</code> and <code>ssl_certificate_key</code> directives and sets up automatic HTTPS redirect.</p>
+
+<h2>5.5 Environment Variables</h2>
+<table>
+  <thead><tr><th>Variable</th><th>System</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>DATABASE_URL</code></td><td>TSK</td><td>Prisma connection string (SQLite file path)</td></tr>
+    <tr><td><code>NEXTAUTH_SECRET</code></td><td>TSK</td><td>JWT signing secret for NextAuth sessions</td></tr>
+    <tr><td><code>NEXTAUTH_URL</code></td><td>TSK</td><td>Public URL of the TSK app (for OAuth callbacks)</td></tr>
+    <tr><td><code>AUTH_TRUST_HOST</code></td><td>TSK</td><td>Set to <code>true</code> when behind a proxy</td></tr>
+    <tr><td><code>BOLT_API_URL</code></td><td>TSK</td><td>Internal URL of the Bolt server for payout API calls</td></tr>
+    <tr><td><code>BOLT_API_KEY</code></td><td>TSK</td><td>API key for authenticating TSK → Bolt calls</td></tr>
+    <tr><td><code>JWT_SECRET</code></td><td>Bolt</td><td>Signs admin dashboard JWTs</td></tr>
+    <tr><td><code>BLINK_API_KEY</code></td><td>Bolt</td><td>Blink GraphQL API authentication</td></tr>
+    <tr><td><code>BLINK_WALLET_ID</code></td><td>Bolt</td><td>Blink Bitcoin wallet identifier</td></tr>
+    <tr><td><code>ZAR_RATE</code></td><td>Bolt</td><td>BTC/ZAR exchange rate for display purposes</td></tr>
+  </tbody>
+</table>
+
+<h2>5.6 Database Migrations</h2>
+<p><strong>TSK (Prisma):</strong> The Docker entrypoint runs <code>prisma migrate deploy</code> before starting the Next.js server. This applies any pending SQL migrations from <code>prisma/migrations/</code> to the production database safely — skipping already-applied migrations and never touching data.</p>
+<p><strong>Bolt (SQLite):</strong> On startup, the Express app runs synchronous <code>CREATE TABLE IF NOT EXISTS</code> statements for all 11 tables. This is idempotent — existing tables are untouched. Schema changes require a manual <code>ALTER TABLE</code> migration or a data migration script run on the server.</p>
+
+<h2>5.7 Maintenance Notes</h2>
+<ul>
+  <li><strong>Disk space:</strong> Docker image layers accumulate on the VPS over time. Run <code>docker system prune -f</code> before deploying if disk space is low.</li>
+  <li><strong>SQLite backups:</strong> Both databases are single files on Docker named volumes. Back up by running <code>docker cp &lt;container&gt;:/data/tsk.db ./backup-tsk.db</code>.</li>
+  <li><strong>Log access:</strong> <code>docker compose logs -f tsk</code> or <code>docker compose logs -f bolt</code> for live logs.</li>
+  <li><strong>Seed users:</strong> After a fresh TSK deployment, run <code>docker compose exec tsk npm run db:seed</code> to create the default admin and marshall accounts.</li>
+</ul>
+
+<hr class="divider" />
+
+<p style="text-align: center; color: #999; font-size: 0.85rem; margin-top: 3rem;">
+  TSK Bitcoin Rewards Platform &mdash; System Documentation &mdash; BitcoinEkasi &mdash; April 2026
+</p>
+
+</body>
+</html>
