@@ -73,13 +73,16 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      // For retired participants, only count events up to their retirement date
-      const eligibleEvents = participant.retiredAt
+      // Attended: sessions the participant was present for, capped at retirement date if applicable.
+      // New participants have no records before their registration, so attended is naturally 0 for those.
+      // totalEvents is always the full session count for the month — both retired and new participants
+      // are divided by the same denominator regardless of when they joined or left.
+      const attendableEvents = participant.retiredAt
         ? events.filter((e) => e.date <= participant.retiredAt!)
         : events;
 
-      const totalEvents = eligibleEvents.length;
-      const attended = eligibleEvents.filter((e) =>
+      const totalEvents = events.length;
+      const attended = attendableEvents.filter((e) =>
         attendedSet.get(participant.id)?.has(e.id)
       ).length;
 
