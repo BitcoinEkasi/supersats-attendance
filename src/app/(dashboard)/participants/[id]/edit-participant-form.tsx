@@ -605,7 +605,9 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   const isFreeSurfer = l.value === FREE_SURFER_LEVEL;
                   // Free Surfer is only reachable from Shark Elite
                   const freeSurferLocked = isFreeSurfer && tskStatus !== POD_LEVEL && tskStatus !== FREE_SURFER_LEVEL;
-                  const disabled = (currentIdx >= 0 && i < currentIdx) || freeSurferLocked;
+                  // Allow reverting from Free Surfer back to Shark Elite
+                  const isRevertToShark = l.value === POD_LEVEL && tskStatus === FREE_SURFER_LEVEL;
+                  const disabled = ((currentIdx >= 0 && i < currentIdx) || freeSurferLocked) && !isRevertToShark;
                   return (
                     <option key={l.value} value={l.value} disabled={disabled}>
                       {l.value}{disabled && !freeSurferLocked ? " ↑ already passed" : ""}
