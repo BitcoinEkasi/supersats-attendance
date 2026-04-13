@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import type { UserRole } from "@/lib/auth";
 
 const allNavItems = [
@@ -63,27 +64,64 @@ const allNavItems = [
 
 export default function Sidebar({ role }: { role?: UserRole }) {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("sidebar-collapsed");
+    if (stored !== null) setCollapsed(stored === "true");
+  }, []);
+
+  function toggle() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  }
 
   const navItems = role
     ? allNavItems.filter((item) => item.roles.includes(role))
     : allNavItems;
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
-      <div className="flex items-center border-b border-gray-200 px-6 py-4">
-        <h1 className="text-lg font-bold leading-snug text-orange-600">TSK Attendance, Performance, and Rewards</h1>
+    <aside
+      className={`flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-200 ${
+        collapsed ? "w-16" : "w-64"
+      }`}
+    >
+      {/* Header */}
+      <div
+        className={`flex items-center border-b border-gray-200 ${
+          collapsed ? "justify-center px-2 py-4" : "px-6 py-4"
+        }`}
+      >
+        {collapsed ? (
+          <span className="text-xl font-bold text-orange-600">T</span>
+        ) : (
+          <h1 className="text-lg font-bold leading-snug text-orange-600">
+            TSK Attendance, Performance, and Rewards
+          </h1>
+        )}
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4">
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-1 px-2 py-4">
         {navItems.map((item) => {
           const isActive =
             item.href === "/participants"
-              ? pathname === "/participants" || (pathname.startsWith("/participants/") && !pathname.startsWith("/participants/add") && !pathname.startsWith("/participants/import"))
+              ? pathname === "/participants" ||
+                (pathname.startsWith("/participants/") &&
+                  !pathname.startsWith("/participants/add") &&
+                  !pathname.startsWith("/participants/import"))
               : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                collapsed ? "justify-center" : "gap-3"
+              } ${
                 isActive
                   ? "bg-orange-50 text-orange-700"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -98,11 +136,33 @@ export default function Sidebar({ role }: { role?: UserRole }) {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
               </svg>
-              {item.label}
+              {!collapsed && item.label}
             </Link>
           );
         })}
       </nav>
+
+      {/* Toggle button */}
+      <div className="border-t border-gray-200 p-2">
+        <button
+          onClick={toggle}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors ${
+            collapsed ? "justify-center" : "gap-3"
+          }`}
+        >
+          <svg
+            className={`h-5 w-5 shrink-0 transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+          {!collapsed && <span>Collapse</span>}
+        </button>
+      </div>
     </aside>
   );
 }
