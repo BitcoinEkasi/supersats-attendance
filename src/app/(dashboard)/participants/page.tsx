@@ -141,6 +141,12 @@ export default async function ParticipantsPage({
                     <span>Age {calculateAge(p.dateOfBirth)}</span>
                     <span className="text-gray-300">·</span>
                     <span>Division {getDivisionLabel(p.dateOfBirth, p.gender)}</span>
+                    {(p as any).stance && (
+                      <>
+                        <span className="text-gray-300">·</span>
+                        <span>{(p as any).stance}</span>
+                      </>
+                    )}
                   </div>
 
                   {/* Joined / Retired */}
