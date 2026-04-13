@@ -142,7 +142,7 @@ export default async function ParticipantDetailPage({
               {(participant as any).stance && (
                 <>
                   <span className="text-gray-300">·</span>
-                  <span>{(participant as any).stance}</span>
+                  <span>Stance {(participant as any).stance}</span>
                 </>
               )}
             </div>
