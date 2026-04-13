@@ -158,6 +158,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         wetsuiteSize: newWetsuiteSize,
         ...(wetsuiteChanged ? { wetsuiteUpdatedAt: now }  : {}),
         ...(measurementsChanged ? { measurementsUpdatedAt: now } : {}),
+        stance: body.stance?.trim() || null,
         notes: body.notes?.trim() || null,
         paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
         lightningAddress: body.lightningAddress?.trim() || null,

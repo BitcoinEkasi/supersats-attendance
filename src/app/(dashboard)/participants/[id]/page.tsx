@@ -139,6 +139,12 @@ export default async function ParticipantDetailPage({
               <span>Age {calculateAge(participant.dateOfBirth)}</span>
               <span className="text-gray-300">·</span>
               <span>Division {getDivisionLabel(participant.dateOfBirth, participant.gender)}</span>
+              {(participant as any).stance && (
+                <>
+                  <span className="text-gray-300">·</span>
+                  <span>{(participant as any).stance}</span>
+                </>
+              )}
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
               {participant.status === "ACTIVE" ? (

@@ -81,6 +81,7 @@ model Participant {
   shoeSizeUpdatedAt   DateTime? @map("shoe_size_updated_at")
   wetsuiteSize        String?   @map("wetsuit_size")
   wetsuiteUpdatedAt   DateTime? @map("wetsuit_updated_at")
+  stance           String?
   notes            String?
   paymentMethod    PaymentMethod     @default(BOLT_CARD) @map("payment_method")
   lightningAddress String?           @map("lightning_address")

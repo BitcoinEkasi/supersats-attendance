@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getExpectedGrade } from "@/lib/sa-id";
+import { getExpectedGrade, getDivisionLabel } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
 import TskLevelHistorySection from "./tsk-level-history-section";
@@ -75,6 +75,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [retiredReason, setRetiredReason] = useState<string>((participant as any).retiredReason || "");
   const [retiredReasonOther, setRetiredReasonOther] = useState<string>((participant as any).retiredReasonOther || "");
 
+  const [stance, setStance] = useState<string>((participant as any).stance || "");
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
   const [isJuniorCoach, setIsJuniorCoach] = useState<boolean>(participant.isJuniorCoach);
   const [juniorCoachLevel, setJuniorCoachLevel] = useState<string>((participant as any).juniorCoachLevel?.toString() || "");
@@ -535,6 +536,26 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   </div>
                 )}
               </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 font-medium">Division</p>
+                <p className="text-sm text-gray-700">{getDivisionLabel(participant.dateOfBirth, participant.gender)}</p>
+                <div className="pt-1">
+                  <label className="block text-sm font-medium text-gray-700">Stance</label>
+                  <select
+                    value={stance}
+                    onChange={(e) => { setStance(e.target.value); setSaved(false); setIsDirty(true); }}
+                    className={inputCls}
+                  >
+                    <option value="">— select —</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Goofy">Goofy</option>
+                  </select>
+                  <input type="hidden" name="stance" value={stance} />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div />
               <div className="flex flex-col gap-2 pb-2">
                 {tskStatus === POD_LEVEL ? (
                   <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Shark Elite level</p>
@@ -580,10 +601,10 @@ export default function EditParticipantForm({ participant }: { participant: Part
                 <input type="hidden" name="isJuniorCoach" value={isJuniorCoach && tskStatus !== POD_LEVEL ? "on" : ""} />
                 <input type="hidden" name="juniorCoachLevel" value={juniorCoachLevel} />
               </div>
-              {(participant as any).juniorCoachHistory?.length > 0 && (
-                <JcHistorySection history={(participant as any).juniorCoachHistory} />
-              )}
             </div>
+            {(participant as any).juniorCoachHistory?.length > 0 && (
+              <JcHistorySection history={(participant as any).juniorCoachHistory} />
+            )}
             <input type="hidden" name="paymentMethod" value={paymentMethod} />
             <input type="hidden" name="lightningAddress" value={lightningAddress} />
           </div>
