@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
+import { updateBoltUserDisplayName } from "@/lib/bolt";
 import { POD_LEVEL, FREE_SURFER_LEVEL } from "@/lib/tsk-levels";
 import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
 
@@ -82,7 +83,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const newTskStatus = body.tskStatus?.trim() || null;
   const existing = await prisma.participant.findUnique({
     where: { id },
-    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isJuniorCoach: true, juniorCoachLevel: true },
+    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isJuniorCoach: true, juniorCoachLevel: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
   });
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
 
@@ -200,6 +201,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
+
+    // Sync display name to Bolt if name/knownAs changed and user has a bolt account
+    const newKnownAs = body.knownAs?.trim() || null;
+    const nameChanged = existing && (
+      existing.surname !== surname ||
+      existing.fullNames !== fullNames ||
+      existing.knownAs !== newKnownAs
+    );
+    if (nameChanged && existing?.boltUserId) {
+      const knownAsPart = newKnownAs ? ` (${newKnownAs})` : '';
+      const displayName = `${surname}, ${fullNames}${knownAsPart}`;
+      try { await updateBoltUserDisplayName(Number(existing.boltUserId), displayName); } catch { /* non-critical */ }
+    }
 
     return Response.json({ success: true });
   } catch (e: unknown) {

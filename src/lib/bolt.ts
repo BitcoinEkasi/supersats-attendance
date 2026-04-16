@@ -130,6 +130,13 @@ export async function getPayoutBatchStatus(batchId: number): Promise<{ status: s
   return res.json();
 }
 
+export async function updateBoltUserDisplayName(boltUserId: number, displayName: string): Promise<void> {
+  await boltFetch(`/api/v1/users/${boltUserId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ display_name: displayName }),
+  });
+}
+
 export async function updateBoltUserAddress(boltUserId: number, lnPayoutAddress: string | null): Promise<void> {
   await boltFetch(`/api/v1/users/${boltUserId}`, {
     method: 'PATCH',
