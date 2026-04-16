@@ -202,14 +202,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
 
-    // Sync display name to Bolt if name/knownAs changed and user has a bolt account
-    const newKnownAs = body.knownAs?.trim() || null;
-    const nameChanged = existing && (
-      existing.surname !== surname ||
-      existing.fullNames !== fullNames ||
-      existing.knownAs !== newKnownAs
-    );
-    if (nameChanged && existing?.boltUserId) {
+    // Always sync display name to Bolt if participant has a bolt account
+    if (existing?.boltUserId) {
+      const newKnownAs = body.knownAs?.trim() || null;
       const knownAsPart = newKnownAs ? ` (${newKnownAs})` : '';
       const displayName = `${surname}, ${fullNames}${knownAsPart}`;
       try { await updateBoltUserDisplayName(Number(existing.boltUserId), displayName); } catch { /* non-critical */ }
