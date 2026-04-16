@@ -2,7 +2,8 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
-import { updateBoltUserDisplayName } from "@/lib/bolt";
+import { updateBoltUserDisplayName, updateBoltUserMeta } from "@/lib/bolt";
+import { getDivisionLabel } from "@/lib/sa-id";
 import { POD_LEVEL, FREE_SURFER_LEVEL } from "@/lib/tsk-levels";
 import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
 
@@ -202,12 +203,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
 
-    // Always sync display name to Bolt if participant has a bolt account
+    // Always sync display name and meta to Bolt if participant has a bolt account
     if (existing?.boltUserId) {
       const newKnownAs = body.knownAs?.trim() || null;
       const knownAsPart = newKnownAs ? ` (${newKnownAs})` : '';
       const displayName = `${surname}, ${fullNames}${knownAsPart}`;
       try { await updateBoltUserDisplayName(Number(existing.boltUserId), displayName); } catch { /* non-critical */ }
+      try {
+        const division = getDivisionLabel(parsed.dob, parsed.gender);
+        await updateBoltUserMeta(Number(existing.boltUserId), {
+          division,
+          tsk_level: newTskStatus,
+          jc_level: newJcLevel,
+        });
+      } catch { /* non-critical */ }
     }
 
     return Response.json({ success: true });
