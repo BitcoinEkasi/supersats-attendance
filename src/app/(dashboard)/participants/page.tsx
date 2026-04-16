@@ -18,10 +18,10 @@ export default async function ParticipantsPage({
   const searchWhere = search
     ? {
         OR: [
-          { tskId: { contains: search, mode: "insensitive" as const } },
-          { surname: { contains: search, mode: "insensitive" as const } },
-          { fullNames: { contains: search, mode: "insensitive" as const } },
-          { knownAs: { contains: search, mode: "insensitive" as const } },
+          { tskId: { contains: search } },
+          { surname: { contains: search } },
+          { fullNames: { contains: search } },
+          { knownAs: { contains: search } },
         ],
       }
     : {};
