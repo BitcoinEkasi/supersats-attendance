@@ -62,6 +62,7 @@ export default async function EventAttendancePage({
     select: {
       id: true, surname: true, fullNames: true, knownAs: true,
       profilePicture: true, dateOfBirth: true, gender: true, isJuniorCoach: true,
+      juniorCoachLevel: true, tskStatus: true,
     },
     orderBy: [{ surname: "asc" }],
   });

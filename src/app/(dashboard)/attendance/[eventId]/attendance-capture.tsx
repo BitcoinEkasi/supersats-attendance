@@ -12,6 +12,8 @@ type Participant = {
   dateOfBirth: Date;
   gender: "MALE" | "FEMALE";
   isJuniorCoach: boolean;
+  juniorCoachLevel: number | null;
+  tskStatus: string | null;
 };
 
 type ExistingRecord = {
@@ -192,7 +194,8 @@ export default function AttendanceCapture({
           <p className="truncate text-xs text-gray-500">
             {p.knownAs && <span className="mr-1">({p.knownAs})</span>}
             {getDivisionLabel(p.dateOfBirth, p.gender)}
-            {p.isJuniorCoach && <span className="ml-1 text-blue-400">· JC</span>}
+            {p.tskStatus && <span className="ml-1">· {p.tskStatus}</span>}
+            {p.isJuniorCoach && <span className="ml-1 text-blue-400">· JC{p.juniorCoachLevel != null ? ` ${p.juniorCoachLevel}` : ""}</span>}
           </p>
         </div>
         <button
