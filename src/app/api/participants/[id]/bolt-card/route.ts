@@ -18,7 +18,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     boltUserId = Number(participant.boltUserId);
   } else {
     try {
-      const displayName = `${participant.fullNames} ${participant.surname}`;
+      const knownAs = participant.knownAs ? ` (${participant.knownAs})` : '';
+      const displayName = `${participant.surname}, ${participant.fullNames}${knownAs}`;
       const boltUser = await createBoltUser(participant.tskId, displayName);
       boltUserId = boltUser.id;
     } catch (e: unknown) {
