@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
+import { DeleteReportButton } from "./delete-report-button";
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -65,12 +66,17 @@ export default async function ReportsPage() {
                         </td>
                         <td className="px-4 py-3">{avgPct.toFixed(1)}%</td>
                         <td className="px-4 py-3">
-                          <Link
-                            href={`/reports/${report.id}`}
-                            className="text-orange-600 hover:text-orange-800"
-                          >
-                            View
-                          </Link>
+                          <div className="flex items-center gap-3">
+                            <Link
+                              href={`/reports/${report.id}`}
+                              className="text-orange-600 hover:text-orange-800"
+                            >
+                              View
+                            </Link>
+                            {role === "ADMINISTRATOR" && report.status === "PENDING" && (
+                              <DeleteReportButton reportId={report.id} month={report.month} />
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
