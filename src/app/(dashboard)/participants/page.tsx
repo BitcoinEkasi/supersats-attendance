@@ -6,14 +6,32 @@ import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 
+const LEVEL_GROUPS = {
+  turtles:    ["Turtle Rookie", "Turtle Novice"],
+  seals:      ["Seal Intermediate", "Seal Proficient"],
+  dolphins:   ["Dolphin Advanced", "Dolphin Refined"],
+  sharks:     ["Shark Elite"],
+  freesurfers: ["Free Surfer"],
+} as const;
+
+type Tab = "active" | keyof typeof LEVEL_GROUPS | "retired";
+
+const VALID_TABS: Tab[] = ["active", "turtles", "seals", "dolphins", "sharks", "freesurfers", "retired"];
+
+function getLevelFilter(tab: Tab) {
+  if (tab in LEVEL_GROUPS) {
+    return { tskStatus: { in: LEVEL_GROUPS[tab as keyof typeof LEVEL_GROUPS] as unknown as string[] } };
+  }
+  return {};
+}
+
 export default async function ParticipantsPage({
   searchParams,
 }: {
   searchParams: Promise<{ search?: string; tab?: string }>;
 }) {
   const { search, tab: tabParam } = await searchParams;
-  const tab = tabParam === "retired" ? "retired" : "active";
-  const statusFilter = tab === "retired" ? "RETIRED" : "ACTIVE";
+  const tab: Tab = VALID_TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "active";
 
   const searchWhere = search
     ? {
@@ -26,13 +44,39 @@ export default async function ParticipantsPage({
       }
     : {};
 
-  const where = { status: statusFilter as "ACTIVE" | "RETIRED", ...searchWhere };
+  const statusFilter = tab === "retired" ? "RETIRED" : "ACTIVE";
+  const levelFilter = getLevelFilter(tab);
+  const where = { status: statusFilter as "ACTIVE" | "RETIRED", ...levelFilter, ...searchWhere };
 
-  const [participants, activeCount, retiredCount] = await Promise.all([
+  const [
+    participants,
+    activeCount,
+    turtlesCount,
+    sealsCount,
+    dolphinsCount,
+    sharksCount,
+    freesurfersCount,
+    retiredCount,
+  ] = await Promise.all([
     prisma.participant.findMany({ where, orderBy: [{ surname: "asc" }, { fullNames: "asc" }] }),
     prisma.participant.count({ where: { status: "ACTIVE" } }),
+    prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.turtles] } } }),
+    prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.seals] } } }),
+    prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.dolphins] } } }),
+    prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.sharks] } } }),
+    prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.freesurfers] } } }),
     prisma.participant.count({ where: { status: "RETIRED" } }),
   ]);
+
+  const counts: Record<Tab, number> = {
+    active: activeCount,
+    turtles: turtlesCount,
+    seals: sealsCount,
+    dolphins: dolphinsCount,
+    sharks: sharksCount,
+    freesurfers: freesurfersCount,
+    retired: retiredCount,
+  };
 
   const withBolt = participants.filter((p) => p.boltUserId);
   const [boltResults, zarPerSat] = await Promise.all([
@@ -41,9 +85,27 @@ export default async function ParticipantsPage({
   ]);
   const boltMap = new Map(boltResults.map(({ id, user }) => [id, user]));
 
-  const activeTabCls = "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors";
-  const activeSelected = "bg-white text-gray-900 shadow-sm border border-gray-200";
-  const activeUnselected = "text-gray-500 hover:text-gray-700";
+  const tabDef: { key: Tab; label: string; badge: string }[] = [
+    { key: "active",      label: "All Active",  badge: "bg-green-100 text-green-700" },
+    { key: "turtles",     label: "Turtles",     badge: "bg-teal-100 text-teal-700" },
+    { key: "seals",       label: "Seals",       badge: "bg-cyan-100 text-cyan-700" },
+    { key: "dolphins",    label: "Dolphins",    badge: "bg-blue-100 text-blue-700" },
+    { key: "sharks",      label: "Sharks",      badge: "bg-purple-100 text-purple-700" },
+    { key: "freesurfers", label: "Free Surfers", badge: "bg-orange-100 text-orange-700" },
+    { key: "retired",     label: "Retired",     badge: "bg-red-100 text-red-600" },
+  ];
+
+  const tabCls = "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap";
+  const selectedCls = "bg-white text-gray-900 shadow-sm border border-gray-200";
+  const unselectedCls = "text-gray-500 hover:text-gray-700";
+
+  function tabHref(key: Tab) {
+    const params = new URLSearchParams();
+    if (key !== "active") params.set("tab", key);
+    if (search) params.set("search", search);
+    const qs = params.toString();
+    return `/participants${qs ? `?${qs}` : ""}`;
+  }
 
   return (
     <div>
@@ -53,25 +115,15 @@ export default async function ParticipantsPage({
       </div>
 
       {/* Tabs */}
-      <div className="mt-4 flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
-        <Link
-          href="/participants"
-          className={`${activeTabCls} ${tab === "active" ? activeSelected : activeUnselected}`}
-        >
-          Active
-          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tab === "active" ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
-            {activeCount}
-          </span>
-        </Link>
-        <Link
-          href="/participants?tab=retired"
-          className={`${activeTabCls} ${tab === "retired" ? activeSelected : activeUnselected}`}
-        >
-          Retired
-          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tab === "retired" ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-500"}`}>
-            {retiredCount}
-          </span>
-        </Link>
+      <div className="mt-4 flex items-center gap-1 rounded-lg bg-gray-100 p-1 overflow-x-auto">
+        {tabDef.map(({ key, label, badge }) => (
+          <Link key={key} href={tabHref(key)} className={`${tabCls} ${tab === key ? selectedCls : unselectedCls}`}>
+            {label}
+            <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium ${tab === key ? badge : "bg-gray-200 text-gray-500"}`}>
+              {counts[key]}
+            </span>
+          </Link>
+        ))}
       </div>
 
       <div className="mt-4">
@@ -84,7 +136,7 @@ export default async function ParticipantsPage({
                 ? "No participants match your search."
                 : tab === "retired"
                   ? "No retired participants yet."
-                  : "No participants yet. Use \"Add Participant\" in the menu."}
+                  : "No participants yet."}
             </div>
           ) : (
             participants.map((p) => (
