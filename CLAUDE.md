@@ -12,7 +12,7 @@ npm run lint          # ESLint
 npm run db:generate   # Regenerate Prisma client after schema changes
 npm run db:push       # Push schema to DB (development/prototype)
 npm run db:migrate    # Run migrations (production-safe)
-npm run db:seed       # Seed default users (admin, marshal)
+npm run db:seed       # Seed default users (admin, marshall)
 ```
 
 No test suite is configured. Lint is the only automated check.
@@ -27,9 +27,9 @@ All data mutations go through **Server Actions** (`src/app/actions/`), not API r
 
 ### Roles & Access
 
-Two roles: `ADMINISTRATOR` and `MARSHAL`.
+Two roles: `ADMINISTRATOR` and `MARSHALL`.
 
-- Marshals get a stripped-down attendance-only UI and land on `/attendance` after login.
+- Marshalls get a stripped-down attendance-only UI and land on `/attendance` after login.
 - Administrators get the full dashboard with sidebar, participants, reports, etc.
 - All role enforcement happens in Server Actions via `requireRole()` (`src/lib/role-guard.ts`), not in components or middleware.
 

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Redirects the Marshal back to /attendance at SAST midnight (UTC+2).
+ * Redirects the Marshall back to /attendance at SAST midnight (UTC+2).
  * Also triggers when the tab becomes visible again after midnight has passed.
  */
 export default function MidnightReset() {

@@ -12,7 +12,7 @@ export const proxy = auth((request) => {
 
   if (session && isLoginPage) {
     const role = session.user?.role as string;
-    const dest = role === "MARSHAL" ? "/attendance" : "/dashboard";
+    const dest = role === "MARSHALL" ? "/attendance" : "/dashboard";
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
@@ -28,7 +28,7 @@ export const proxy = auth((request) => {
     if (
       pathname.startsWith("/attendance") &&
       role !== "ADMINISTRATOR" &&
-      role !== "MARSHAL"
+      role !== "MARSHALL"
     ) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }

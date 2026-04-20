@@ -74,7 +74,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireAuth(["ADMINISTRATOR", "MARSHAL"]);
+  const user = await requireAuth(["ADMINISTRATOR", "MARSHALL"]);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;

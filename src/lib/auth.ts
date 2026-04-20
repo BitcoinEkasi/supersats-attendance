@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 
-export type UserRole = "ADMINISTRATOR" | "MARSHAL";
+export type UserRole = "ADMINISTRATOR" | "MARSHALL";
 
 const ADMIN_USER = {
   id: "admin",
@@ -13,26 +13,26 @@ const ADMIN_USER = {
   group: null as string | null,
 };
 
-const LEGACY_MARSHAL = {
-  id: "marshal",
-  name: process.env.MARSHAL_NAME || "Marshal",
-  username: process.env.MARSHAL_USERNAME || "marshal",
-  password: process.env.MARSHAL_PASSWORD || "",
-  role: "MARSHAL" as UserRole,
+const LEGACY_MARSHALL = {
+  id: "marshall",
+  name: process.env.MARSHALL_NAME || "Marshall",
+  username: process.env.MARSHALL_USERNAME || "marshall",
+  password: process.env.MARSHALL_PASSWORD || "",
+  role: "MARSHALL" as UserRole,
   group: null as string | null,
 };
 
-// One Marshal account per group — authenticated by group id + passcode (no username)
-const GROUP_MARSHALS = TSK_GROUPS.map((g) => ({
-  id: `marshal-${g.toLowerCase()}`,
-  name: `${TSK_GROUP_LABELS[g]} Marshal`,
+// One Marshall account per group — authenticated by group id + passcode (no username)
+const GROUP_MARSHALLS = TSK_GROUPS.map((g) => ({
+  id: `marshall-${g.toLowerCase()}`,
+  name: `${TSK_GROUP_LABELS[g]} Marshall`,
   username: g,
-  password: process.env[`MARSHAL_PASSCODE_${g}`] || "",
-  role: "MARSHAL" as UserRole,
+  password: process.env[`MARSHALL_PASSCODE_${g}`] || "",
+  role: "MARSHALL" as UserRole,
   group: g as string | null,
 }));
 
-const USERS = [ADMIN_USER, LEGACY_MARSHAL, ...GROUP_MARSHALS];
+const USERS = [ADMIN_USER, LEGACY_MARSHALL, ...GROUP_MARSHALLS];
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -58,12 +58,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnLogin = nextUrl.pathname.startsWith("/login");
-      const isOnMarshal = nextUrl.pathname.startsWith("/marshal");
+      const isOnMarshall = nextUrl.pathname.startsWith("/marshall");
 
-      if (isOnLogin || isOnMarshal) {
+      if (isOnLogin || isOnMarshall) {
         if (isLoggedIn) {
           const role = (auth?.user as { role?: string })?.role;
-          const dest = role === "MARSHAL" ? "/attendance" : "/dashboard";
+          const dest = role === "MARSHALL" ? "/attendance" : "/dashboard";
           return Response.redirect(new URL(dest, nextUrl));
         }
         return true;

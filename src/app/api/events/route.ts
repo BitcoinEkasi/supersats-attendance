@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const user = await requireAuth(["ADMINISTRATOR", "MARSHAL"]);
+  const user = await requireAuth(["ADMINISTRATOR", "MARSHALL"]);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();

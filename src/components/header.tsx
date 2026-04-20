@@ -4,7 +4,7 @@ import { signOut, useSession } from "next-auth/react";
 
 const roleLabels: Record<string, string> = {
   ADMINISTRATOR: "Administrator",
-  MARSHAL: "Marshal",
+  MARSHAL: "Marshall",
 };
 
 const roleColors: Record<string, string> = {

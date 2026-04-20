@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-/** Redirects a Marshal to /attendance at SAST midnight (UTC+2). */
+/** Redirects a Marshall to /attendance at SAST midnight (UTC+2). */
 export default function MidnightRedirect() {
   const router = useRouter();
 

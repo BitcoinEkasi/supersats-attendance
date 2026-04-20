@@ -70,9 +70,9 @@ CI/CD is handled by **GitHub Actions**: on push to `main`, each repository build
 | Role | Access Level | Primary Use |
 |------|-------------|-------------|
 | **ADMINISTRATOR** | Full access | Participant management, report generation & approval, payout management |
-| **MARSHAL** | Attendance only | Mobile-first view of today's session; marks attendance; can raise change requests |
+| **MARSHALL** | Attendance only | Mobile-first view of today's session; marks attendance; can raise change requests |
 
-Marshals are redirected to the current day's attendance session on login and see only the minimal mobile UI needed for that task.
+Marshalls are redirected to the current day's attendance session on login and see only the minimal mobile UI needed for that task.
 
 ---
 
@@ -128,7 +128,7 @@ Append-only audit log of TSK level changes. Each row records `participantId`, `l
 | **TskReview** | Quarterly review: overall rating, surfing/skating/fitness scores, coach comments, level recommendation. |
 | **PerformanceEvent** | Competition results: event name, date, placement, notes. |
 | **SchoolReport** | Academic results per term: `year`, `term`, `grade`, `percentage`, `reportFileUrl`. Used for academic payouts. |
-| **ParticipantChangeRequest** | Marshal-raised profile corrections: `field`, `currentValue`, `proposedValue`, `reason`, `status`. |
+| **ParticipantChangeRequest** | Marshall-raised profile corrections: `field`, `currentValue`, `proposedValue`, `reason`, `status`. |
 | **AcademicPayout / Entry** | Term-based school grade reward batches and per-participant entries. |
 | **SpecialPayout / Entry** | Ad-hoc reward groups and per-participant entries with custom amounts. |
 
@@ -173,7 +173,7 @@ The `retiredAt` date is set to the current timestamp. On retirement, the monthly
 
 #### Change Requests
 
-When a Marshal notices a profile error, they submit a **ParticipantChangeRequest** specifying the field, current value, and proposed correction. Administrators see a queue of pending requests and approve or reject each one. This gives Marshals a way to surface data issues without granting them direct edit access.
+When a Marshall notices a profile error, they submit a **ParticipantChangeRequest** specifying the field, current value, and proposed correction. Administrators see a queue of pending requests and approve or reject each one. This gives Marshalls a way to surface data issues without granting them direct edit access.
 
 ---
 
@@ -185,7 +185,7 @@ An **Event** (session) represents a single training day. Only one session can ex
 
 #### Role-Based Flow
 
-- **Marshals** see a mobile-optimised single-page view. On login they are redirected to today's session (if it exists) or to a stripped-down creation form.
+- **Marshalls** see a mobile-optimised single-page view. On login they are redirected to today's session (if it exists) or to a stripped-down creation form.
 - **Administrators** see the full attendance overview: all historical sessions grouped by month, a session creation form, and a link to today's session.
 
 #### Marking Attendance
@@ -499,7 +499,7 @@ TSK Rewards and the BoltCard Server are loosely coupled via a simple REST API. T
 
 ### End-to-End Reward Flow
 
-1. **Attendance tracked (TSK)** — Marshals mark daily attendance throughout the month. Each session auto-updates the monthly report.
+1. **Attendance tracked (TSK)** — Marshalls mark daily attendance throughout the month. Each session auto-updates the monthly report.
 2. **Month closes (TSK)** — Administrator opens the monthly report showing each participant's attendance % and calculated reward.
 3. **Report approved (TSK → Bolt)** — Administrator clicks Approve. TSK calls `POST /api/v1/payout/batch` on Bolt, passing each participant's TSK ID and reward amount.
 4. **Balances credited (Bolt)** — Bolt processes the batch. BOLT_CARD participants have their internal balance increased; LIGHTNING_ADDRESS participants receive an outbound Lightning payment.
@@ -607,7 +607,7 @@ docker compose logs -f bolt
 # Backup TSK database
 docker cp infra-tsk-1:/data/tsk.db ./backup-tsk.db
 
-# Seed default admin + marshal accounts (fresh deploy only)
+# Seed default admin + marshall accounts (fresh deploy only)
 docker compose exec tsk npm run db:seed
 
 # Free up disk space before deploying
