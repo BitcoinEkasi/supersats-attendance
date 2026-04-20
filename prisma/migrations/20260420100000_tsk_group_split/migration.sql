@@ -2,6 +2,9 @@
 ALTER TABLE "events" ADD COLUMN "group" TEXT;
 
 -- Recreate monthly_reports with new unique constraint (month, group)
+-- Disable FK checks for safe table recreation
+PRAGMA foreign_keys=OFF;
+
 CREATE TABLE "new_monthly_reports" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "month" TEXT NOT NULL,
@@ -24,3 +27,5 @@ DROP TABLE "monthly_reports";
 ALTER TABLE "new_monthly_reports" RENAME TO "monthly_reports";
 
 CREATE UNIQUE INDEX "monthly_reports_month_group_key" ON "monthly_reports"("month", "group");
+
+PRAGMA foreign_keys=ON;
