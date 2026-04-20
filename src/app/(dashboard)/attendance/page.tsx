@@ -6,19 +6,22 @@ import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
-import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import { TSK_GROUP_LABELS, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
 
 export default async function AttendancePage() {
   const session = await auth();
   const role = session?.user?.role;
+  const userGroup = session?.user?.group ?? null;
   const isMobile = role === "MARSHALL";
 
   const todayStart = getStartOfSASTToday();
   const todayEnd = getEndOfSASTToday();
 
   if (isMobile) {
+    // For group Marshalls: only look at sessions for their group
+    const groupFilter = userGroup && isValidGroup(userGroup) ? { group: userGroup as TskGroupKey } : {};
     const todayEvents = await prisma.event.findMany({
-      where: { date: { gte: todayStart, lte: todayEnd } },
+      where: { date: { gte: todayStart, lte: todayEnd }, ...groupFilter },
       orderBy: { createdAt: "desc" },
     });
 
@@ -47,16 +50,11 @@ export default async function AttendancePage() {
               </Link>
             ))}
           </div>
-          <div className="mt-6">
-            <Link href="/attendance/new-session" className="text-sm text-orange-600 hover:underline">
-              + Start a new session
-            </Link>
-          </div>
         </div>
       );
     }
 
-    return <CreateEventForm mobile />;
+    return <CreateEventForm mobile fixedGroup={userGroup && isValidGroup(userGroup) ? userGroup as TskGroupKey : null} />;
   }
 
   // Desktop layout

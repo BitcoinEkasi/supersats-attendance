@@ -14,9 +14,9 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-export default function CreateEventForm({ mobile = false }: { mobile?: boolean }) {
+export default function CreateEventForm({ mobile = false, fixedGroup = null }: { mobile?: boolean; fixedGroup?: TskGroupKey | null }) {
   const router = useRouter();
-  const [group, setGroup] = useState<TskGroupKey | null>(null);
+  const [group, setGroup] = useState<TskGroupKey | null>(fixedGroup);
   const [selected, setSelected] = useState<EventCategory | null>(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
         )}
 
-        {/* Step 1: Group selection */}
+        {/* Step 1: Group selection (skipped when fixedGroup is set) */}
         {!group ? (
           <>
             <p className="mt-1 text-sm text-gray-400">Select your group</p>
@@ -88,9 +88,13 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
           /* Step 2: Category selection */
           <>
             <p className="mt-1 text-sm text-gray-400">
-              <button onClick={() => { setGroup(null); setSelected(null); }} className="text-orange-500 hover:underline">
-                {TSK_GROUP_LABELS[group]}
-              </button>
+              {fixedGroup ? (
+                <span className="font-medium text-gray-600">{TSK_GROUP_LABELS[group]}</span>
+              ) : (
+                <button onClick={() => { setGroup(null); setSelected(null); }} className="text-orange-500 hover:underline">
+                  {TSK_GROUP_LABELS[group]}
+                </button>
+              )}
               {" · "}Select a category to start
             </p>
 

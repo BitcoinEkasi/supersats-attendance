@@ -104,6 +104,12 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <div className="mt-4 text-center">
+          <a href="/marshal" className="text-sm text-orange-600 hover:underline">
+            Marshall? Sign in here →
+          </a>
+        </div>
+
         {isDev && (
           <div className="mt-6">
             <div className="relative flex items-center">

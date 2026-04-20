@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import type { UserRole } from "@/lib/auth";
 
-type AuthUser = { id: string; name?: string | null; role: UserRole };
+type AuthUser = { id: string; name?: string | null; role: UserRole; group?: string | null };
 
 export async function requireAuth(allowedRoles?: UserRole[]): Promise<AuthUser | null> {
   const session = await auth();
@@ -11,5 +11,5 @@ export async function requireAuth(allowedRoles?: UserRole[]): Promise<AuthUser |
 
   if (allowedRoles && !allowedRoles.includes(user.role as UserRole)) return null;
 
-  return user as AuthUser;
+  return { id: user.id, name: user.name, role: user.role as UserRole, group: user.group ?? null };
 }

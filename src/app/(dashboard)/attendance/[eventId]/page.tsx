@@ -45,6 +45,11 @@ export default async function EventAttendancePage({
     if (event.date < todayStart || event.date > todayEnd) {
       redirect("/attendance");
     }
+    // Group Marshalls may only access their own group's session
+    const userGroup = session?.user?.group ?? null;
+    if (userGroup && event.group && event.group !== userGroup) {
+      redirect("/attendance");
+    }
   }
 
   const eventDate = event.date;
