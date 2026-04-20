@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { createPayoutBatch, createBoltUser } from "@/lib/bolt";
+import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -49,8 +50,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ success: false, error: "No eligible participants with bolt accounts", ineligible_count: ineligibleCount }, { status: 400 });
   }
 
+  const groupLabel = report.group ? (TSK_GROUP_LABELS[report.group] ?? report.group) : "All";
   const batch = await createPayoutBatch({
-    memo: `TSK rewards ${report.month}`,
+    memo: `TSK rewards ${report.month} – ${groupLabel}`,
     payouts: eligible.map((e) => ({
       user_id: Number(e.participant.boltUserId),
       amount_sats: e.rewardSats,

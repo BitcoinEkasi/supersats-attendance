@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { getSASTNow } from "@/lib/sast";
 import { createPayoutBatch, createBoltUser } from "@/lib/bolt";
+import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -60,8 +61,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   }
 
   try {
+    const groupLabel = report.group ? (TSK_GROUP_LABELS[report.group] ?? report.group) : "All";
     const batch = await createPayoutBatch({
-      memo: `TSK rewards ${report.month}`,
+      memo: `TSK rewards ${report.month} – ${groupLabel}`,
       payouts: eligible.map((e) => ({
         user_id: Number(e.participant.boltUserId),
         amount_sats: e.rewardSats,

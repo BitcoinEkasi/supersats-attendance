@@ -8,6 +8,7 @@ import NoteInput from "./note-input";
 import MidnightRedirect from "./midnight-redirect";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
+import { TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -26,16 +27,14 @@ export default async function EventAttendancePage({
   const session = await auth();
   const isMobile = session?.user?.role === "MARSHALL";
 
-  const [event] = await Promise.all([
-    prisma.event.findUnique({
-      where: { id: eventId },
-      include: {
-        attendanceRecords: {
-          select: { participantId: true, present: true, onTour: true },
-        },
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: {
+      attendanceRecords: {
+        select: { participantId: true, present: true, onTour: true },
       },
-    }),
-  ]);
+    },
+  });
 
   if (!event) notFound();
 
@@ -48,9 +47,9 @@ export default async function EventAttendancePage({
     }
   }
 
-  // Eligible participants: registered on or before the event date,
-  // and either ACTIVE or RETIRED with retiredAt on or after the event date.
   const eventDate = event.date;
+  const groupFilter = event.group ? participantWhereForGroup(event.group as TskGroupKey) : {};
+
   const participants = await prisma.participant.findMany({
     where: {
       registrationDate: { lte: eventDate },
@@ -58,6 +57,7 @@ export default async function EventAttendancePage({
         { status: "ACTIVE" },
         { status: "RETIRED", retiredAt: { gte: eventDate } },
       ],
+      ...groupFilter,
     },
     select: {
       id: true, surname: true, fullNames: true, knownAs: true,
@@ -67,15 +67,21 @@ export default async function EventAttendancePage({
     orderBy: [{ surname: "asc" }],
   });
 
+  const groupLabel = event.group ? (TSK_GROUP_LABELS[event.group] ?? event.group) : null;
+
   if (isMobile) {
     return (
       <div className="flex flex-col">
         <MidnightRedirect />
-        {/* Minimal event header */}
         <div className="flex items-start justify-between border-b border-gray-100 bg-white px-4 py-4">
           <div>
             <p className="font-semibold text-gray-900">
               {event.date.toLocaleDateString("en-GB", { weekday: "long" })} {fmtDate(event.date)}
+              {groupLabel && (
+                <span className="ml-2 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                  {groupLabel}
+                </span>
+              )}
             </p>
             <CategorySelect eventId={event.id} category={event.category} />
             <NoteInput eventId={event.id} note={event.note} />
@@ -101,6 +107,11 @@ export default async function EventAttendancePage({
         <span className="text-gray-300">/</span>
         <h2 className="text-xl font-bold text-gray-900">
           {fmtDate(event.date)} — {categoryLabels[event.category] || event.category}
+          {groupLabel && (
+            <span className="ml-2 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-sm font-medium text-orange-700">
+              {groupLabel}
+            </span>
+          )}
         </h2>
       </div>
 

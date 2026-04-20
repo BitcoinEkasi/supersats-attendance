@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { EventCategory } from "@prisma/client";
 import { getSASTDateString } from "@/lib/sast";
+import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 
 const categories: { value: EventCategory; label: string }[] = [
   { value: "SURFING", label: "Surfing" },
@@ -15,6 +16,7 @@ const categories: { value: EventCategory; label: string }[] = [
 
 export default function CreateEventForm({ mobile = false }: { mobile?: boolean }) {
   const router = useRouter();
+  const [group, setGroup] = useState<TskGroupKey | null>(null);
   const [selected, setSelected] = useState<EventCategory | null>(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,13 +37,13 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
   }, [mobile, router]);
 
   async function handleMobileCreate() {
-    if (!selected) return;
+    if (!selected || !group) return;
     setLoading(true);
     setError("");
     const res = await fetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: "today", category: selected, note: note.trim() || null }),
+      body: JSON.stringify({ date: "today", category: selected, group, note: note.trim() || null }),
     });
     const result = await res.json();
     if (result.error) {
@@ -61,45 +63,72 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
     return (
       <div className="flex min-h-dvh flex-col justify-center px-6 py-12">
         <h1 className="text-2xl font-bold text-gray-900">{today}</h1>
-        <p className="mt-1 text-sm text-gray-400">Select a category to start</p>
 
         {error && (
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
         )}
 
-        <div className="mt-8 space-y-3">
-          {categories.map((c) => (
-            <button
-              key={c.value}
-              onClick={() => setSelected(c.value)}
-              className={`w-full rounded-2xl border-2 px-5 py-5 text-left text-lg font-semibold transition-all active:scale-98 ${
-                selected === c.value
-                  ? "border-orange-500 bg-orange-50 text-orange-700"
-                  : "border-gray-200 bg-white text-gray-700"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
+        {/* Step 1: Group selection */}
+        {!group ? (
+          <>
+            <p className="mt-1 text-sm text-gray-400">Select your group</p>
+            <div className="mt-8 space-y-3">
+              {TSK_GROUPS.map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGroup(g)}
+                  className="w-full rounded-2xl border-2 border-gray-200 bg-white px-5 py-5 text-left text-lg font-semibold text-gray-700 transition-all active:scale-98"
+                >
+                  {TSK_GROUP_LABELS[g]}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          /* Step 2: Category selection */
+          <>
+            <p className="mt-1 text-sm text-gray-400">
+              <button onClick={() => { setGroup(null); setSelected(null); }} className="text-orange-500 hover:underline">
+                {TSK_GROUP_LABELS[group]}
+              </button>
+              {" · "}Select a category to start
+            </p>
 
-        {selected && (
-          <div className="mt-6 space-y-4">
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Add a note (optional)"
-              className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base focus:border-orange-400 focus:outline-none"
-            />
-            <button
-              onClick={handleMobileCreate}
-              disabled={loading}
-              className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white disabled:opacity-50 active:bg-orange-700"
-            >
-              {loading ? "Starting…" : "Start Session"}
-            </button>
-          </div>
+            <div className="mt-8 space-y-3">
+              {categories.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => setSelected(c.value)}
+                  className={`w-full rounded-2xl border-2 px-5 py-5 text-left text-lg font-semibold transition-all active:scale-98 ${
+                    selected === c.value
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      : "border-gray-200 bg-white text-gray-700"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+
+            {selected && (
+              <div className="mt-6 space-y-4">
+                <input
+                  type="text"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Add a note (optional)"
+                  className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base focus:border-orange-400 focus:outline-none"
+                />
+                <button
+                  onClick={handleMobileCreate}
+                  disabled={loading}
+                  className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white disabled:opacity-50 active:bg-orange-700"
+                >
+                  {loading ? "Starting…" : "Start Session"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -121,6 +150,7 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
       body: JSON.stringify({
         date: formData.get("date"),
         category: formData.get("category"),
+        group: formData.get("group"),
         note: formData.get("note"),
       }),
     });
@@ -142,6 +172,15 @@ export default function CreateEventForm({ mobile = false }: { mobile?: boolean }
         {desktopError && (
           <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{desktopError}</div>
         )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Group *</label>
+          <select name="group" required className={inputCls}>
+            <option value="">Select group...</option>
+            {TSK_GROUPS.map((g) => (
+              <option key={g} value={g}>{TSK_GROUP_LABELS[g]}</option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Date *</label>
           <input name="date" type="date" required defaultValue={getSASTDateString()} className={inputCls} />

@@ -5,13 +5,14 @@ import ParticipantsExportButton from "./participants-export-button";
 import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
+import { TSK_GROUP_LEVELS } from "@/lib/tsk-groups";
 
 const LEVEL_GROUPS = {
-  turtles:    ["Turtle Rookie", "Turtle Novice"],
-  seals:      ["Seal Intermediate", "Seal Proficient"],
-  dolphins:   ["Dolphin Advanced", "Dolphin Refined"],
-  sharks:     ["Shark Elite"],
-  freesurfers: ["Free Surfer"],
+  turtles:     TSK_GROUP_LEVELS.TURTLES,
+  seals:       TSK_GROUP_LEVELS.SEALS,
+  dolphins:    TSK_GROUP_LEVELS.DOLPHINS,
+  sharks:      TSK_GROUP_LEVELS.SHARKS,
+  freesurfers: TSK_GROUP_LEVELS.FREE_SURFERS,
 } as const;
 
 type Tab = "active" | keyof typeof LEVEL_GROUPS | "retired";

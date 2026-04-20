@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function DeleteReportButton({ reportId, month }: { reportId: string; month: string }) {
+export function DeleteReportButton({ reportId, month, group }: { reportId: string; month: string; group?: string }) {
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function DeleteReportButton({ reportId, month }: { reportId: string; mont
   if (confirming) {
     return (
       <span className="inline-flex items-center gap-2">
-        <span className="text-xs text-gray-600">Delete {month}?</span>
+        <span className="text-xs text-gray-600">Delete {group ? `${group} – ` : ""}{month}?</span>
         <button
           onClick={handleDelete}
           disabled={loading}

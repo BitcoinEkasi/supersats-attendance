@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import DeleteEventButton from "./delete-event-button";
+import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -29,9 +30,10 @@ function fmtMonth(key: string) {
 
 export type EventRow = {
   id: string;
-  date: string;        // UTC ISO string (stored at noon UTC)
-  dateLabel: string;   // pre-formatted display string
+  date: string;
+  dateLabel: string;
   category: string;
+  group: string | null;
   note: string | null;
   presentCount: number;
   monthKey: string;    // YYYY-MM
@@ -39,14 +41,14 @@ export type EventRow = {
 
 export default function SessionsTable({
   events,
-  approvedMonths,
+  approvedMonthGroups,
 }: {
   events: EventRow[];
-  approvedMonths: string[];
+  // Set of "YYYY-MM:GROUP" or "YYYY-MM:null" strings
+  approvedMonthGroups: string[];
 }) {
-  const approvedSet = new Set(approvedMonths);
+  const approvedSet = new Set(approvedMonthGroups);
 
-  // Group by month, preserving desc order
   const monthKeys: string[] = [];
   const byMonth: Record<string, EventRow[]> = {};
   for (const e of events) {
@@ -57,7 +59,6 @@ export default function SessionsTable({
     byMonth[e.monthKey].push(e);
   }
 
-  // Most recent month open by default
   const [open, setOpen] = useState<Record<string, boolean>>(
     monthKeys.length > 0 ? { [monthKeys[0]]: true } : {}
   );
@@ -79,6 +80,7 @@ export default function SessionsTable({
       <thead className="border-b bg-gray-50">
         <tr>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+          <th className="px-4 py-3 text-left font-medium text-gray-500">Group</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Attendees</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Note</th>
@@ -93,13 +95,12 @@ export default function SessionsTable({
 
           return (
             <>
-              {/* Month header row */}
               <tr
                 key={`month-${key}`}
                 className="border-b bg-gray-50 cursor-pointer select-none hover:bg-gray-100"
                 onClick={() => toggle(key)}
               >
-                <td className="px-4 py-2.5" colSpan={4}>
+                <td className="px-4 py-2.5" colSpan={5}>
                   <span className="flex items-center gap-2 font-semibold text-gray-700">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -118,21 +119,28 @@ export default function SessionsTable({
                 <td className="px-4 py-2.5" />
               </tr>
 
-              {/* Session rows */}
               {isOpen && sessions.map((event) => {
-                const isApproved = approvedSet.has(event.monthKey);
+                const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
+                const isApproved = approvedSet.has(approvedKey);
                 return (
                   <tr key={event.id} className="border-b last:border-0">
                     <td className="px-4 py-3 pl-10 font-medium">{event.dateLabel}</td>
+                    <td className="px-4 py-3">
+                      {event.group ? (
+                        <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
+                          {TSK_GROUP_LABELS[event.group] ?? event.group}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
                         {categoryLabels[event.category] || event.category}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-gray-800 font-medium">
-                        {event.presentCount}
-                      </span>
+                      <span className="text-gray-800 font-medium">{event.presentCount}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
                     <td className="px-4 py-3">

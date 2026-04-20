@@ -1,15 +1,23 @@
 import { prisma } from "@/lib/db";
 import { calculateRewardSats } from "@/lib/rewards";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
+import { type TskGroupKey, participantWhereForGroup } from "@/lib/tsk-groups";
 
-export async function upsertMonthlyReport(month: string, generatedBy: string) {
+export async function upsertMonthlyReport(
+  month: string,
+  generatedBy: string,
+  group: TskGroupKey | null = null,
+) {
   if (!/^\d{4}-\d{2}$/.test(month)) return;
 
   const monthStart = getStartOfSASTMonth(month);
   const monthEnd = getEndOfSASTMonth(month);
 
   const events = await prisma.event.findMany({
-    where: { date: { gte: monthStart, lte: monthEnd } },
+    where: {
+      date: { gte: monthStart, lte: monthEnd },
+      ...(group ? { group } : {}),
+    },
     select: { id: true, date: true },
   });
 
@@ -17,9 +25,6 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
 
   const eventIds = events.map((e) => e.id);
 
-  // Include participants who were active at any point during this month:
-  // registered before month end AND either still ACTIVE or retired on/after month start.
-  // Participants retired in a previous month are excluded.
   const [participants, records] = await Promise.all([
     prisma.participant.findMany({
       where: {
@@ -28,6 +33,7 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
           { status: "ACTIVE" },
           { status: "RETIRED", retiredAt: { gte: monthStart } },
         ],
+        ...(group ? participantWhereForGroup(group) : {}),
       },
       select: { id: true, isJuniorCoach: true, juniorCoachLevel: true, retiredAt: true },
     }),
@@ -37,7 +43,6 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
     }),
   ]);
 
-  // Build per-participant set of events attended
   const attendedSet = new Map<string, Set<string>>();
   for (const record of records) {
     if (record.present || record.onTour) {
@@ -49,12 +54,14 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
   }
 
   await prisma.$transaction(async (tx) => {
-    const existing = await tx.monthlyReport.findUnique({ where: { month } });
+    const existing = await tx.monthlyReport.findFirst({
+      where: { month, group: group ?? null },
+    });
 
     let reportId: string;
     if (existing) {
       await tx.monthlyReport.update({
-        where: { month },
+        where: { id: existing.id },
         data: {
           generatedAt: new Date(),
           ...(existing.status === "APPROVED"
@@ -65,7 +72,7 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
       reportId = existing.id;
     } else {
       const created = await tx.monthlyReport.create({
-        data: { month, generatedBy },
+        data: { month, group: group ?? null, generatedBy },
       });
       reportId = created.id;
     }
@@ -73,10 +80,6 @@ export async function upsertMonthlyReport(month: string, generatedBy: string) {
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      // Attended: sessions the participant was present for, capped at retirement date if applicable.
-      // New participants have no records before their registration, so attended is naturally 0 for those.
-      // totalEvents is always the full session count for the month — both retired and new participants
-      // are divided by the same denominator regardless of when they joined or left.
       const attendableEvents = participant.retiredAt
         ? events.filter((e) => e.date <= participant.retiredAt!)
         : events;

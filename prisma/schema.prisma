@@ -40,6 +40,14 @@ enum PaymentMethod {
   LIGHTNING_ADDRESS
 }
 
+enum TskGroup {
+  TURTLES
+  SEALS
+  DOLPHINS
+  SHARKS
+  FREE_SURFERS
+}
+
 model Participant {
   id               String            @id @default(uuid())
   tskId            String            @unique @map("tsk_id")
@@ -154,6 +162,7 @@ model Event {
   id        String        @id @default(uuid())
   date      DateTime
   category  EventCategory
+  group     TskGroup?
   note      String?
   createdBy String        @map("created_by")
   createdAt DateTime      @default(now()) @map("created_at")
@@ -216,6 +225,7 @@ model TskReview {
 model MonthlyReport {
   id              String       @id @default(uuid())
   month           String
+  group           TskGroup?
   status          ReportStatus @default(PENDING)
   generatedAt     DateTime     @default(now()) @map("generated_at")
   generatedBy     String       @map("generated_by")
@@ -229,7 +239,7 @@ model MonthlyReport {
 
   entries MonthlyReportEntry[]
 
-  @@unique([month])
+  @@unique([month, group])
   @@map("monthly_reports")
 }
 

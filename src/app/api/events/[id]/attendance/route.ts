@@ -20,10 +20,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       ),
     );
 
-    const event = await prisma.event.findUnique({ where: { id: eventId }, select: { date: true } });
+    const event = await prisma.event.findUnique({ where: { id: eventId }, select: { date: true, group: true } });
     if (event) {
       const month = event.date.toISOString().substring(0, 7);
-      await upsertMonthlyReport(month, user.id);
+      await upsertMonthlyReport(month, user.id, (event.group as any) ?? null);
     }
 
     return Response.json({ success: true });
