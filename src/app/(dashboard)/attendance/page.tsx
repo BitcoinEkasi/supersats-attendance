@@ -12,13 +12,13 @@ export default async function AttendancePage() {
   const session = await auth();
   const role = session?.user?.role;
   const userGroup = session?.user?.group ?? null;
-  const isMobile = role === "MARSHALL";
+  const isMobile = role === "MARSHAL";
 
   const todayStart = getStartOfSASTToday();
   const todayEnd = getEndOfSASTToday();
 
   if (isMobile) {
-    // For group Marshalls: only look at sessions for their group
+    // For group Marshals: only look at sessions for their group
     const groupFilter = userGroup && isValidGroup(userGroup) ? { group: userGroup as TskGroupKey } : {};
     const todayEvents = await prisma.event.findMany({
       where: { date: { gte: todayStart, lte: todayEnd }, ...groupFilter },

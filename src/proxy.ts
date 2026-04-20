@@ -12,7 +12,7 @@ export const proxy = auth((request) => {
 
   if (session && isLoginPage) {
     const role = session.user?.role as string;
-    const dest = role === "MARSHALL" ? "/attendance" : "/dashboard";
+    const dest = role === "MARSHAL" ? "/attendance" : "/dashboard";
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
@@ -24,11 +24,11 @@ export const proxy = auth((request) => {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Attendance section: ADMINISTRATOR or MARSHALL
+    // Attendance section: ADMINISTRATOR or MARSHAL
     if (
       pathname.startsWith("/attendance") &&
       role !== "ADMINISTRATOR" &&
-      role !== "MARSHALL"
+      role !== "MARSHAL"
     ) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }

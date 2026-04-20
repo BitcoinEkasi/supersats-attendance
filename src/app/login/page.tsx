@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 const DEV_ACCOUNTS = [
   { label: "Administrator", username: "admin",   password: "admin123",    color: "bg-orange-100 text-orange-700 hover:bg-orange-200 border-orange-200" },
-  { label: "Marshall",      username: "marshall", password: "marshall123", color: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200" },
+  { label: "Marshal",      username: "marshal", password: "marshal123", color: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200" },
 ];
 
 const isDev = process.env.NODE_ENV === "development";
@@ -106,7 +106,7 @@ export default function LoginPage() {
 
         <div className="mt-4 text-center">
           <a href="/marshal" className="text-sm text-orange-600 hover:underline">
-            Marshall? Sign in here →
+            Marshal? Sign in here →
           </a>
         </div>
 

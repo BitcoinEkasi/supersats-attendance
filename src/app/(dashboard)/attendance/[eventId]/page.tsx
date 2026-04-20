@@ -25,7 +25,7 @@ export default async function EventAttendancePage({
 }) {
   const { eventId } = await params;
   const session = await auth();
-  const isMobile = session?.user?.role === "MARSHALL";
+  const isMobile = session?.user?.role === "MARSHAL";
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
@@ -38,14 +38,14 @@ export default async function EventAttendancePage({
 
   if (!event) notFound();
 
-  // Marshalls may only access today's session
+  // Marshals may only access today's session
   if (isMobile) {
     const todayStart = getStartOfSASTToday();
     const todayEnd = getEndOfSASTToday();
     if (event.date < todayStart || event.date > todayEnd) {
       redirect("/attendance");
     }
-    // Group Marshalls may only access their own group's session
+    // Group Marshals may only access their own group's session
     const userGroup = session?.user?.group ?? null;
     if (userGroup && event.group && event.group !== userGroup) {
       redirect("/attendance");
