@@ -20,14 +20,6 @@ export default function MarshalLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function appendDigit(d: string) {
-    if (passcode.length < 8) setPasscode((p) => p + d);
-  }
-
-  function deleteDigit() {
-    setPasscode((p) => p.slice(0, -1));
-  }
-
   async function handleSubmit() {
     if (!group || !passcode) return;
     setLoading(true);
@@ -66,8 +58,6 @@ export default function MarshalLoginPage() {
     );
   }
 
-  const dots = Array.from({ length: 8 }, (_, i) => i < passcode.length);
-
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-50 px-6 py-12">
       <button
@@ -79,48 +69,20 @@ export default function MarshalLoginPage() {
       <h1 className="text-2xl font-bold text-gray-900">{TSK_GROUP_LABELS[group]}</h1>
       <p className="mt-1 text-sm text-gray-500">Enter your passcode</p>
 
-      {/* Passcode dots */}
-      <div className="mt-8 flex gap-3">
-        {dots.map((filled, i) => (
-          <div
-            key={i}
-            className={`h-4 w-4 rounded-full border-2 transition-all ${filled ? "border-orange-500 bg-orange-500" : "border-gray-300 bg-white"}`}
-          />
-        ))}
-      </div>
+      <input
+        type="password"
+        value={passcode}
+        onChange={(e) => setPasscode(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        disabled={loading}
+        autoFocus
+        className="mt-8 w-64 rounded-2xl border border-gray-300 bg-white px-5 py-4 text-center text-xl tracking-widest shadow-sm focus:border-orange-400 focus:outline-none disabled:opacity-50"
+        placeholder="••••••••"
+      />
 
       {error && (
         <p className="mt-3 text-sm font-medium text-red-600">{error}</p>
       )}
-
-      {/* Numeric keypad */}
-      <div className="mt-8 grid grid-cols-3 gap-3 w-64">
-        {["1","2","3","4","5","6","7","8","9"].map((d) => (
-          <button
-            key={d}
-            onClick={() => appendDigit(d)}
-            disabled={loading}
-            className="rounded-2xl border border-gray-200 bg-white py-5 text-xl font-semibold text-gray-800 shadow-sm active:bg-gray-100 disabled:opacity-50"
-          >
-            {d}
-          </button>
-        ))}
-        <div /> {/* spacer */}
-        <button
-          onClick={() => appendDigit("0")}
-          disabled={loading}
-          className="rounded-2xl border border-gray-200 bg-white py-5 text-xl font-semibold text-gray-800 shadow-sm active:bg-gray-100 disabled:opacity-50"
-        >
-          0
-        </button>
-        <button
-          onClick={deleteDigit}
-          disabled={loading}
-          className="rounded-2xl border border-gray-200 bg-white py-5 text-xl font-semibold text-gray-400 shadow-sm active:bg-gray-100 disabled:opacity-50"
-        >
-          ⌫
-        </button>
-      </div>
 
       <button
         onClick={handleSubmit}
