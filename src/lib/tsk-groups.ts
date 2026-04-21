@@ -11,10 +11,10 @@ export const TSK_GROUP_LABELS: Record<string, string> = {
 };
 
 export const TSK_GROUP_LEVELS: Record<string, string[]> = {
-  TURTLES:     ["Turtle Rookie", "Turtle Novice"],
-  SEALS:       ["Seal Intermediate", "Seal Proficient"],
-  DOLPHINS:    ["Dolphin Advanced", "Dolphin Refined"],
-  SHARKS:      ["Shark Elite"],
+  TURTLES:      ["Turtle L1", "Turtle L2"],
+  SEALS:        ["Seal L3", "Seal L4"],
+  DOLPHINS:     ["Dolphin L5", "Dolphin L6"],
+  SHARKS:       ["Shark L7"],
   FREE_SURFERS: ["Free Surfer"],
 };
 

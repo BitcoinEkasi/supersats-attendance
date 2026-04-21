@@ -558,7 +558,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
               <div />
               <div className="flex flex-col gap-2 pb-2">
                 {tskStatus === POD_LEVEL ? (
-                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Shark Elite level</p>
+                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Shark L7 level</p>
                 ) : (
                   <>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -632,7 +632,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
                   return (
                     <option key={l.value} value={l.value} disabled={disabled}>
                       {l.value}{disabled && !freeSurferLocked ? " ↑ already passed" : ""}
-                      {freeSurferLocked ? " (Shark Elite only)" : ""}
+                      {freeSurferLocked ? " (Shark L7 only)" : ""}
                     </option>
                   );
                 })}
