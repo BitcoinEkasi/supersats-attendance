@@ -17,7 +17,6 @@ type Session = {
   date: string;
   category: string;
   present: boolean;
-  onTour: boolean;
 };
 
 const categoryLabels: Record<string, string> = {
@@ -113,9 +112,7 @@ export default function MonthlyAttendanceHistory({
                                 <td className="py-1 pl-2 text-gray-600">{s.date}</td>
                                 <td className="py-1 text-gray-600">{categoryLabels[s.category] || s.category}</td>
                                 <td className="py-1">
-                                  {s.onTour ? (
-                                    <span className="inline-flex rounded-full px-2 py-0.5 font-medium bg-blue-100 text-blue-700">On Tour</span>
-                                  ) : s.present ? (
+                                  {s.present ? (
                                     <span className="inline-flex rounded-full px-2 py-0.5 font-medium bg-green-100 text-green-700">Present</span>
                                   ) : (
                                     <span className="inline-flex rounded-full px-2 py-0.5 font-medium bg-red-100 text-red-700">Absent</span>

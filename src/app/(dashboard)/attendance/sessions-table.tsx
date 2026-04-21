@@ -39,32 +39,61 @@ export type EventRow = {
   monthKey: string;    // YYYY-MM
 };
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={`h-4 w-4 text-gray-400 transition-transform ${open ? "rotate-90" : ""}`}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path fillRule="evenodd" d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
 export default function SessionsTable({
   events,
   approvedMonthGroups,
 }: {
   events: EventRow[];
-  // Set of "YYYY-MM:GROUP" or "YYYY-MM:null" strings
   approvedMonthGroups: string[];
 }) {
   const approvedSet = new Set(approvedMonthGroups);
 
+  // Build month → day → sessions structure
   const monthKeys: string[] = [];
-  const byMonth: Record<string, EventRow[]> = {};
+  const byMonth: Record<string, Record<string, EventRow[]>> = {};
+
   for (const e of events) {
     if (!byMonth[e.monthKey]) {
       monthKeys.push(e.monthKey);
-      byMonth[e.monthKey] = [];
+      byMonth[e.monthKey] = {};
     }
-    byMonth[e.monthKey].push(e);
+    if (!byMonth[e.monthKey][e.date]) {
+      byMonth[e.monthKey][e.date] = [];
+    }
+    byMonth[e.monthKey][e.date].push(e);
   }
 
-  const [open, setOpen] = useState<Record<string, boolean>>(
-    monthKeys.length > 0 ? { [monthKeys[0]]: true } : {}
-  );
+  // Default: most recent month open, its most recent day open
+  const defaultMonthOpen = monthKeys.length > 0 ? { [monthKeys[0]]: true } : {};
+  const defaultDayOpen: Record<string, boolean> = {};
+  if (monthKeys.length > 0) {
+    const firstMonth = byMonth[monthKeys[0]];
+    const dayKeys = Object.keys(firstMonth);
+    if (dayKeys.length > 0) defaultDayOpen[`${monthKeys[0]}:${dayKeys[0]}`] = true;
+  }
 
-  function toggle(key: string) {
-    setOpen((prev) => ({ ...prev, [key]: !prev[key] }));
+  const [openMonths, setOpenMonths] = useState<Record<string, boolean>>(defaultMonthOpen);
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>(defaultDayOpen);
+
+  function toggleMonth(key: string) {
+    setOpenMonths((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function toggleDay(key: string) {
+    setOpenDays((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   if (events.length === 0) {
@@ -88,72 +117,97 @@ export default function SessionsTable({
         </tr>
       </thead>
       <tbody>
-        {monthKeys.map((key) => {
-          const sessions = byMonth[key];
-          const isOpen = !!open[key];
-          const totalPresent = sessions.reduce((s, e) => s + e.presentCount, 0);
+        {monthKeys.map((monthKey) => {
+          const dayMap = byMonth[monthKey];
+          const dayKeys = Object.keys(dayMap);
+          const allSessions = dayKeys.flatMap((d) => dayMap[d]);
+          const totalPresent = allSessions.reduce((s, e) => s + e.presentCount, 0);
+          const isMonthOpen = !!openMonths[monthKey];
 
           return (
             <>
+              {/* Month row */}
               <tr
-                key={`month-${key}`}
+                key={`month-${monthKey}`}
                 className="border-b bg-gray-50 cursor-pointer select-none hover:bg-gray-100"
-                onClick={() => toggle(key)}
+                onClick={() => toggleMonth(monthKey)}
               >
                 <td className="px-4 py-2.5" colSpan={5}>
                   <span className="flex items-center gap-2 font-semibold text-gray-700">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? "rotate-90" : ""}`}
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path fillRule="evenodd" d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    {fmtMonth(key)}
+                    <ChevronIcon open={isMonthOpen} />
+                    {fmtMonth(monthKey)}
                     <span className="ml-1 text-xs font-normal text-gray-400">
-                      {sessions.length} {sessions.length === 1 ? "session" : "sessions"} · {totalPresent} total attendees
+                      {allSessions.length} {allSessions.length === 1 ? "session" : "sessions"} · {totalPresent} total attendees
                     </span>
                   </span>
                 </td>
                 <td className="px-4 py-2.5" />
               </tr>
 
-              {isOpen && sessions.map((event) => {
-                const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
-                const isApproved = approvedSet.has(approvedKey);
+              {isMonthOpen && dayKeys.map((dayKey) => {
+                const sessions = dayMap[dayKey];
+                const dayTotal = sessions.reduce((s, e) => s + e.presentCount, 0);
+                const compoundKey = `${monthKey}:${dayKey}`;
+                const isDayOpen = !!openDays[compoundKey];
+
                 return (
-                  <tr key={event.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 pl-10 font-medium">{event.dateLabel}</td>
-                    <td className="px-4 py-3">
-                      {event.group ? (
-                        <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                          {TSK_GROUP_LABELS[event.group] ?? event.group}
+                  <>
+                    {/* Day row */}
+                    <tr
+                      key={`day-${compoundKey}`}
+                      className="border-b bg-gray-50/60 cursor-pointer select-none hover:bg-gray-100/60"
+                      onClick={() => toggleDay(compoundKey)}
+                    >
+                      <td className="px-4 py-2 pl-10" colSpan={5}>
+                        <span className="flex items-center gap-2 text-gray-600 font-medium">
+                          <ChevronIcon open={isDayOpen} />
+                          {sessions[0].dateLabel}
+                          <span className="text-xs font-normal text-gray-400">
+                            {sessions.length} {sessions.length === 1 ? "session" : "sessions"} · {dayTotal} attendees
+                          </span>
                         </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
-                        {categoryLabels[event.category] || event.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-gray-800 font-medium">{event.presentCount}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
-                          View
-                        </Link>
-                        {!isApproved && (
-                          <DeleteEventButton eventId={event.id} eventDate={event.dateLabel} />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-4 py-2" />
+                    </tr>
+
+                    {isDayOpen && sessions.map((event) => {
+                      const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
+                      const isApproved = approvedSet.has(approvedKey);
+                      return (
+                        <tr key={event.id} className="border-b last:border-0">
+                          <td className="px-4 py-3 pl-16 font-medium text-gray-500">{event.dateLabel}</td>
+                          <td className="px-4 py-3">
+                            {event.group ? (
+                              <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
+                                {TSK_GROUP_LABELS[event.group] ?? event.group}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
+                              {categoryLabels[event.category] || event.category}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-gray-800 font-medium">{event.presentCount}</span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
+                                View
+                              </Link>
+                              {!isApproved && (
+                                <DeleteEventButton eventId={event.id} eventDate={event.dateLabel} />
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </>
                 );
               })}
             </>

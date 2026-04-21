@@ -19,12 +19,10 @@ type Participant = {
 type ExistingRecord = {
   participantId: string;
   present: boolean;
-  onTour: boolean;
 };
 
-type Mark = "present" | "onTour" | null;
+type Mark = "present" | null;
 
-const LONG_PRESS_MS = 500;
 const AUTOSAVE_DEBOUNCE_MS = 800;
 
 function CheckIcon() {
@@ -44,10 +42,6 @@ function XIcon() {
   );
 }
 
-function OnTourIcon() {
-  return <span className="text-lg font-bold leading-none">➤</span>;
-}
-
 export default function AttendanceCapture({
   eventId,
   participants,
@@ -62,8 +56,7 @@ export default function AttendanceCapture({
   const initialState = new Map<string, Mark>();
   for (const p of participants) initialState.set(p.id, null);
   for (const r of existing) {
-    if (r.onTour) initialState.set(r.participantId, "onTour");
-    else if (r.present) initialState.set(r.participantId, "present");
+    if (r.present) initialState.set(r.participantId, "present");
   }
 
   const [marks, setMarks] = useState<Map<string, Mark>>(new Map(initialState));
@@ -71,8 +64,6 @@ export default function AttendanceCapture({
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longFiredRef = useRef(false);
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
 
@@ -86,8 +77,8 @@ export default function AttendanceCapture({
     autosaveRef.current = setTimeout(async () => {
       const records = [...marks.entries()].map(([participantId, v]) => ({
         participantId,
-        present: v !== null,
-        onTour: v === "onTour",
+        present: v === "present",
+        onTour: false,
       }));
       const res = await fetch(`/api/events/${eventId}/attendance`, {
         method: "POST",
@@ -108,30 +99,12 @@ export default function AttendanceCapture({
     return p.knownAs ?? `${p.surname}, ${p.fullNames}`;
   }
 
-  function handlePressStart(id: string) {
-    longFiredRef.current = false;
-    timerRef.current = setTimeout(() => {
-      longFiredRef.current = true;
-      setMarks((prev) => {
-        const next = new Map(prev);
-        next.set(id, prev.get(id) ? null : "onTour");
-        return next;
-      });
-    }, LONG_PRESS_MS);
-  }
-
-  function handlePressEnd(id: string) {
-    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-    if (longFiredRef.current) return;
+  function handleTap(id: string) {
     setMarks((prev) => {
       const next = new Map(prev);
-      next.set(id, prev.get(id) ? null : "present");
+      next.set(id, prev.get(id) === "present" ? null : "present");
       return next;
     });
-  }
-
-  function handlePressCancel() {
-    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
   }
 
   const sorted = useMemo(() => {
@@ -142,7 +115,6 @@ export default function AttendanceCapture({
   }, [participants, search]);
 
   const presentCount = [...marks.values()].filter((v) => v === "present").length;
-  const onTourCount = [...marks.values()].filter((v) => v === "onTour").length;
   const total = participants.length;
 
   const statusIndicator = (
@@ -176,7 +148,6 @@ export default function AttendanceCapture({
   const participantRow = (p: Participant, mobile: boolean) => {
     const mark = marks.get(p.id);
     const isPresent = mark === "present";
-    const isOnTour = mark === "onTour";
     return (
       <div key={p.id} className={`flex items-center gap-3 bg-white ${mobile ? "px-4 py-3" : "px-4 py-3"}`}>
         <div className={`shrink-0 h-10 w-10 rounded-full overflow-hidden ring-2 ${p.gender === "FEMALE" ? "ring-pink-500" : "ring-blue-500"}`}>
@@ -199,18 +170,12 @@ export default function AttendanceCapture({
           </p>
         </div>
         <button
-          onPointerDown={() => handlePressStart(p.id)}
-          onPointerUp={() => handlePressEnd(p.id)}
-          onPointerLeave={handlePressCancel}
-          onContextMenu={(e) => e.preventDefault()}
+          onClick={() => handleTap(p.id)}
           className={`flex shrink-0 items-center justify-center rounded-xl transition-colors ${mobile ? "h-14 w-14 active:scale-95" : "h-12 w-12"} ${
-            isPresent ? "bg-green-500 text-white shadow-sm"
-            : isOnTour ? "bg-orange-500 text-white shadow-sm"
-            : "border border-gray-200 bg-white text-gray-300"
+            isPresent ? "bg-green-500 text-white shadow-sm" : "border border-gray-200 bg-white text-gray-300"
           }`}
-          title={mobile ? "Tap = present · Hold = on tour" : "Click = present · Hold = on tour"}
         >
-          {isOnTour ? <OnTourIcon /> : isPresent ? <CheckIcon /> : <XIcon />}
+          {isPresent ? <CheckIcon /> : <XIcon />}
         </button>
       </div>
     );
@@ -224,7 +189,6 @@ export default function AttendanceCapture({
             <div className="flex items-center gap-3 text-xs text-gray-500">
               <span>Listed: <span className="font-semibold text-gray-900">{total}</span></span>
               <span>Present: <span className="font-semibold text-green-600">{presentCount}</span></span>
-              <span>On Tour: <span className="font-semibold text-blue-600">{onTourCount}</span></span>
             </div>
             {statusIndicator}
           </div>
@@ -243,7 +207,6 @@ export default function AttendanceCapture({
           <div className="flex items-center gap-4 text-sm text-gray-500">
             <span>Listed: <span className="font-semibold text-gray-900">{total}</span></span>
             <span>Present: <span className="font-semibold text-green-600">{presentCount}</span></span>
-            <span>On Tour: <span className="font-semibold text-blue-600">{onTourCount}</span></span>
           </div>
           {statusIndicator}
         </div>

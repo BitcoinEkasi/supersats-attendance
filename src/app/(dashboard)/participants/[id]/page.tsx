@@ -58,7 +58,7 @@ export default async function ParticipantDetailPage({
   ]);
 
   // Group sessions by YYYY-MM for the MonthlyAttendanceHistory component
-  const sessionsByMonth: Record<string, { date: string; category: string; present: boolean; onTour: boolean }[]> = {};
+  const sessionsByMonth: Record<string, { date: string; category: string; present: boolean }[]> = {};
   for (const record of allAttendanceRecords) {
     const d = record.event.date;
     const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -67,7 +67,6 @@ export default async function ParticipantDetailPage({
       date: fmtDate(d),
       category: record.event.category,
       present: record.present,
-      onTour: record.onTour,
     });
   }
 

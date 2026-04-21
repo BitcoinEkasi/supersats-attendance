@@ -31,7 +31,7 @@ export default async function EventAttendancePage({
     where: { id: eventId },
     include: {
       attendanceRecords: {
-        select: { participantId: true, present: true, onTour: true },
+        select: { participantId: true, present: true },
       },
     },
   });
