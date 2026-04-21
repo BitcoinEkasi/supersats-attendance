@@ -18,8 +18,8 @@ export default auth((request) => {
 
   const role = session.user?.role as string;
 
-  // Logged-in users on login/marshall pages get redirected away
-  if (isLoginPage || isMarshallPage) {
+  // Logged-in users on login page get redirected away (marshall page stays accessible)
+  if (isLoginPage) {
     const dest = role === "MARSHALL" ? "/attendance" : "/dashboard";
     return NextResponse.redirect(new URL(dest, request.url));
   }

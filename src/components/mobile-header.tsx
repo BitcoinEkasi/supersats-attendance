@@ -11,7 +11,7 @@ export default async function MobileHeader() {
         <form
           action={async () => {
             "use server";
-            await signOut({ redirectTo: "/login" });
+            await signOut({ redirectTo: "/marshall" });
           }}
         >
           <button
