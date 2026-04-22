@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { getDivisionLabel } from "@/lib/sa-id";
+import { getAcMultiplier } from "@/lib/tsk-levels";
 
 type Participant = {
   id: string;
@@ -12,6 +13,7 @@ type Participant = {
   dateOfBirth: Date;
   gender: "MALE" | "FEMALE";
   isAssistantCoach: boolean;
+  assistantCoachSince: Date | string | null;
   tskStatus: string | null;
 };
 
@@ -164,7 +166,14 @@ export default function AttendanceCapture({
           <p className="truncate text-xs text-gray-500">
             {p.knownAs && <span className="mr-1">({p.knownAs})</span>}
             {getDivisionLabel(p.dateOfBirth, p.gender)}
-            {p.tskStatus && <span className="ml-1">· {p.tskStatus}{p.isAssistantCoach ? " (A)" : ""}</span>}
+            {p.tskStatus && (
+              <span className="ml-1">
+                · {p.tskStatus}
+                {p.isAssistantCoach && p.assistantCoachSince && (
+                  <> AC<sup className="text-[9px]">×{getAcMultiplier(p.assistantCoachSince, new Date().toISOString().slice(0, 7))}</sup></>
+                )}
+              </span>
+            )}
           </p>
         </div>
         <button

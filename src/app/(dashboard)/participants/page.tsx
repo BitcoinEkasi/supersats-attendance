@@ -6,6 +6,7 @@ import { formatTenure, formatDuration, calculateAge, getDivisionLabel } from "@/
 import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import { TSK_GROUP_LEVELS } from "@/lib/tsk-groups";
+import { getAcMultiplier } from "@/lib/tsk-levels";
 
 const LEVEL_GROUPS = {
   turtles:     TSK_GROUP_LEVELS.TURTLES,
@@ -177,7 +178,10 @@ export default async function ParticipantsPage({
                     <span className="font-mono text-xs text-gray-500">{p.tskId}</span>
                     {p.tskStatus && (
                       <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                        {p.tskStatus}{(p as any).isAssistantCoach ? " (A)" : ""}
+                        {p.tskStatus}
+                        {(p as any).isAssistantCoach && (p as any).assistantCoachSince && (
+                          <> AC<sup className="text-[9px]">×{getAcMultiplier((p as any).assistantCoachSince, new Date().toISOString().slice(0, 7))}</sup></>
+                        )}
                       </span>
                     )}
                   </div>

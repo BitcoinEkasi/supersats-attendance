@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getAcMultiplier } from "@/lib/tsk-levels";
 
 type Entry = {
   id: string;
@@ -31,10 +32,12 @@ export default function MonthlyAttendanceHistory({
   entries,
   sessionsByMonth,
   isAssistantCoach,
+  assistantCoachSince,
 }: {
   entries: Entry[];
   sessionsByMonth: Record<string, Session[]>;
   isAssistantCoach: boolean;
+  assistantCoachSince: Date | string | null;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -63,9 +66,9 @@ export default function MonthlyAttendanceHistory({
                   <td className="py-2 font-medium">{entry.reportMonth}</td>
                   <td className="py-2">{entry.attended}/{entry.totalEvents} ({entry.percentage.toFixed(1)}%)</td>
                   <td className="py-2">
-                    {isAssistantCoach && (
+                    {isAssistantCoach && assistantCoachSince && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        AC
+                        AC<sup className="text-[9px]">×{getAcMultiplier(assistantCoachSince, entry.reportMonth)}</sup>
                       </span>
                     )}
                     {entry.rewardSats === 0 ? (

@@ -67,7 +67,7 @@ export default async function EventAttendancePage({
     select: {
       id: true, surname: true, fullNames: true, knownAs: true,
       profilePicture: true, dateOfBirth: true, gender: true,
-      isAssistantCoach: true, tskStatus: true,
+      isAssistantCoach: true, assistantCoachSince: true, tskStatus: true,
     },
     orderBy: [{ surname: "asc" }],
   });

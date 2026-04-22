@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { REWARD_TIERS } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
+import { getAcMultiplier } from "@/lib/tsk-levels";
 
 type Entry = {
   id: string;
@@ -21,6 +22,7 @@ type Entry = {
     dateOfBirth: Date | null;
     gender: "MALE" | "FEMALE" | null;
     isAssistantCoach: boolean;
+    assistantCoachSince: Date | string | null;
   };
 };
 
@@ -103,9 +105,9 @@ export default function ReportTable({ entries, reportMonth }: { entries: Entry[]
                     <span className={tier?.color || ""}>{pct.toFixed(1)}%</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
-                    {p.isAssistantCoach && (
+                    {p.isAssistantCoach && p.assistantCoachSince && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        AC
+                        AC<sup className="text-[9px]">×{getAcMultiplier(p.assistantCoachSince, reportMonth)}</sup>
                       </span>
                     )}
                     {entry.rewardSats > 0 ? <>🗲 {entry.rewardSats.toLocaleString()}</> : null}

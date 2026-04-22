@@ -15,6 +15,7 @@ import MonthlyAttendanceHistory from "./monthly-attendance-history";
 import NotesSection from "./notes-section";
 import TskReviewsSection from "./tsk-reviews-section";
 import Image from "next/image";
+import { getAcMultiplier } from "@/lib/tsk-levels";
 
 export default async function ParticipantDetailPage({
   params,
@@ -122,7 +123,10 @@ export default async function ParticipantDetailPage({
               <span className="font-mono text-xs text-gray-500">{participant.tskId}</span>
               {participant.tskStatus && (
                 <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                  {participant.tskStatus}{(participant as any).isAssistantCoach ? " (A)" : ""}
+                  {participant.tskStatus}
+                  {(participant as any).isAssistantCoach && (participant as any).assistantCoachSince && (
+                    <> AC<sup className="text-[9px]">×{getAcMultiplier((participant as any).assistantCoachSince, new Date().toISOString().slice(0, 7))}</sup></>
+                  )}
                 </span>
               )}
             </div>
@@ -364,6 +368,7 @@ export default async function ParticipantDetailPage({
             entries={historyEntries}
             sessionsByMonth={sessionsByMonth}
             isAssistantCoach={(participant as any).isAssistantCoach ?? false}
+            assistantCoachSince={(participant as any).assistantCoachSince ?? null}
           />
 
           {role === "ADMINISTRATOR" && (
