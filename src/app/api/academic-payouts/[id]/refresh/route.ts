@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { calculateRewardSats } from "@/lib/rewards";
+import { buildCalculateRewardSats } from "@/lib/rewards";
+import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -17,6 +18,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     where: { year: payout.year, [termField]: { not: null } },
     select: { participantId: true, term1Result: true, term2Result: true, term3Result: true, term4Result: true },
   });
+
+  const { minSats, maxSats } = await getActiveRewardSettings();
+  const calculateRewardSats = buildCalculateRewardSats(minSats, maxSats);
 
   await prisma.$transaction(async (tx) => {
     await tx.academicPayoutEntry.deleteMany({ where: { payoutId: id } });

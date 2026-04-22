@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { calculateRewardSats } from "@/lib/rewards";
+import { buildCalculateRewardSats } from "@/lib/rewards";
+import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 
 export async function GET() {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -37,16 +38,20 @@ export async function POST(req: Request) {
 
   const termField = `term${term}Result` as "term1Result" | "term2Result" | "term3Result" | "term4Result";
 
-  const schoolReports = await prisma.schoolReport.findMany({
-    where: { year, [termField]: { not: null } },
-    select: {
-      participantId: true,
-      term1Result: true,
-      term2Result: true,
-      term3Result: true,
-      term4Result: true,
-    },
-  });
+  const [schoolReports, { minSats, maxSats }] = await Promise.all([
+    prisma.schoolReport.findMany({
+      where: { year, [termField]: { not: null } },
+      select: {
+        participantId: true,
+        term1Result: true,
+        term2Result: true,
+        term3Result: true,
+        term4Result: true,
+      },
+    }),
+    getActiveRewardSettings(),
+  ]);
+  const calculateRewardSats = buildCalculateRewardSats(minSats, maxSats);
 
   if (schoolReports.length === 0) {
     return Response.json({ error: "No school reports found for this year and term" }, { status: 400 });

@@ -343,6 +343,17 @@ model TskLevelHistory {
   @@map("tsk_level_history")
 }
 
+model RewardSettings {
+  id            String   @id @default(uuid())
+  minSats       Int      @map("min_sats")
+  maxSats       Int      @map("max_sats")
+  effectiveFrom DateTime @map("effective_from")
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String   @map("created_by")
+
+  @@map("reward_settings")
+}
+
 model PendingParticipantChange {
   id            String    @id @default(uuid())
   participantId String    @map("participant_id")

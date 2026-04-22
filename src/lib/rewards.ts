@@ -1,31 +1,43 @@
-const STEPS = [
-  { min: 100, sats: 10000 },
-  { min: 95,  sats: 8200  },
-  { min: 90,  sats: 6700  },
-  { min: 85,  sats: 5500  },
-  { min: 80,  sats: 4500  },
-  { min: 75,  sats: 3700  },
-  { min: 70,  sats: 3000  },
+export const DEFAULT_MIN_SATS = 3000;
+export const DEFAULT_MAX_SATS = 10000;
+
+// 7 tiers from 70% to 100% — exponential curve between minSats and maxSats
+const TIER_THRESHOLDS = [
+  { min: 100, max: 100, label: "100%",   color: "text-yellow-600", idx: 6 },
+  { min: 95,  max: 99,  label: "95–99%", color: "text-green-700",  idx: 5 },
+  { min: 90,  max: 94,  label: "90–94%", color: "text-green-600",  idx: 4 },
+  { min: 85,  max: 89,  label: "85–89%", color: "text-blue-700",   idx: 3 },
+  { min: 80,  max: 84,  label: "80–84%", color: "text-blue-600",   idx: 2 },
+  { min: 75,  max: 79,  label: "75–79%", color: "text-gray-700",   idx: 1 },
+  { min: 70,  max: 74,  label: "70–74%", color: "text-gray-600",   idx: 0 },
+  { min: 0,   max: 69,  label: "<70%",   color: "text-red-600",    idx: -1 },
 ];
 
-export function calculateRewardSats(attendancePercent: number): number {
-  for (const step of STEPS) {
-    if (attendancePercent >= step.min) return step.sats;
-  }
-  return 0;
+export function buildTiers(minSats: number, maxSats: number) {
+  const ratio = Math.pow(maxSats / minSats, 1 / 6);
+  return TIER_THRESHOLDS.map((t) => ({
+    ...t,
+    sats: t.idx < 0 ? 0 : t.idx === 6 ? maxSats : Math.round(minSats * Math.pow(ratio, t.idx)),
+  }));
 }
 
-export const REWARD_TIERS = [
-  { min: 100, max: 100, sats: 10000, label: "100%",   color: "text-yellow-600" },
-  { min: 95,  max: 99,  sats: 8200,  label: "95–99%", color: "text-green-700"  },
-  { min: 90,  max: 94,  sats: 6700,  label: "90–94%", color: "text-green-600"  },
-  { min: 85,  max: 89,  sats: 5500,  label: "85–89%", color: "text-blue-700"   },
-  { min: 80,  max: 84,  sats: 4500,  label: "80–84%", color: "text-blue-600"   },
-  { min: 75,  max: 79,  sats: 3700,  label: "75–79%", color: "text-gray-700"   },
-  { min: 70,  max: 74,  sats: 3000,  label: "70–74%", color: "text-gray-600"   },
-  { min: 0,   max: 69,  sats: 0,     label: "<70%",   color: "text-red-600"    },
-];
+export function buildCalculateRewardSats(minSats: number, maxSats: number) {
+  const tiers = buildTiers(minSats, maxSats);
+  return function (pct: number): number {
+    for (const tier of tiers) {
+      if (pct >= tier.min) return tier.sats;
+    }
+    return 0;
+  };
+}
+
+// Static defaults — used as fallback and for components that don't fetch DB settings
+export const REWARD_TIERS = buildTiers(DEFAULT_MIN_SATS, DEFAULT_MAX_SATS);
+
+export function calculateRewardSats(pct: number): number {
+  return buildCalculateRewardSats(DEFAULT_MIN_SATS, DEFAULT_MAX_SATS)(pct);
+}
 
 export function getRewardTierLabel(sats: number): string {
-  return REWARD_TIERS.find(t => t.sats === sats)?.label ?? "Below 70%";
+  return REWARD_TIERS.find((t) => t.sats === sats)?.label ?? "Below 70%";
 }

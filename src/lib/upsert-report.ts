@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
-import { calculateRewardSats } from "@/lib/rewards";
+import { buildCalculateRewardSats } from "@/lib/rewards";
+import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, participantWhereForGroup } from "@/lib/tsk-groups";
 
@@ -21,6 +22,9 @@ export async function upsertMonthlyReport(
   group: TskGroupKey | null = null,
 ) {
   if (!/^\d{4}-\d{2}$/.test(month)) return;
+
+  const { minSats, maxSats } = await getActiveRewardSettings();
+  const calculateRewardSats = buildCalculateRewardSats(minSats, maxSats);
 
   const monthStart = getStartOfSASTMonth(month);
   const monthEnd = getEndOfSASTMonth(month);

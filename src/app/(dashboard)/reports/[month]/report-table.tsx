@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { REWARD_TIERS } from "@/lib/rewards";
+import { REWARD_TIERS, type buildTiers } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getAcMultiplier } from "@/lib/tsk-levels";
 
@@ -26,7 +26,9 @@ type Entry = {
   };
 };
 
-export default function ReportTable({ entries, reportMonth }: { entries: Entry[]; reportMonth: string }) {
+type RewardTier = ReturnType<typeof buildTiers>[number];
+
+export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD_TIERS }: { entries: Entry[]; reportMonth: string; rewardTiers?: RewardTier[] }) {
   const [search, setSearch] = useState("");
 
   const q = search.trim().toLowerCase();

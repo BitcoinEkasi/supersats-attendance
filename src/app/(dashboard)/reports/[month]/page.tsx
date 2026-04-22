@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { REWARD_TIERS } from "@/lib/rewards";
+import { buildTiers } from "@/lib/rewards";
+import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getSASTNow } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import ExportButton from "./export-button";
@@ -18,7 +19,7 @@ export default async function ReportDetailPage({
   params: Promise<{ month: string }>;
 }) {
   const { month: reportId } = await params;
-  const [report, session] = await Promise.all([
+  const [report, session, rewardSettings] = await Promise.all([
     prisma.monthlyReport.findUnique({
       where: { id: reportId },
       include: {
@@ -36,7 +37,9 @@ export default async function ReportDetailPage({
       },
     }),
     auth(),
+    getActiveRewardSettings(),
   ]);
+  const REWARD_TIERS = buildTiers(rewardSettings.minSats, rewardSettings.maxSats);
 
   if (!report) notFound();
 
@@ -161,6 +164,7 @@ export default async function ReportDetailPage({
 
       <ReportTable
         reportMonth={report.month}
+        rewardTiers={REWARD_TIERS}
         entries={report.entries.map(e => ({
           ...e,
           percentage: e.percentage.toString(),
