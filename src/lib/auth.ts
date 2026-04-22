@@ -60,7 +60,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const isOnLogin = nextUrl.pathname.startsWith("/login");
       const isOnMarshal = nextUrl.pathname.startsWith("/marshal");
 
-      if (isOnLogin || isOnMarshal) {
+      // /marshal is always accessible — handles its own auth
+      if (isOnMarshal) return true;
+
+      if (isOnLogin) {
         if (isLoggedIn) {
           const role = (auth?.user as { role?: string })?.role;
           const dest = role === "MARSHAL" ? "/attendance" : "/dashboard";

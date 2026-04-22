@@ -7,10 +7,10 @@ export default auth((request) => {
   const isLoginPage = pathname === "/login";
   const isMarshallPage = pathname.startsWith("/marshal");
 
-  // Allow unauthenticated access to login and marshal pages
-  if (!session && (isLoginPage || isMarshallPage)) {
-    return NextResponse.next();
-  }
+  // /marshal is always accessible — handles its own auth
+  if (isMarshallPage) return NextResponse.next();
+
+  if (!session && isLoginPage) return NextResponse.next();
 
   if (!session) {
     return NextResponse.redirect(new URL("/login", request.url));
