@@ -11,7 +11,7 @@ export async function GET() {
 
   const headers = [
     "TSK ID", "Surname", "Full Names", "Known As", "Gender", "Date of Birth",
-    "Status", "Junior Coach", "Level", "Registration Date",
+    "Status", "Assistant Coach", "AC Since", "Registration Date",
     "Ethnicity", "Language", "School", "Grade",
     "Guardian", "Guardian ID", "Relationship",
     "Address", "Contact 1", "Contact 2", "Housing Type",
@@ -35,8 +35,10 @@ export async function GET() {
     p.gender === "MALE" ? "Male" : "Female",
     p.dateOfBirth.toISOString().split("T")[0],
     p.status.charAt(0) + p.status.slice(1).toLowerCase(),
-    p.isJuniorCoach ? "Yes" : "No",
-    esc(p.tskStatus),
+    (p as any).isAssistantCoach ? "Yes" : "No",
+    (p as any).assistantCoachSince
+      ? new Date((p as any).assistantCoachSince).toISOString().split("T")[0]
+      : "",
     p.registrationDate.toISOString().split("T")[0],
     esc(p.ethnicity),
     esc(p.language),

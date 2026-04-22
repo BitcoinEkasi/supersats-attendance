@@ -37,7 +37,6 @@ export default async function ParticipantDetailPage({
       schoolReports: { orderBy: { year: "desc" } },
       tskReviews: { orderBy: { reviewDate: "desc" } },
       tskLevelHistory: { orderBy: { changedAt: "asc" } },
-      juniorCoachHistory: { orderBy: { startedAt: "asc" } },
     },
   });
 
@@ -123,12 +122,7 @@ export default async function ParticipantDetailPage({
               <span className="font-mono text-xs text-gray-500">{participant.tskId}</span>
               {participant.tskStatus && (
                 <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                  {participant.tskStatus}
-                </span>
-              )}
-              {participant.isJuniorCoach && (
-                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">
-                  Junior Coach
+                  {participant.tskStatus}{(participant as any).isAssistantCoach ? " (A)" : ""}
                 </span>
               )}
             </div>
@@ -369,8 +363,7 @@ export default async function ParticipantDetailPage({
           <MonthlyAttendanceHistory
             entries={historyEntries}
             sessionsByMonth={sessionsByMonth}
-            isJuniorCoach={participant.isJuniorCoach}
-            juniorCoachLevel={(participant as any).juniorCoachLevel ?? null}
+            isAssistantCoach={(participant as any).isAssistantCoach ?? false}
           />
 
           {role === "ADMINISTRATOR" && (

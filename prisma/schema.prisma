@@ -60,8 +60,8 @@ model Participant {
   idNumber         String            @unique @map("id_number")
   dateOfBirth      DateTime          @map("date_of_birth")
   boltUserId       String?           @map("bolt_user_id")
-  isJuniorCoach    Boolean           @default(false) @map("is_junior_coach")
-  juniorCoachLevel Int?              @map("junior_coach_level")
+  isAssistantCoach    Boolean   @default(false) @map("is_assistant_coach")
+  assistantCoachSince DateTime? @map("assistant_coach_since")
   ethnicity        String?
   language         String?
   school           String?
@@ -109,7 +109,6 @@ model Participant {
   schoolReports         SchoolReport[]
   tskReviews            TskReview[]
   tskLevelHistory       TskLevelHistory[]
-  juniorCoachHistory    JuniorCoachHistory[]
   academicPayoutEntries AcademicPayoutEntry[]
   specialPayoutEntries  SpecialPayoutEntry[]
 
@@ -343,15 +342,3 @@ model TskLevelHistory {
   @@map("tsk_level_history")
 }
 
-model JuniorCoachHistory {
-  id            String      @id @default(uuid())
-  participantId String      @map("participant_id")
-  level         Int
-  startedAt     DateTime    @map("started_at")
-  endedAt       DateTime?   @map("ended_at")
-  endReason     String?     @map("end_reason")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
-
-  @@map("junior_coach_history")
-}

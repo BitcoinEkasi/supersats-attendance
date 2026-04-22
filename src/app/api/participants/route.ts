@@ -66,7 +66,6 @@ export async function POST(req: Request) {
           gender: parsed.gender,
           dateOfBirth: parsed.dob,
           status: (body.status as ParticipantStatus) || "ACTIVE",
-          isJuniorCoach: body.isJuniorCoach === "on" || body.isJuniorCoach === true,
           profilePicture: body.profilePicture || null,
           registrationDate,
           ethnicity: body.ethnicity?.trim() || null,

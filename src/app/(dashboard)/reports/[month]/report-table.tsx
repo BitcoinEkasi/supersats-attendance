@@ -20,8 +20,7 @@ type Entry = {
     knownAs: string | null;
     dateOfBirth: Date | null;
     gender: "MALE" | "FEMALE" | null;
-    isJuniorCoach: boolean;
-    juniorCoachLevel: number | null;
+    isAssistantCoach: boolean;
   };
 };
 
@@ -104,9 +103,9 @@ export default function ReportTable({ entries, reportMonth }: { entries: Entry[]
                     <span className={tier?.color || ""}>{pct.toFixed(1)}%</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
-                    {p.isJuniorCoach && (
+                    {p.isAssistantCoach && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        JC L{p.juniorCoachLevel ?? 1}
+                        AC
                       </span>
                     )}
                     {entry.rewardSats > 0 ? <>🗲 {entry.rewardSats.toLocaleString()}</> : null}

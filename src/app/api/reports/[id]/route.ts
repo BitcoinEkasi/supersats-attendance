@@ -31,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           participant: {
             select: {
               tskId: true, surname: true, fullNames: true, knownAs: true,
-              dateOfBirth: true, gender: true, isJuniorCoach: true,
+              dateOfBirth: true, gender: true, isAssistantCoach: true,
             },
           },
         },

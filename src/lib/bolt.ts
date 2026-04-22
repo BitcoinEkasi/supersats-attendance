@@ -140,7 +140,7 @@ export async function updateBoltUserDisplayName(boltUserId: number, displayName:
 export async function updateBoltUserMeta(boltUserId: number, meta: {
   division?: string | null;
   tsk_level?: string | null;
-  jc_level?: number | null;
+  ac?: boolean | null;
 }): Promise<void> {
   await boltFetch(`/api/v1/users/${boltUserId}`, {
     method: 'PATCH',

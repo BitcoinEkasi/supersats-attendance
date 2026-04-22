@@ -3,6 +3,18 @@ import { calculateRewardSats } from "@/lib/rewards";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, participantWhereForGroup } from "@/lib/tsk-groups";
 
+function getAcMultiplier(assistantCoachSince: Date, reportMonth: string): number {
+  const [reportYear, reportMon] = reportMonth.split("-").map(Number);
+  const sinceYear = assistantCoachSince.getUTCFullYear();
+  const sinceMon  = assistantCoachSince.getUTCMonth() + 1;
+  const elapsed   = (reportYear - sinceYear) * 12 + (reportMon - sinceMon);
+  if (elapsed <= 0)  return 1;  // month 1 — trial
+  if (elapsed <= 5)  return 3;  // months 2–6
+  if (elapsed <= 11) return 5;  // months 7–12
+  if (elapsed <= 17) return 7;  // months 13–18
+  return 9;                     // month 19+
+}
+
 export async function upsertMonthlyReport(
   month: string,
   generatedBy: string,
@@ -35,7 +47,7 @@ export async function upsertMonthlyReport(
         ],
         ...(group ? participantWhereForGroup(group) : {}),
       },
-      select: { id: true, isJuniorCoach: true, juniorCoachLevel: true, retiredAt: true },
+      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -91,10 +103,10 @@ export async function upsertMonthlyReport(
 
       const percentage = totalEvents > 0 ? (attended / totalEvents) * 100 : 0;
       const baseReward = calculateRewardSats(percentage);
-      const JC_MULTIPLIERS: Record<number, number> = { 1: 5, 2: 7.5, 3: 10 };
-      const rewardSats = participant.isJuniorCoach
-        ? Math.round(baseReward * (JC_MULTIPLIERS[participant.juniorCoachLevel ?? 1] ?? 5))
-        : baseReward;
+      const rewardSats =
+        participant.isAssistantCoach && participant.assistantCoachSince
+          ? Math.round(baseReward * getAcMultiplier(participant.assistantCoachSince, month))
+          : baseReward;
 
       await tx.monthlyReportEntry.create({
         data: {

@@ -177,12 +177,7 @@ export default async function ParticipantsPage({
                     <span className="font-mono text-xs text-gray-500">{p.tskId}</span>
                     {p.tskStatus && (
                       <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                        {p.tskStatus}
-                      </span>
-                    )}
-                    {p.isJuniorCoach && (
-                      <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">
-                        Junior Coach
+                        {p.tskStatus}{(p as any).isAssistantCoach ? " (A)" : ""}
                       </span>
                     )}
                   </div>

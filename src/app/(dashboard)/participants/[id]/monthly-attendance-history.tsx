@@ -30,13 +30,11 @@ const categoryLabels: Record<string, string> = {
 export default function MonthlyAttendanceHistory({
   entries,
   sessionsByMonth,
-  isJuniorCoach,
-  juniorCoachLevel,
+  isAssistantCoach,
 }: {
   entries: Entry[];
   sessionsByMonth: Record<string, Session[]>;
-  isJuniorCoach: boolean;
-  juniorCoachLevel: number | null;
+  isAssistantCoach: boolean;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -65,9 +63,9 @@ export default function MonthlyAttendanceHistory({
                   <td className="py-2 font-medium">{entry.reportMonth}</td>
                   <td className="py-2">{entry.attended}/{entry.totalEvents} ({entry.percentage.toFixed(1)}%)</td>
                   <td className="py-2">
-                    {isJuniorCoach && (
+                    {isAssistantCoach && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        JC L{juniorCoachLevel ?? 1}
+                        AC
                       </span>
                     )}
                     {entry.rewardSats === 0 ? (

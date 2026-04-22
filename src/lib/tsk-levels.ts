@@ -13,3 +13,9 @@ export const TSK_LEVEL_MAP = Object.fromEntries(TSK_LEVELS.map((l) => [l.value, 
 
 export const POD_LEVEL = "Shark L7";
 export const FREE_SURFER_LEVEL = "Free Surfer";
+
+export const AC_ELIGIBLE_LEVELS = ["Dolphin L5", "Dolphin L6", "Free Surfer"] as const;
+
+export function isAcEligible(tskStatus: string | null): boolean {
+  return AC_ELIGIBLE_LEVELS.includes(tskStatus as (typeof AC_ELIGIBLE_LEVELS)[number]);
+}

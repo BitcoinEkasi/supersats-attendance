@@ -6,9 +6,7 @@ import { getExpectedGrade, getDivisionLabel } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
 import TskLevelHistorySection from "./tsk-level-history-section";
-import JcHistorySection from "./jc-history-section";
-import type { JcHistoryEntry } from "./jc-history-section";
-import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL, FREE_SURFER_LEVEL } from "@/lib/tsk-levels";
+import { TSK_LEVELS, TSK_LEVEL_MAP, POD_LEVEL, FREE_SURFER_LEVEL, isAcEligible } from "@/lib/tsk-levels";
 import type { Participant, Certification, PerformanceEvent, TskLevelHistory, ParticipantStatus } from "@prisma/client";
 
 const RETIRED_REASONS = [
@@ -35,7 +33,7 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   };
 }
 
-export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[]; juniorCoachHistory?: JcHistoryEntry[] } }) {
+export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] } }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -77,8 +75,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
 
   const [stance, setStance] = useState<string>((participant as any).stance || "");
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
-  const [isJuniorCoach, setIsJuniorCoach] = useState<boolean>(participant.isJuniorCoach);
-  const [juniorCoachLevel, setJuniorCoachLevel] = useState<string>((participant as any).juniorCoachLevel?.toString() || "");
+  const [isAssistantCoach, setIsAssistantCoach] = useState<boolean>((participant as any).isAssistantCoach ?? false);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [paymentMethod, setPaymentMethod] = useState<string>((participant as any).paymentMethod || "BOLT_CARD");
   const [lightningAddress, setLightningAddress] = useState<string>((participant as any).lightningAddress || "");
@@ -557,54 +554,27 @@ export default function EditParticipantForm({ participant }: { participant: Part
             <div className="grid grid-cols-2 gap-4">
               <div />
               <div className="flex flex-col gap-2 pb-2">
-                {tskStatus === POD_LEVEL ? (
-                  <p className="text-xs text-gray-400 italic">Junior Coach not applicable at Shark L7 level</p>
+                {!isAcEligible(tskStatus) ? (
+                  <p className="text-xs text-gray-400 italic">Assistant Coach only available at Dolphin L5, Dolphin L6, or Free Surfer</p>
                 ) : (
-                  <>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isJuniorCoach}
-                        onChange={(e) => {
-                          setIsJuniorCoach(e.target.checked);
-                          if (e.target.checked) {
-                            setJuniorCoachLevel(juniorCoachLevel || "1");
-                          } else {
-                            setJuniorCoachLevel("");
-                          }
-                          setSaved(false); setIsDirty(true);
-                        }}
-                        className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Junior Coach</span>
-                      {isJuniorCoach && (
-                        <select
-                          value={juniorCoachLevel}
-                          onChange={(e) => { setJuniorCoachLevel(e.target.value); setSaved(false); setIsDirty(true); }}
-                          className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
-                        >
-                          {([1, 2, 3] as const).map((lvl) => {
-                            const savedLevel = (participant as any).juniorCoachLevel ?? 0;
-                            const isDowngrade = savedLevel > 0 && lvl < savedLevel;
-                            return (
-                              <option key={lvl} value={String(lvl)} disabled={isDowngrade}>
-                                {lvl === 1 ? "Level 1 (×5)" : lvl === 2 ? "Level 2 (×7.5)" : "Level 3 (×10)"}
-                                {isDowngrade ? " ↑ already passed" : ""}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      )}
-                    </label>
-                  </>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAssistantCoach}
+                      onChange={(e) => { setIsAssistantCoach(e.target.checked); setSaved(false); setIsDirty(true); }}
+                      className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Assistant Coach</span>
+                  </label>
                 )}
-                <input type="hidden" name="isJuniorCoach" value={isJuniorCoach && tskStatus !== POD_LEVEL ? "on" : ""} />
-                <input type="hidden" name="juniorCoachLevel" value={juniorCoachLevel} />
+                {isAssistantCoach && (participant as any).assistantCoachSince && (
+                  <p className="text-xs text-gray-500">
+                    AC since {fmtDate(new Date((participant as any).assistantCoachSince))}
+                  </p>
+                )}
+                <input type="hidden" name="isAssistantCoach" value={isAssistantCoach && isAcEligible(tskStatus) ? "on" : ""} />
               </div>
             </div>
-            {(participant as any).juniorCoachHistory?.length > 0 && (
-              <JcHistorySection history={(participant as any).juniorCoachHistory} />
-            )}
             <input type="hidden" name="paymentMethod" value={paymentMethod} />
             <input type="hidden" name="lightningAddress" value={lightningAddress} />
           </div>
