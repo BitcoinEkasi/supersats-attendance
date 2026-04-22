@@ -5,11 +5,24 @@ import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { updateBoltUserDisplayName, updateBoltUserMeta } from "@/lib/bolt";
 import { getDivisionLabel } from "@/lib/sa-id";
 import { isAcEligible } from "@/lib/tsk-levels";
+import { getSASTNow } from "@/lib/sast";
+import { randomUUID } from "crypto";
 import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
 
 function currentMonthStr() {
   const now = new Date();
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function isFirstOfMonth(): boolean {
+  return getSASTNow().day === 1;
+}
+
+function nextMonthFirst(): Date {
+  const { year, month } = getSASTNow();
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear  = month === 12 ? year + 1 : year;
+  return new Date(`${nextYear}-${String(nextMonth).padStart(2, "0")}-01T00:00:00.000Z`);
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -89,12 +102,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
 
   const now = new Date();
+  const applyNow = isFirstOfMonth();
+  const effectiveFrom = nextMonthFirst();
+
   const requestedAc = body.isAssistantCoach === "on" || body.isAssistantCoach === true;
   const newIsAc = requestedAc && isAcEligible(newTskStatus);
   const wasAc = existing?.isAssistantCoach ?? false;
+  const acChanged = newIsAc !== wasAc;
   const newSince: Date | null = newIsAc
     ? (wasAc && existing?.assistantCoachSince ? existing.assistantCoachSince : now)
     : null;
+
   const newWeightKg = body.weightKg ? parseFloat(body.weightKg) || null : null;
   const newHeightCm = body.heightCm ? parseFloat(body.heightCm) || null : null;
   const newTshirtSize = body.tshirtSize?.trim() || null;
@@ -106,6 +124,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const shoeChanged      = existing && existing.shoeSize !== newShoeSize;
   const wetsuiteChanged  = existing && existing.wetsuiteSize !== newWetsuiteSize;
   const measurementsChanged = weightChanged || heightChanged || tshirtChanged || shoeChanged || wetsuiteChanged;
+
+  // Determine effective level/AC values for the immediate update
+  const appliedTskStatus  = (applyNow || !tskStatusChanged) ? newTskStatus  : existing?.tskStatus ?? null;
+  const appliedIsAc       = (applyNow || !acChanged)        ? newIsAc       : wasAc;
+  const appliedSince      = (applyNow || !acChanged)        ? newSince      : existing?.assistantCoachSince ?? null;
 
   try {
     await prisma.participant.update({
@@ -124,8 +147,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           retiredReasonOther: body.retiredReason === "Other" ? (body.retiredReasonOther?.trim() || null) : null,
         } : {}),
         ...(body.status === "ACTIVE" ? { retiredAt: null, retiredReason: null, retiredReasonOther: null } : {}),
-        isAssistantCoach:    newIsAc,
-        assistantCoachSince: newSince,
+        isAssistantCoach:    appliedIsAc,
+        assistantCoachSince: appliedSince,
         ethnicity: body.ethnicity?.trim() || null,
         language: body.language?.trim() || null,
         school: body.school?.trim() || null,
@@ -141,8 +164,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         idDocumentUploadedAt: body.idDocumentUploadedAt ? new Date(body.idDocumentUploadedAt) : null,
         indemnityFormUrl: body.indemnityFormUrl?.trim() || null,
         indemnityUploadedAt: body.indemnityUploadedAt ? new Date(body.indemnityUploadedAt) : null,
-        tskStatus: newTskStatus,
-        ...(tskStatusChanged ? { tskStatusUpdatedAt: new Date() } : {}),
+        tskStatus: appliedTskStatus,
+        ...(applyNow && tskStatusChanged ? { tskStatusUpdatedAt: now } : {}),
         weightKg: newWeightKg,
         ...(weightChanged   ? { weightUpdatedAt: now }    : {}),
         heightCm: newHeightCm,
@@ -162,15 +185,46 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ...(body.profilePicture !== undefined ? { profilePicture: body.profilePicture || null } : {}),
       },
     });
-    if (tskStatusChanged && newTskStatus) {
+
+    if (applyNow && tskStatusChanged && newTskStatus) {
       await prisma.tskLevelHistory.create({
-        data: { participantId: id, level: newTskStatus, changedAt: new Date() },
+        data: { participantId: id, level: newTskStatus, changedAt: now },
       });
+    }
+
+    // Queue or clear pending changes for deferred fields
+    if (!applyNow) {
+      if (tskStatusChanged) {
+        await prisma.pendingParticipantChange.upsert({
+          where: { participantId_field: { participantId: id, field: "tskStatus" } },
+          create: { id: randomUUID(), participantId: id, field: "tskStatus", oldValue: existing?.tskStatus ?? null, newValue: newTskStatus, effectiveFrom, createdBy: user.id },
+          update: { oldValue: existing?.tskStatus ?? null, newValue: newTskStatus, effectiveFrom, createdBy: user.id, appliedAt: null },
+        });
+      } else {
+        // If reverted to current value, cancel any existing pending change
+        await prisma.pendingParticipantChange.deleteMany({
+          where: { participantId: id, field: "tskStatus", appliedAt: null },
+        });
+      }
+
+      if (acChanged) {
+        await prisma.pendingParticipantChange.upsert({
+          where: { participantId_field: { participantId: id, field: "isAssistantCoach" } },
+          create: { id: randomUUID(), participantId: id, field: "isAssistantCoach", oldValue: String(wasAc), newValue: String(newIsAc), effectiveFrom, createdBy: user.id },
+          update: { oldValue: String(wasAc), newValue: String(newIsAc), effectiveFrom, createdBy: user.id, appliedAt: null },
+        });
+      } else {
+        await prisma.pendingParticipantChange.deleteMany({
+          where: { participantId: id, field: "isAssistantCoach", appliedAt: null },
+        });
+      }
     }
 
     if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
 
-    // Always sync display name and meta to Bolt if participant has a bolt account
+    const pendingQueued = !applyNow && (tskStatusChanged || acChanged);
+
+    // Sync to Bolt (use applied values)
     if (existing?.boltUserId) {
       const newKnownAs = body.knownAs?.trim() || null;
       const knownAsPart = newKnownAs ? ` (${newKnownAs})` : '';
@@ -180,13 +234,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const division = getDivisionLabel(parsed.dob, parsed.gender);
         await updateBoltUserMeta(Number(existing.boltUserId), {
           division,
-          tsk_level: newTskStatus,
-          ac: newIsAc,
+          tsk_level: appliedTskStatus,
+          ac: appliedIsAc,
         });
       } catch { /* non-critical */ }
     }
 
-    return Response.json({ success: true });
+    return Response.json({ success: true, pendingQueued });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "";
     if (message.includes("Unique constraint")) {

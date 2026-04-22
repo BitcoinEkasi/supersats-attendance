@@ -111,6 +111,7 @@ model Participant {
   tskLevelHistory       TskLevelHistory[]
   academicPayoutEntries AcademicPayoutEntry[]
   specialPayoutEntries  SpecialPayoutEntry[]
+  pendingChanges        PendingParticipantChange[]
 
   @@map("participants")
 }
@@ -340,5 +341,22 @@ model TskLevelHistory {
   participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@map("tsk_level_history")
+}
+
+model PendingParticipantChange {
+  id            String    @id @default(uuid())
+  participantId String    @map("participant_id")
+  field         String    // "tskStatus" | "isAssistantCoach"
+  oldValue      String?   @map("old_value")
+  newValue      String?   @map("new_value")
+  effectiveFrom DateTime  @map("effective_from")
+  appliedAt     DateTime? @map("applied_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  createdBy     String    @map("created_by")
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, field])
+  @@map("pending_participant_changes")
 }
 

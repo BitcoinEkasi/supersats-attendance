@@ -33,7 +33,14 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   };
 }
 
-export default function EditParticipantForm({ participant }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] } }) {
+type PendingChange = {
+  id: string;
+  field: string;
+  newValue: string | null;
+  effectiveFrom: string;
+};
+
+export default function EditParticipantForm({ participant, pendingChanges = [] }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] }; pendingChanges?: PendingChange[] }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -76,6 +83,8 @@ export default function EditParticipantForm({ participant }: { participant: Part
   const [stance, setStance] = useState<string>((participant as any).stance || "");
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
   const [isAssistantCoach, setIsAssistantCoach] = useState<boolean>((participant as any).isAssistantCoach ?? false);
+  const [pending, setPending] = useState<PendingChange[]>(pendingChanges);
+  const [pendingQueued, setPendingQueued] = useState(false);
   const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
   const [paymentMethod, setPaymentMethod] = useState<string>((participant as any).paymentMethod || "BOLT_CARD");
   const [lightningAddress, setLightningAddress] = useState<string>((participant as any).lightningAddress || "");
@@ -142,6 +151,7 @@ export default function EditParticipantForm({ participant }: { participant: Part
     e.preventDefault();
     setLoading(true);
     setError("");
+    setPendingQueued(false);
     const formData = new FormData(e.currentTarget);
     const res = await fetch(`/api/participants/${participant.id}`, {
       method: "PATCH",
@@ -154,9 +164,18 @@ export default function EditParticipantForm({ participant }: { participant: Part
     } else {
       setSaved(true);
       setIsDirty(false);
+      if (result.pendingQueued) setPendingQueued(true);
       router.refresh();
     }
     setLoading(false);
+  }
+
+  async function cancelPending(changeId: string) {
+    const res = await fetch(`/api/participants/${participant.id}/pending-changes/${changeId}`, { method: "DELETE" });
+    if (res.ok) {
+      setPending((prev) => prev.filter((c) => c.id !== changeId));
+      router.refresh();
+    }
   }
 
   const inputCls =
@@ -169,6 +188,26 @@ export default function EditParticipantForm({ participant }: { participant: Part
       {isDirty && (
         <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           You have unsaved changes — save before leaving this page.
+        </div>
+      )}
+      {pendingQueued && (
+        <div className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          Level / AC changes queued — will apply automatically on the 1st of next month.
+        </div>
+      )}
+      {pending.length > 0 && (
+        <div className="rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800 space-y-1">
+          <p className="font-medium">Pending changes (effective {new Date(pending[0].effectiveFrom).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}):</p>
+          {pending.map((c) => (
+            <div key={c.id} className="flex items-center justify-between gap-2">
+              <span>
+                {c.field === "tskStatus" ? "TSK Level" : "Assistant Coach"}
+                {" → "}
+                <strong>{c.field === "tskStatus" ? (c.newValue || "none") : (c.newValue === "true" ? "On" : "Off")}</strong>
+              </span>
+              <button type="button" onClick={() => cancelPending(c.id)} className="text-xs text-red-600 hover:underline">Cancel</button>
+            </div>
+          ))}
         </div>
       )}
       <form onSubmit={handleSubmit} onChange={() => { setSaved(false); setIsDirty(true); }} className="space-y-6">

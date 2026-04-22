@@ -81,7 +81,13 @@ export default async function ParticipantDetailPage({
     reportStatus: entry.report.status,
   }));
 
-  const boltUser = participant.boltUserId ? await getBoltUser(participant.boltUserId) : null;
+  const [boltUser, pendingChanges] = await Promise.all([
+    participant.boltUserId ? getBoltUser(participant.boltUserId) : Promise.resolve(null),
+    prisma.pendingParticipantChange.findMany({
+      where: { participantId: id, appliedAt: null },
+      orderBy: { field: "asc" },
+    }),
+  ]);
   const zarPerSat = boltUser ? await getZarPerSat() : null;
 
   return (
@@ -197,7 +203,15 @@ export default async function ParticipantDetailPage({
       <div id="scroll-container" className="flex-1 overflow-y-auto bg-gray-50 px-6 pb-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {role === "ADMINISTRATOR" ? (
-          <EditParticipantForm participant={participant} />
+          <EditParticipantForm
+            participant={participant}
+            pendingChanges={pendingChanges.map((c) => ({
+              id: c.id,
+              field: c.field,
+              newValue: c.newValue,
+              effectiveFrom: c.effectiveFrom.toISOString(),
+            }))}
+          />
         ) : (
           <div className="rounded-lg border border-gray-200 bg-white p-6">
             <h3 className="text-lg font-semibold text-gray-900">Participant Details</h3>
