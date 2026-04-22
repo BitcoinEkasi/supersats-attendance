@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 
 export async function GET() {
-  const user = await requireAuth(["ADMINISTRATOR", "MARSHALL"]);
+  const user = await requireAuth(["ADMINISTRATOR", "MARSHAL"]);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const participants = await prisma.participant.findMany({

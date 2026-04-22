@@ -4,12 +4,12 @@ import { signOut, useSession } from "next-auth/react";
 
 const roleLabels: Record<string, string> = {
   ADMINISTRATOR: "Administrator",
-  MARSHALL: "Marshall",
+  MARSHAL: "Marshal",
 };
 
 const roleColors: Record<string, string> = {
   ADMINISTRATOR: "bg-orange-100 text-orange-700",
-  MARSHALL: "bg-blue-100 text-blue-700",
+  MARSHAL: "bg-blue-100 text-blue-700",
 };
 
 export default function Header() {

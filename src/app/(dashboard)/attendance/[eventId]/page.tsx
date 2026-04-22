@@ -25,7 +25,7 @@ export default async function EventAttendancePage({
 }) {
   const { eventId } = await params;
   const session = await auth();
-  const isMobile = session?.user?.role === "MARSHALL";
+  const isMobile = session?.user?.role === "MARSHAL";
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },

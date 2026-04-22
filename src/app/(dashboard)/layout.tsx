@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   const session = await auth();
   const role = session?.user?.role as UserRole | undefined;
 
-  if (role === "MARSHALL") {
+  if (role === "MARSHAL") {
     return (
       <SessionProvider>
         <MidnightReset />

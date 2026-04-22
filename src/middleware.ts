@@ -5,9 +5,9 @@ export default auth((request) => {
   const session = request.auth;
   const { pathname } = request.nextUrl;
   const isLoginPage = pathname === "/login";
-  const isMarshallPage = pathname.startsWith("/marshall");
+  const isMarshallPage = pathname.startsWith("/marshal");
 
-  // Allow unauthenticated access to login and marshall pages
+  // Allow unauthenticated access to login and marshal pages
   if (!session && (isLoginPage || isMarshallPage)) {
     return NextResponse.next();
   }
@@ -18,9 +18,9 @@ export default auth((request) => {
 
   const role = session.user?.role as string;
 
-  // Logged-in users on login page get redirected away (marshall page stays accessible)
+  // Logged-in users on login page get redirected away (marshal page stays accessible)
   if (isLoginPage) {
-    const dest = role === "MARSHALL" ? "/attendance" : "/dashboard";
+    const dest = role === "MARSHAL" ? "/attendance" : "/dashboard";
     return NextResponse.redirect(new URL(dest, request.url));
   }
 
@@ -29,11 +29,11 @@ export default auth((request) => {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Attendance section: ADMINISTRATOR or MARSHALL
+  // Attendance section: ADMINISTRATOR or MARSHAL
   if (
     pathname.startsWith("/attendance") &&
     role !== "ADMINISTRATOR" &&
-    role !== "MARSHALL"
+    role !== "MARSHAL"
   ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

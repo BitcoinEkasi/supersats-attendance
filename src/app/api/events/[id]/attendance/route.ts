@@ -3,7 +3,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireAuth(["ADMINISTRATOR", "MARSHALL"]);
+  const user = await requireAuth(["ADMINISTRATOR", "MARSHAL"]);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: eventId } = await params;

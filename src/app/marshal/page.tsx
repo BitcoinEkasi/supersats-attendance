@@ -41,7 +41,7 @@ export default function MarshalLoginPage() {
   if (!group) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-gray-50 px-6 py-12">
-        <h1 className="text-2xl font-bold text-gray-900">Marshall Login</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Marshal Login</h1>
         <p className="mt-1 text-sm text-gray-500">Select your group</p>
         <div className="mt-8 w-full max-w-sm space-y-3">
           {TSK_GROUPS.map((g) => (

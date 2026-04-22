@@ -12,7 +12,7 @@ export default async function AttendancePage() {
   const session = await auth();
   const role = session?.user?.role;
   const userGroup = session?.user?.group ?? null;
-  const isMobile = role === "MARSHALL";
+  const isMobile = role === "MARSHAL";
 
   const todayStart = getStartOfSASTToday();
   const todayEnd = getEndOfSASTToday();
