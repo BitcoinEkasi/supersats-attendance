@@ -33,7 +33,7 @@ const JC_LEVEL_LABELS: Record<number, { label: string; multiplier: string; color
 const END_REASON_LABELS: Record<string, string> = {
   manual:      "Manually removed",
   promoted:    "Promoted",
-  shark_elite: "Reached Shark Elite",
+  shark_elite: "Reached Shark L7",
   free_surfer: "Reached Free Surfer",
 };
 
