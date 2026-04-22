@@ -52,8 +52,9 @@ export async function POST(req: Request) {
     return Response.json({ error: "A session for this group already exists today", existingId: existing.id }, { status: 409 });
   }
 
+  let event;
   try {
-    const event = await prisma.event.create({
+    event = await prisma.event.create({
       data: {
         date: new Date(dateStr + "T12:00:00.000Z"),
         category,
@@ -62,12 +63,17 @@ export async function POST(req: Request) {
         createdBy: user.id,
       },
     });
-
-    const month = dateStr.substring(0, 7);
-    await upsertMonthlyReport(month, user.id, tskGroup);
-
-    return Response.json({ id: event.id });
-  } catch {
+  } catch (err) {
+    console.error("[events POST] failed to create event:", err);
     return Response.json({ error: "Failed to create event" }, { status: 500 });
   }
+
+  try {
+    const month = dateStr.substring(0, 7);
+    await upsertMonthlyReport(month, user.id, tskGroup);
+  } catch (err) {
+    console.error("[events POST] failed to upsert monthly report:", err);
+  }
+
+  return Response.json({ id: event.id });
 }
