@@ -86,7 +86,7 @@ export default function RewardSettingsForm({
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Tier Preview</p>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-              {previewTiers.filter(t => t.sats > 0).map((t) => (
+              {previewTiers.filter(t => t.sats > 0).reverse().map((t) => (
                 <div key={t.label} className="text-center">
                   <p className={`text-sm font-bold ${t.color}`}>{t.sats.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{t.label}</p>
