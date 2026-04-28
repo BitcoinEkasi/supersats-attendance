@@ -28,19 +28,22 @@ export async function POST(req: Request) {
         },
       },
     },
-    // Process tskStatus before isAssistantCoach so AC eligibility re-check uses the new level
     orderBy: [{ participantId: "asc" }, { field: "asc" }],
   });
 
   let applied = 0;
   const errors: string[] = [];
 
-  // Group by participant so we can re-read current state between fields
+  // Group by participant; sort tskStatus before isAssistantCoach so the
+  // eligibility re-check on the AC change sees the freshly-written level.
   const byParticipant = new Map<string, typeof pending>();
   for (const c of pending) {
     const list = byParticipant.get(c.participantId) ?? [];
     list.push(c);
     byParticipant.set(c.participantId, list);
+  }
+  for (const list of byParticipant.values()) {
+    list.sort((a, b) => (a.field === "tskStatus" ? -1 : b.field === "tskStatus" ? 1 : 0));
   }
 
   for (const [, changes] of byParticipant) {

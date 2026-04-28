@@ -3,18 +3,7 @@ import { buildCalculateRewardSats } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, participantWhereForGroup } from "@/lib/tsk-groups";
-
-function getAcMultiplier(assistantCoachSince: Date, reportMonth: string): number {
-  const [reportYear, reportMon] = reportMonth.split("-").map(Number);
-  const sinceYear = assistantCoachSince.getUTCFullYear();
-  const sinceMon  = assistantCoachSince.getUTCMonth() + 1;
-  const elapsed   = (reportYear - sinceYear) * 12 + (reportMon - sinceMon);
-  if (elapsed <= 0)  return 1;  // month 1 — trial
-  if (elapsed <= 5)  return 3;  // months 2–6
-  if (elapsed <= 11) return 5;  // months 7–12
-  if (elapsed <= 17) return 7;  // months 13–18
-  return 9;                     // month 19+
-}
+import { getAcMultiplier } from "@/lib/tsk-levels";
 
 export async function upsertMonthlyReport(
   month: string,
