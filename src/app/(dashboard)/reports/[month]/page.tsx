@@ -134,7 +134,7 @@ export default async function ReportDetailPage({
       <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
         <h3 className="text-lg font-semibold text-gray-900">Reward Tier Breakdown</h3>
         <div className="mt-4 grid grid-cols-4 gap-3 lg:grid-cols-8">
-          {tierCounts.map((tier) => (
+          {[...tierCounts].reverse().map((tier) => (
             <div key={tier.label} className="text-center">
               <p className={`text-lg font-bold ${tier.color}`}>{tier.count}</p>
               <p className="text-xs text-gray-500">{tier.label}</p>
