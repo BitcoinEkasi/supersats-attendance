@@ -40,7 +40,7 @@ export async function upsertMonthlyReport(
         ],
         ...(group ? participantWhereForGroup(group) : {}),
       },
-      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true },
+      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -85,11 +85,13 @@ export async function upsertMonthlyReport(
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      const attendableEvents = participant.retiredAt
-        ? events.filter((e) => e.date <= participant.retiredAt!)
-        : events;
+      const attendableEvents = events.filter(
+        (e) =>
+          e.date >= participant.registrationDate &&
+          (!participant.retiredAt || e.date <= participant.retiredAt)
+      );
 
-      const totalEvents = events.length;
+      const totalEvents = attendableEvents.length;
       const attended = attendableEvents.filter((e) =>
         attendedSet.get(participant.id)?.has(e.id)
       ).length;
