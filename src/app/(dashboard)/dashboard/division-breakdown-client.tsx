@@ -91,7 +91,13 @@ export default function DivisionBreakdownClient({ rows, total }: { rows: Divisio
             <td className="px-3 py-3" />
             <td className="px-4 py-3 font-semibold text-gray-700">Total</td>
             <td className="px-4 py-3 text-right tabular-nums font-semibold text-gray-700">{total}</td>
-            <td className="px-4 py-3" />
+            <td className="px-4 py-3 text-sm text-gray-400">
+              {(() => {
+                const boys  = rows.filter(r => !r.division.startsWith("Women") && !r.division.endsWith("Girls")).reduce((s, r) => s + r.count, 0);
+                const girls = rows.filter(r =>  r.division.startsWith("Women") ||  r.division.endsWith("Girls")).reduce((s, r) => s + r.count, 0);
+                return `(${boys} boys · ${girls} girls)`;
+              })()}
+            </td>
           </tr>
         </tbody>
       </table>
