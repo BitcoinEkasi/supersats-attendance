@@ -1,7 +1,10 @@
-export default function DashboardPage() {
+import PendingMovesTable from "./pending-moves-table";
+
+export default async function DashboardPage() {
   return (
-    <div>
+    <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+      <PendingMovesTable />
     </div>
   );
 }
