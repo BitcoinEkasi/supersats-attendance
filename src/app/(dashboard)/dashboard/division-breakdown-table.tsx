@@ -6,11 +6,10 @@ const DIVISION_BASE_ORDER = ["U/8", "U/10", "U/12", "U/14", "U/16", "U/18", "Ope
 const TSK_LEVEL_ORDER: string[] = TSK_LEVELS.map((l) => l.value);
 
 function divisionSortKey(label: string): number {
-  const base = label.replace(/ (Boys|Girls|Men|Women)$/, "");
-  const suffix = label.split(" ").pop()!;
+  const base = label.replace(/^(Men's Open|Women's Open)$/, "Open").replace(/ (Boys|Girls)$/, "");
   const baseIdx = DIVISION_BASE_ORDER.indexOf(base);
-  const genderIdx = ["Boys", "Men"].includes(suffix) ? 0 : 1;
-  return baseIdx * 2 + genderIdx;
+  const isFemale = label.startsWith("Women") || label.endsWith("Girls");
+  return baseIdx * 2 + (isFemale ? 1 : 0);
 }
 
 function tskLevelSortKey(level: string): number {
