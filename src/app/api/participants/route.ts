@@ -49,9 +49,7 @@ export async function POST(req: Request) {
     return Response.json({ error: parsed.error }, { status: 400 });
   }
 
-  const registrationDate = body.registrationDate
-    ? new Date(body.registrationDate + "T00:00:00Z")
-    : new Date();
+  const registrationDate = new Date();
 
   try {
     const participant = await prisma.$transaction(async (tx) => {
