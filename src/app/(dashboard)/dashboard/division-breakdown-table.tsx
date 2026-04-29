@@ -48,19 +48,14 @@ export default async function DivisionBreakdownTable() {
 
   if (rows.length === 0) {
     return (
-      <div>
-        <h3 className="mb-3 text-base font-semibold text-gray-900">Participant Divisions</h3>
-        <div className="rounded-lg border border-gray-200 bg-white px-6 py-8 text-center text-sm text-gray-400">
-          No active participants.
-        </div>
+      <div className="rounded-lg border border-gray-200 bg-white px-6 py-8 text-center text-sm text-gray-400">
+        No active participants.
       </div>
     );
   }
 
   return (
-    <div>
-      <h3 className="mb-3 text-base font-semibold text-gray-900">Participant Divisions</h3>
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
         <table className="w-full text-sm">
           <thead className="border-b bg-gray-50">
             <tr>
@@ -92,6 +87,5 @@ export default async function DivisionBreakdownTable() {
           </tbody>
         </table>
       </div>
-    </div>
   );
 }

@@ -35,11 +35,8 @@ export default async function PendingMovesTable() {
 
   if (pendingChanges.length === 0) {
     return (
-      <div>
-        <h3 className="mb-3 text-base font-semibold text-gray-900">Pending Level Changes</h3>
-        <div className="rounded-lg border border-gray-200 bg-white px-6 py-8 text-center text-sm text-gray-400">
-          No pending level changes.
-        </div>
+      <div className="rounded-lg border border-gray-200 bg-white px-6 py-8 text-center text-sm text-gray-400">
+        No pending level changes.
       </div>
     );
   }

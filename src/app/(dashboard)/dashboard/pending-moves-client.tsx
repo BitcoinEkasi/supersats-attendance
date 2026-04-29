@@ -111,9 +111,8 @@ export default function PendingMovesClient({ months }: { months: MonthData[] }) 
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-gray-900">Pending Level Changes</h3>
+      {/* Month selector */}
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-400">Effective {data.effectiveDateLabel}</span>
           {months.length > 1 && (
