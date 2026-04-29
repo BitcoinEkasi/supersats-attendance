@@ -632,16 +632,11 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                 <option value="">— select —</option>
                 {TSK_LEVELS.map((l, i) => {
                   const currentIdx = TSK_LEVELS.findIndex((x) => x.value === tskStatus);
-                  const isFreeSurfer = l.value === FREE_SURFER_LEVEL;
-                  // Free Surfer is only reachable from Shark Elite
-                  const freeSurferLocked = isFreeSurfer && tskStatus !== POD_LEVEL && tskStatus !== FREE_SURFER_LEVEL;
-                  // Allow reverting from Free Surfer back to Shark Elite
                   const isRevertToShark = l.value === POD_LEVEL && tskStatus === FREE_SURFER_LEVEL;
-                  const disabled = ((currentIdx >= 0 && i < currentIdx) || freeSurferLocked) && !isRevertToShark;
+                  const disabled = (currentIdx >= 0 && i < currentIdx) && !isRevertToShark;
                   return (
                     <option key={l.value} value={l.value} disabled={disabled}>
-                      {l.value}{disabled && !freeSurferLocked ? " ↑ already passed" : ""}
-                      {freeSurferLocked ? " (Shark L7 only)" : ""}
+                      {l.value}{disabled ? " ↑ already passed" : ""}
                     </option>
                   );
                 })}
