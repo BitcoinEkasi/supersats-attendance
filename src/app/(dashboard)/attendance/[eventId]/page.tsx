@@ -93,7 +93,7 @@ export default async function EventAttendancePage({
                 </span>
               )}
             </p>
-            <CategorySelect eventId={event.id} category={event.category} />
+            <CategorySelect eventId={event.id} category={event.category} group={event.group} />
             <NoteInput eventId={event.id} note={event.note} />
           </div>
         </div>

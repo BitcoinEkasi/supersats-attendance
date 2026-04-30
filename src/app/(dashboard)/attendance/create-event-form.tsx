@@ -19,6 +19,12 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
+const SHARKS_ONLY: Set<EventCategory> = new Set(["SIMULATED_HEATS", "VIDEO_ANALYSIS", "MENTAL_TRAINING", "SCORING_REVIEW"]);
+
+function visibleCategories(group: string | null) {
+  return categories.filter((c) => !SHARKS_ONLY.has(c.value) || group === "SHARKS");
+}
+
 export default function CreateEventForm({ mobile = false, fixedGroup = null }: { mobile?: boolean; fixedGroup?: TskGroupKey | null }) {
   const router = useRouter();
   const [group, setGroup] = useState<TskGroupKey | null>(fixedGroup);
@@ -104,7 +110,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
             </p>
 
             <div className="mt-8 space-y-3">
-              {categories.map((c) => (
+              {visibleCategories(group).map((c) => (
                 <button
                   key={c.value}
                   onClick={() => setSelected(c.value)}
@@ -146,6 +152,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
   // Desktop version
   const [desktopLoading, setDesktopLoading] = useState(false);
   const [desktopError, setDesktopError] = useState("");
+  const [desktopGroup, setDesktopGroup] = useState<string>("");
   const inputCls = "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
 
   async function handleDesktopSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -183,7 +190,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
         )}
         <div>
           <label className="block text-sm font-medium text-gray-700">Group *</label>
-          <select name="group" required className={inputCls}>
+          <select name="group" required className={inputCls} value={desktopGroup} onChange={(e) => setDesktopGroup(e.target.value)}>
             <option value="">Select group...</option>
             {TSK_GROUPS.map((g) => (
               <option key={g} value={g}>{TSK_GROUP_LABELS[g]}</option>
@@ -198,7 +205,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
           <label className="block text-sm font-medium text-gray-700">Category *</label>
           <select name="category" required className={inputCls}>
             <option value="">Select category...</option>
-            {categories.map((c) => (
+            {visibleCategories(desktopGroup).map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>

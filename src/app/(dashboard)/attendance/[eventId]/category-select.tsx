@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { EventCategory } from "@prisma/client";
 
-const categories: { value: EventCategory; label: string }[] = [
+const ALL_CATEGORIES: { value: EventCategory; label: string }[] = [
   { value: "SURFING", label: "Surfing" },
   { value: "FITNESS", label: "Fitness" },
   { value: "SKATING", label: "Skating" },
@@ -16,8 +16,11 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
-export default function CategorySelect({ eventId, category }: { eventId: string; category: EventCategory }) {
+const SHARKS_ONLY: Set<EventCategory> = new Set(["SIMULATED_HEATS", "VIDEO_ANALYSIS", "MENTAL_TRAINING", "SCORING_REVIEW"]);
+
+export default function CategorySelect({ eventId, category, group }: { eventId: string; category: EventCategory; group: string | null }) {
   const [current, setCurrent] = useState(category);
+  const categories = ALL_CATEGORIES.filter((c) => !SHARKS_ONLY.has(c.value) || group === "SHARKS");
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as EventCategory;
