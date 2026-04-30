@@ -10,6 +10,7 @@ const categoryLabels: Record<string, string> = {
   FITNESS: "Fitness",
   SKATING: "Skating",
   BEACH_CLEAN_UP: "Beach Clean Up",
+  BEACH_ACTIVITIES: "Beach Activities",
   OTHER: "Other",
 };
 
@@ -18,6 +19,7 @@ const categoryColors: Record<string, string> = {
   FITNESS: "bg-green-100 text-green-700",
   SKATING: "bg-purple-100 text-purple-700",
   BEACH_CLEAN_UP: "bg-yellow-100 text-yellow-700",
+  BEACH_ACTIVITIES: "bg-orange-100 text-orange-700",
   OTHER: "bg-gray-100 text-gray-600",
 };
 

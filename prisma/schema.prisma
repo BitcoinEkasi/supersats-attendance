@@ -27,6 +27,7 @@ enum EventCategory {
   FITNESS
   SKATING
   BEACH_CLEAN_UP
+  BEACH_ACTIVITIES
   OTHER
 }
 

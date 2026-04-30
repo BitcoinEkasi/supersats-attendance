@@ -11,6 +11,7 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "FITNESS", label: "Fitness" },
   { value: "SKATING", label: "Skating" },
   { value: "BEACH_CLEAN_UP", label: "Beach Clean Up" },
+  { value: "BEACH_ACTIVITIES", label: "Beach Activities" },
   { value: "OTHER", label: "Other" },
 ];
 
