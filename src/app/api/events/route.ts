@@ -65,7 +65,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[events POST] failed to create event:", err);
-    return Response.json({ error: "Failed to create event" }, { status: 500 });
+    return Response.json({ error: "Failed to create session" }, { status: 500 });
   }
 
   try {

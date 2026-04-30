@@ -200,7 +200,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Note</label>
-          <textarea name="note" rows={2} className={inputCls} placeholder="Optional note about this event" />
+          <textarea name="note" rows={2} className={inputCls} placeholder="Optional note about this session" />
         </div>
         <button
           type="submit"
