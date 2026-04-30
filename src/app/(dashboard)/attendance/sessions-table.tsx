@@ -11,6 +11,10 @@ const categoryLabels: Record<string, string> = {
   SKATING: "Skating",
   BEACH_CLEAN_UP: "Beach Clean Up",
   BEACH_ACTIVITIES: "Beach Activities",
+  SIMULATED_HEATS: "Simulated Heats",
+  VIDEO_ANALYSIS: "Video Analysis",
+  MENTAL_TRAINING: "Mental Training",
+  SCORING_REVIEW: "Scoring Review",
   OTHER: "Other",
 };
 
@@ -20,6 +24,10 @@ const categoryColors: Record<string, string> = {
   SKATING: "bg-purple-100 text-purple-700",
   BEACH_CLEAN_UP: "bg-yellow-100 text-yellow-700",
   BEACH_ACTIVITIES: "bg-orange-100 text-orange-700",
+  SIMULATED_HEATS: "bg-red-100 text-red-700",
+  VIDEO_ANALYSIS: "bg-indigo-100 text-indigo-700",
+  MENTAL_TRAINING: "bg-pink-100 text-pink-700",
+  SCORING_REVIEW: "bg-teal-100 text-teal-700",
   OTHER: "bg-gray-100 text-gray-600",
 };
 

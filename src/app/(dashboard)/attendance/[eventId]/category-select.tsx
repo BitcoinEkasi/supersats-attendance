@@ -9,6 +9,10 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: "SKATING", label: "Skating" },
   { value: "BEACH_CLEAN_UP", label: "Beach Clean Up" },
   { value: "BEACH_ACTIVITIES", label: "Beach Activities" },
+  { value: "SIMULATED_HEATS", label: "Simulated Heats" },
+  { value: "VIDEO_ANALYSIS", label: "Video Analysis" },
+  { value: "MENTAL_TRAINING", label: "Mental Training" },
+  { value: "SCORING_REVIEW", label: "Scoring Review" },
   { value: "OTHER", label: "Other" },
 ];
 

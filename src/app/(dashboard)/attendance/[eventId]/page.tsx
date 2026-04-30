@@ -16,6 +16,10 @@ const categoryLabels: Record<string, string> = {
   SKATING: "Skating",
   BEACH_CLEAN_UP: "Beach Clean Up",
   BEACH_ACTIVITIES: "Beach Activities",
+  SIMULATED_HEATS: "Simulated Heats",
+  VIDEO_ANALYSIS: "Video Analysis",
+  MENTAL_TRAINING: "Mental Training",
+  SCORING_REVIEW: "Scoring Review",
   OTHER: "Other",
 };
 
