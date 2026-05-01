@@ -45,7 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!credentials?.username || !credentials?.password) return null;
 
         const user = USERS.find((u) => u.username === credentials.username);
-        if (!user || !user.password || user.password !== credentials.password) return null;
+        if (!user || !user.password || user.password.toLowerCase() !== (credentials.password as string).toLowerCase()) return null;
 
         return { id: user.id, name: user.name, role: user.role, group: user.group };
       },
