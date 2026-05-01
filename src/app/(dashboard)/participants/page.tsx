@@ -16,9 +16,9 @@ const LEVEL_GROUPS = {
   freesurfers: TSK_GROUP_LEVELS.FREE_SURFERS,
 } as const;
 
-type Tab = "active" | keyof typeof LEVEL_GROUPS | "retired";
+type Tab = "active" | keyof typeof LEVEL_GROUPS | "ac" | "retired";
 
-const VALID_TABS: Tab[] = ["active", "turtles", "seals", "dolphins", "sharks", "freesurfers", "retired"];
+const VALID_TABS: Tab[] = ["active", "turtles", "seals", "dolphins", "sharks", "freesurfers", "ac", "retired"];
 
 function getLevelFilter(tab: Tab) {
   if (tab in LEVEL_GROUPS) {
@@ -48,7 +48,8 @@ export default async function ParticipantsPage({
 
   const statusFilter = tab === "retired" ? "RETIRED" : "ACTIVE";
   const levelFilter = getLevelFilter(tab);
-  const where = { status: statusFilter as "ACTIVE" | "RETIRED", ...levelFilter, ...searchWhere };
+  const acFilter = tab === "ac" ? { isAssistantCoach: true } : {};
+  const where = { status: statusFilter as "ACTIVE" | "RETIRED", ...levelFilter, ...acFilter, ...searchWhere };
 
   const [
     participants,
@@ -58,6 +59,7 @@ export default async function ParticipantsPage({
     dolphinsCount,
     sharksCount,
     freesurfersCount,
+    acCount,
     retiredCount,
   ] = await Promise.all([
     prisma.participant.findMany({ where, orderBy: [{ surname: "asc" }, { fullNames: "asc" }] }),
@@ -67,6 +69,7 @@ export default async function ParticipantsPage({
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.dolphins] } } }),
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.sharks] } } }),
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.freesurfers] } } }),
+    prisma.participant.count({ where: { status: "ACTIVE", isAssistantCoach: true } }),
     prisma.participant.count({ where: { status: "RETIRED" } }),
   ]);
 
@@ -77,6 +80,7 @@ export default async function ParticipantsPage({
     dolphins: dolphinsCount,
     sharks: sharksCount,
     freesurfers: freesurfersCount,
+    ac: acCount,
     retired: retiredCount,
   };
 
@@ -93,8 +97,9 @@ export default async function ParticipantsPage({
     { key: "seals",       label: "Seals",       badge: "bg-cyan-100 text-cyan-700" },
     { key: "dolphins",    label: "Dolphins",    badge: "bg-blue-100 text-blue-700" },
     { key: "sharks",      label: "Sharks",      badge: "bg-purple-100 text-purple-700" },
-    { key: "freesurfers", label: "Free Surfers", badge: "bg-orange-100 text-orange-700" },
-    { key: "retired",     label: "Retired",     badge: "bg-red-100 text-red-600" },
+    { key: "freesurfers", label: "Free Surfers",       badge: "bg-orange-100 text-orange-700" },
+    { key: "ac",          label: "Assistant Coaches", badge: "bg-yellow-100 text-yellow-700" },
+    { key: "retired",     label: "Retired",           badge: "bg-red-100 text-red-600" },
   ];
 
   const tabCls = "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap";
@@ -138,7 +143,9 @@ export default async function ParticipantsPage({
                 ? "No participants match your search."
                 : tab === "retired"
                   ? "No retired participants yet."
-                  : "No participants yet."}
+                  : tab === "ac"
+                    ? "No assistant coaches yet."
+                    : "No participants yet."}
             </div>
           ) : (
             participants.map((p) => (
