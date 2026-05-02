@@ -96,7 +96,7 @@ export default async function AttendancePage() {
             <div className="border-b px-4 py-3">
               <h3 className="font-semibold text-gray-900">Sessions</h3>
             </div>
-            <SessionsTable events={eventRows} approvedMonthGroups={approvedMonthGroups} />
+            <SessionsTable events={eventRows} approvedMonthGroups={approvedMonthGroups} isAdmin={role === "ADMINISTRATOR"} />
           </div>
         </div>
 

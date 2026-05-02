@@ -65,9 +65,11 @@ function ChevronIcon({ open }: { open: boolean }) {
 export default function SessionsTable({
   events,
   approvedMonthGroups,
+  isAdmin = false,
 }: {
   events: EventRow[];
   approvedMonthGroups: string[];
+  isAdmin?: boolean;
 }) {
   const approvedSet = new Set(approvedMonthGroups);
 
@@ -97,9 +99,38 @@ export default function SessionsTable({
 
   const [openMonths, setOpenMonths] = useState<Record<string, boolean>>(defaultMonthOpen);
   const [openDays, setOpenDays] = useState<Record<string, boolean>>(defaultDayOpen);
+  const [notes, setNotes] = useState<Record<string, string | null>>(() =>
+    Object.fromEntries(events.map((e) => [e.id, e.note]))
+  );
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
 
   function toggleMonth(key: string) {
     setOpenMonths((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function startEdit(eventId: string) {
+    setEditingId(eventId);
+    setDraft(notes[eventId] ?? "");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setDraft("");
+  }
+
+  async function saveNote(eventId: string) {
+    setSaving(true);
+    const trimmed = draft.trim() || null;
+    await fetch(`/api/events/${eventId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: trimmed }),
+    });
+    setNotes((prev) => ({ ...prev, [eventId]: trimmed }));
+    setEditingId(null);
+    setSaving(false);
   }
 
   function toggleDay(key: string) {
@@ -203,7 +234,29 @@ export default function SessionsTable({
                           <td className="px-4 py-3">
                             <span className="text-gray-800 font-medium">{event.presentCount}</span>
                           </td>
-                          <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{event.note || "—"}</td>
+                          <td className="px-4 py-3">
+                            {isAdmin && !isApproved && editingId === event.id ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  autoFocus
+                                  value={draft}
+                                  onChange={(e) => setDraft(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Enter") saveNote(event.id); if (e.key === "Escape") cancelEdit(); }}
+                                  className="w-40 rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                />
+                                <button onClick={() => saveNote(event.id)} disabled={saving} className="text-xs text-orange-600 hover:text-orange-800 disabled:opacity-40">Save</button>
+                                <button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
+                              </div>
+                            ) : (
+                              <span
+                                className={`text-gray-500 text-sm max-w-32 truncate block ${isAdmin && !isApproved ? "cursor-pointer hover:text-gray-700 group" : ""}`}
+                                onClick={isAdmin && !isApproved ? () => startEdit(event.id) : undefined}
+                                title={isAdmin && !isApproved ? "Click to edit note" : undefined}
+                              >
+                                {notes[event.id] || <span className={isAdmin && !isApproved ? "text-gray-300 group-hover:text-gray-400 italic" : "text-gray-400"}>add note</span>}
+                              </span>
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
