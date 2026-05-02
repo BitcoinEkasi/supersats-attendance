@@ -146,6 +146,15 @@ export default async function ReportDetailPage({
         </div>
       </div>
 
+      {/* Direct-paid from reserves (no invoice) */}
+      {report.status === "APPROVED" && report.payoutStatus === "paid" && !report.paymentRequest && (
+        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4">
+          <p className="text-sm text-green-800">
+            ✓ Paid directly from bolt reserves — {report.totalPayoutSats?.toLocaleString()} sats distributed to {qualifyingParticipants} participant{qualifyingParticipants !== 1 ? "s" : ""}.
+          </p>
+        </div>
+      )}
+
       {/* Payout invoice panel (shown after approval when invoice exists) */}
       {report.status === "APPROVED" && report.payoutStatus !== "unpaid" && report.paymentRequest && (
         <PayoutInvoicePanel
@@ -157,7 +166,7 @@ export default async function ReportDetailPage({
         />
       )}
 
-      {/* Create payout button (shown when approved but no invoice yet) */}
+      {/* Create payout button (shown when approved but no payout yet) */}
       {report.status === "APPROVED" && report.payoutStatus === "unpaid" && role === "ADMINISTRATOR" && (
         <CreatePayoutButton reportId={report.id} />
       )}

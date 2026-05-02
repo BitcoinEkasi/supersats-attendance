@@ -108,8 +108,18 @@ export function satsToZar(sats: number, zarPerSat: number): string {
   return `R ${zar.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+export async function getBoltReserve(): Promise<{ reserve_sats: number }> {
+  const res = await boltFetch('/api/v1/payout/reserve');
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bolt getBoltReserve ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
 export async function createPayoutBatch(params: {
   memo: string;
+  invoice_sats?: number;
   payouts: { user_id: number; amount_sats: number; description?: string; payout_type?: string; ln_address?: string }[];
 }): Promise<{ batch_id: number; payment_hash: string; payment_request: string; total_sats: number; qr_base64: string }> {
   const res = await boltFetch('/api/v1/payout/batch', {
@@ -119,6 +129,21 @@ export async function createPayoutBatch(params: {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Bolt createPayoutBatch ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
+export async function directPayoutBatch(params: {
+  memo: string;
+  payouts: { user_id: number; amount_sats: number; description?: string; payout_type?: string; ln_address?: string }[];
+}): Promise<{ batch_id: number; total_sats: number; status: string }> {
+  const res = await boltFetch('/api/v1/payout/batch/direct', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bolt directPayoutBatch ${res.status}: ${body}`);
   }
   return res.json();
 }

@@ -13,6 +13,7 @@ interface PayoutInvoicePanelProps {
   initialStatus: string; // "invoiced" | "paid"
   checkUrl?: string;
   paidMessage?: string;
+  topupNote?: string;
 }
 
 export default function PayoutInvoicePanel({
@@ -25,6 +26,7 @@ export default function PayoutInvoicePanel({
   initialStatus,
   checkUrl,
   paidMessage,
+  topupNote,
 }: PayoutInvoicePanelProps) {
   const [status, setStatus] = useState(initialStatus);
   const [checking, setChecking] = useState(false);
@@ -79,7 +81,7 @@ export default function PayoutInvoicePanel({
         <>
           <div className="mb-4 flex flex-wrap gap-4 text-sm text-gray-600">
             <span>
-              <strong className="text-orange-600 text-xl">{totalSats.toLocaleString()} sats</strong> total to pay
+              <strong className="text-orange-600 text-xl">{totalSats.toLocaleString()} sats</strong> to pay via invoice
             </span>
             {eligibleCount !== undefined && (
               <span>{eligibleCount} participant{eligibleCount !== 1 ? "s" : ""} will be credited</span>
@@ -88,6 +90,11 @@ export default function PayoutInvoicePanel({
               <span className="text-amber-600">{ineligibleCount} participant{ineligibleCount !== 1 ? "s" : ""} without bolt account (excluded)</span>
             )}
           </div>
+          {topupNote && (
+            <p className="mb-4 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+              🏦 {topupNote}
+            </p>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-6 items-start">
             {(qrBase64 || generatedQr) && (
