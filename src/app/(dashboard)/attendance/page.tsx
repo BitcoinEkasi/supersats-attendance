@@ -6,7 +6,7 @@ import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
-import { TSK_GROUP_LABELS, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
+import { TSK_GROUP_LABELS, groupSortIndex, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
 
 export default async function AttendancePage() {
   const session = await auth();
@@ -35,7 +35,7 @@ export default async function AttendancePage() {
           <h1 className="text-2xl font-bold text-gray-900">Choose your session</h1>
           <p className="mt-1 text-sm text-gray-400">Multiple sessions are running today</p>
           <div className="mt-8 space-y-3">
-            {todayEvents.map((e) => (
+            {[...todayEvents].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group)).map((e) => (
               <Link
                 key={e.id}
                 href={`/attendance/${e.id}`}
@@ -105,7 +105,7 @@ export default async function AttendancePage() {
             <div className="rounded-lg border border-green-200 bg-green-50 p-6">
               <h3 className="text-lg font-semibold text-gray-900">Today&apos;s Sessions</h3>
               <div className="mt-3 space-y-2">
-                {todayEvents.map((e) => (
+                {[...todayEvents].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group)).map((e) => (
                   <Link
                     key={e.id}
                     href={`/attendance/${e.id}`}
