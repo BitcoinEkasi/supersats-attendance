@@ -187,7 +187,7 @@ export default async function ParticipantsPage({
                       <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
                         {p.tskStatus}
                         {(p as any).isAssistantCoach && (p as any).assistantCoachSince && (
-                          <> AC<sup className="text-[9px]">{getAcMultiplier((p as any).assistantCoachSince, new Date().toISOString().slice(0, 7))}</sup></>
+                          <> AC{getAcMultiplier((p as any).assistantCoachSince, new Date().toISOString().slice(0, 7))}</>
                         )}
                       </span>
                     )}

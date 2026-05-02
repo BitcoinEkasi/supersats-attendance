@@ -109,7 +109,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                   <td className="px-4 py-3 font-medium">
                     {p.isAssistantCoach && p.assistantCoachSince && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        AC<sup className="text-[9px]">{getAcMultiplier(p.assistantCoachSince, reportMonth)}</sup>
+                        AC{getAcMultiplier(p.assistantCoachSince, reportMonth)}
                       </span>
                     )}
                     {entry.rewardSats > 0 ? <>🗲 {entry.rewardSats.toLocaleString()}</> : null}

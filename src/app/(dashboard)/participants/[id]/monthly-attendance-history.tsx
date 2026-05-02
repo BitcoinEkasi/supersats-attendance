@@ -68,7 +68,7 @@ export default function MonthlyAttendanceHistory({
                   <td className="py-2">
                     {isAssistantCoach && assistantCoachSince && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        AC<sup className="text-[9px]">{getAcMultiplier(assistantCoachSince, entry.reportMonth)}</sup>
+                        AC{getAcMultiplier(assistantCoachSince, entry.reportMonth)}
                       </span>
                     )}
                     {entry.rewardSats === 0 ? (

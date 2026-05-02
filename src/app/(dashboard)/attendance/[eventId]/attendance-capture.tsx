@@ -170,7 +170,7 @@ export default function AttendanceCapture({
               <span className="ml-1">
                 · {p.tskStatus}
                 {p.isAssistantCoach && p.assistantCoachSince && (
-                  <> AC<sup className="text-[9px]">{getAcMultiplier(p.assistantCoachSince, new Date().toISOString().slice(0, 7))}</sup></>
+                  <> AC{getAcMultiplier(p.assistantCoachSince, new Date().toISOString().slice(0, 7))}</>
                 )}
               </span>
             )}
