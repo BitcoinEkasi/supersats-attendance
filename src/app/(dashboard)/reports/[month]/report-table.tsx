@@ -71,7 +71,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
             <th className="px-4 py-3 text-left font-medium text-gray-500">Participant</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Age</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Division</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">Events</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Sessions</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attended</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attendance %</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Reward (sats)</th>
@@ -128,7 +128,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                       href={`/participants/${entry.participantId}?month=${reportMonth}`}
                       className="text-xs text-orange-600 hover:underline whitespace-nowrap"
                     >
-                      View Events
+                      View Sessions
                     </Link>
                   </td>
                 </tr>
