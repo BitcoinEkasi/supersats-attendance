@@ -51,6 +51,7 @@ export default async function ReportDetailPage({
 
   const totalSats = report.entries.reduce((sum, e) => sum + e.rewardSats, 0);
   const totalParticipants = report.entries.length;
+  const totalSessions = report.entries.length > 0 ? Math.max(...report.entries.map((e) => e.totalEvents)) : 0;
   const avgPercentage =
     totalParticipants > 0
       ? report.entries.reduce((sum, e) => sum + Number(e.percentage), 0) / totalParticipants
@@ -109,10 +110,14 @@ export default async function ReportDetailPage({
       </div>
 
       {/* Summary cards */}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Participants</p>
           <p className="mt-1 text-2xl font-bold">{totalParticipants}</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-sm text-gray-500">Sessions</p>
+          <p className="mt-1 text-2xl font-bold">{totalSessions}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Qualifying</p>
