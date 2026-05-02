@@ -62,7 +62,8 @@ export default async function AttendancePage() {
     prisma.event.findMany({
       orderBy: { date: "desc" },
       include: {
-        _count: { select: { attendanceRecords: { where: { present: true } } } },
+        _count: { select: { attendanceRecords: true } },
+        attendanceRecords: { where: { present: true }, select: { participantId: true } },
       },
     }),
     prisma.event.findMany({ where: { date: { gte: todayStart, lte: todayEnd } } }),
@@ -79,7 +80,8 @@ export default async function AttendancePage() {
     category: e.category,
     group: e.group,
     note: e.note,
-    presentCount: e._count.attendanceRecords,
+    presentCount: e.attendanceRecords.length,
+    totalCount: e._count.attendanceRecords,
     monthKey: `${e.date.getUTCFullYear()}-${String(e.date.getUTCMonth() + 1).padStart(2, "0")}`,
   }));
 

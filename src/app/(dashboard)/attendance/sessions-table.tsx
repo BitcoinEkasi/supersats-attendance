@@ -46,6 +46,7 @@ export type EventRow = {
   group: string | null;
   note: string | null;
   presentCount: number;
+  totalCount: number;
   monthKey: string;    // YYYY-MM
 };
 
@@ -231,8 +232,10 @@ export default function SessionsTable({
                               {categoryLabels[event.category] || event.category}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
-                            <span className="text-gray-800 font-medium">{event.presentCount}</span>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className="font-medium text-green-700">{event.presentCount}</span>
+                            <span className="text-gray-400"> / </span>
+                            <span className="text-gray-600">{event.totalCount}</span>
                           </td>
                           <td className="px-4 py-3">
                             {isAdmin && !isApproved && editingId === event.id ? (
