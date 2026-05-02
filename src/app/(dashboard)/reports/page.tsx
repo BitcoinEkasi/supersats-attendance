@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { groupSortIndex } from "@/lib/tsk-groups";
 import { ReportsTableClient } from "./reports-table-client";
 
 export default async function ReportsPage() {
@@ -7,13 +8,13 @@ export default async function ReportsPage() {
   const role = session?.user?.role;
 
   const reports = await prisma.monthlyReport.findMany({
-    orderBy: [{ month: "desc" }, { group: "asc" }],
+    orderBy: { month: "desc" },
     include: {
       entries: { select: { rewardSats: true, percentage: true } },
     },
   });
 
-  // Serialize (convert Prisma Decimal → number) and group by month
+  // Serialize (convert Prisma Decimal → number) and group by month, sorting groups by canonical order
   const monthKeys: string[] = [];
   const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; entries: { rewardSats: number; percentage: number }[] }[]> = {};
   for (const r of reports) {
@@ -28,6 +29,9 @@ export default async function ReportsPage() {
       status: r.status,
       entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage) })),
     });
+  }
+  for (const month of monthKeys) {
+    byMonth[month].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group));
   }
 
   return (

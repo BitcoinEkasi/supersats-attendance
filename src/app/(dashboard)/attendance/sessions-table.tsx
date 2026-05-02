@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import DeleteEventButton from "./delete-event-button";
-import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import { TSK_GROUP_LABELS, groupSortIndex } from "@/lib/tsk-groups";
 
 const categoryLabels: Record<string, string> = {
   SURFING: "Surfing",
@@ -180,7 +180,7 @@ export default function SessionsTable({
                       <td className="px-4 py-2" />
                     </tr>
 
-                    {isDayOpen && sessions.map((event) => {
+                    {isDayOpen && [...sessions].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group)).map((event) => {
                       const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
                       const isApproved = approvedSet.has(approvedKey);
                       return (

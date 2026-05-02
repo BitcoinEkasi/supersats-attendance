@@ -36,3 +36,9 @@ export function participantWhereForGroup(group: TskGroupKey) {
 export function isValidGroup(value: unknown): value is TskGroupKey {
   return TSK_GROUPS.includes(value as TskGroupKey);
 }
+
+export function groupSortIndex(group: string | null | undefined): number {
+  if (!group) return TSK_GROUPS.length;
+  const i = TSK_GROUPS.indexOf(group as TskGroupKey);
+  return i === -1 ? TSK_GROUPS.length : i;
+}
