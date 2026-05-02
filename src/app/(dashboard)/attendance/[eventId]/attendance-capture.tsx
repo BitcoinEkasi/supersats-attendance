@@ -211,8 +211,7 @@ export default function AttendanceCapture({
       <div className="sticky top-0 z-10 flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 text-sm text-gray-500">
-            <span>Listed: <span className="font-semibold text-gray-900">{total}</span></span>
-            <span>Present: <span className="font-semibold text-green-600">{presentCount}</span></span>
+            <span><span className="font-semibold text-green-600">{presentCount}</span> Present / <span className="font-semibold text-gray-900">{total}</span> Listed</span>
           </div>
           {statusIndicator}
         </div>
