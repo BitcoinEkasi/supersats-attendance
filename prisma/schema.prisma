@@ -117,6 +117,7 @@ model Participant {
   academicPayoutEntries AcademicPayoutEntry[]
   specialPayoutEntries  SpecialPayoutEntry[]
   pendingChanges        PendingParticipantChange[]
+  absenceFlag           AbsenceFlag?
 
   @@map("participants")
 }
@@ -374,5 +375,16 @@ model PendingParticipantChange {
 
   @@unique([participantId, field])
   @@map("pending_participant_changes")
+}
+
+model AbsenceFlag {
+  id                String      @id @default(cuid())
+  participant       Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  participantId     String      @unique @map("participant_id")
+  consecutiveMissed Int         @map("consecutive_missed")
+  group             String?
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  @@map("absence_flags")
 }
 
