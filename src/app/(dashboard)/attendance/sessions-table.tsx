@@ -256,11 +256,13 @@ export default function SessionsTable({
                                 <button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1.5 w-36">
+                              <div className="flex items-center gap-1">
                                 {notes[event.id] ? (
                                   <span
-                                    className={`flex-1 min-w-0 text-sm text-gray-500 cursor-pointer select-none ${
-                                      expandedNoteId === event.id ? "whitespace-normal break-words" : "truncate"
+                                    className={`block text-sm text-gray-500 cursor-pointer select-none ${
+                                      expandedNoteId === event.id
+                                        ? "max-w-[8rem] whitespace-normal break-words"
+                                        : "max-w-[8rem] truncate"
                                     }`}
                                     onClick={() => toggleExpand(event.id)}
                                   >
@@ -268,7 +270,7 @@ export default function SessionsTable({
                                   </span>
                                 ) : (
                                   <span
-                                    className={`flex-1 text-sm italic ${isAdmin && !isApproved ? "cursor-pointer text-gray-300 hover:text-gray-400" : "text-gray-400"}`}
+                                    className={`block text-sm italic ${isAdmin && !isApproved ? "cursor-pointer text-gray-400 hover:text-gray-600" : "text-gray-400"}`}
                                     onClick={isAdmin && !isApproved ? () => startEdit(event.id) : undefined}
                                   >
                                     {isAdmin && !isApproved ? "add note" : "—"}
@@ -277,11 +279,11 @@ export default function SessionsTable({
                                 {isAdmin && !isApproved && (
                                   <button
                                     onClick={() => startEdit(event.id)}
-                                    className="shrink-0 text-gray-300 hover:text-orange-500 transition-colors"
+                                    className="ml-1 shrink-0 text-gray-400 hover:text-orange-500 transition-colors"
                                     title="Edit note"
                                   >
-                                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                                      <path d="M11.5 2.5a1.414 1.414 0 012 2L5 13H3v-2L11.5 2.5z" strokeLinecap="round" strokeLinejoin="round" />
+                                    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor">
+                                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                     </svg>
                                   </button>
                                 )}
