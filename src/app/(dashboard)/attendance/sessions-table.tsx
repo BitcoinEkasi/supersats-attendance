@@ -239,16 +239,20 @@ export default function SessionsTable({
                           </td>
                           <td className="px-4 py-3">
                             {isAdmin && !isApproved && editingId === event.id ? (
-                              <div className="flex items-center gap-1">
-                                <input
+                              <div className="flex flex-col gap-1 min-w-[12rem]">
+                                <textarea
                                   autoFocus
                                   value={draft}
                                   onChange={(e) => setDraft(e.target.value)}
-                                  onKeyDown={(e) => { if (e.key === "Enter") saveNote(event.id); if (e.key === "Escape") cancelEdit(); }}
-                                  className="w-40 rounded border border-gray-300 px-2 py-0.5 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                  onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) saveNote(event.id); if (e.key === "Escape") cancelEdit(); }}
+                                  rows={3}
+                                  className="w-full rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none"
                                 />
-                                <button onClick={() => saveNote(event.id)} disabled={saving} className="text-xs text-orange-600 hover:text-orange-800 disabled:opacity-40">Save</button>
-                                <button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => saveNote(event.id)} disabled={saving} className="text-xs text-orange-600 hover:text-orange-800 disabled:opacity-40">Save</button>
+                                  <button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
+                                  <span className="text-xs text-gray-400">Ctrl+Enter to save</span>
+                                </div>
                               </div>
                             ) : (
                               <div className="relative flex items-center gap-1 group/note">
