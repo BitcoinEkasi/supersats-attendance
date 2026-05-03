@@ -106,7 +106,6 @@ export default function SessionsTable({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
   function toggleMonth(key: string) {
     setOpenMonths((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -120,10 +119,6 @@ export default function SessionsTable({
   function cancelEdit() {
     setEditingId(null);
     setDraft("");
-  }
-
-  function toggleExpand(id: string) {
-    setExpandedNoteId((prev) => (prev === id ? null : id));
   }
 
   async function saveNote(eventId: string) {
@@ -221,7 +216,7 @@ export default function SessionsTable({
                       const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
                       const isApproved = approvedSet.has(approvedKey);
                       return (
-                        <tr key={event.id} className={`border-b last:border-0${expandedNoteId === event.id ? " [&>td]:align-top" : ""}`}>
+                        <tr key={event.id} className="border-b last:border-0">
                           <td className="px-4 py-3 pl-16 font-medium text-gray-500">{event.dateLabel}</td>
                           <td className="px-4 py-3">
                             {event.group ? (
@@ -256,18 +251,18 @@ export default function SessionsTable({
                                 <button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-1">
+                              <div className="relative flex items-center gap-1 group/note">
                                 {notes[event.id] ? (
-                                  <span
-                                    className={`block text-sm text-gray-500 cursor-pointer select-none ${
-                                      expandedNoteId === event.id
-                                        ? "max-w-[8rem] whitespace-normal break-words"
-                                        : "max-w-[8rem] truncate"
-                                    }`}
-                                    onClick={() => toggleExpand(event.id)}
-                                  >
-                                    {notes[event.id]}
-                                  </span>
+                                  <>
+                                    <span className="block max-w-[8rem] truncate text-sm text-gray-500">
+                                      {notes[event.id]}
+                                    </span>
+                                    <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-1.5 hidden group-hover/note:block">
+                                      <div className="max-w-[16rem] rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white shadow-lg whitespace-normal break-words">
+                                        {notes[event.id]}
+                                      </div>
+                                    </div>
+                                  </>
                                 ) : (
                                   <span
                                     className={`block text-sm italic ${isAdmin && !isApproved ? "cursor-pointer text-gray-400 hover:text-gray-600" : "text-gray-400"}`}
