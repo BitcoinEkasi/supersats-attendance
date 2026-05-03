@@ -14,6 +14,10 @@ services:
       - MARSHALL_NAME=${MARSHALL_NAME:-Marshall}
       - MARSHALL_USERNAME=${MARSHALL_USERNAME:-marshall}
       - MARSHALL_PASSWORD=${MARSHALL_PASSWORD}
+      - BOLT_API_URL=${BOLT_API_URL}
+      - BOLT_API_KEY=${BOLT_API_KEY}
+      - NEXT_PUBLIC_BOLT_URL=${NEXT_PUBLIC_BOLT_URL}
+      - CRON_SECRET=${CRON_SECRET}
     volumes:
       - ./data:/data
     restart: unless-stopped
