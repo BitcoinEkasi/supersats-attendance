@@ -20,4 +20,11 @@ services:
       - CRON_SECRET=${CRON_SECRET}
     volumes:
       - ./data:/data
+    networks:
+      - default
+      - infra_default
     restart: unless-stopped
+
+networks:
+  infra_default:
+    external: true
