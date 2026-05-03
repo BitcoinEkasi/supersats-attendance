@@ -72,7 +72,7 @@ export default async function ReportDetailPage({
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Report: {report.month}
+            Report: {(() => { const [y, m] = report.month.split("-"); return `${new Date(+y, +m - 1).toLocaleString("en-GB", { month: "short" })} '${y.slice(2)}`; })()}
             {report.group && (
               <span className="ml-2 inline-flex rounded-full bg-orange-100 px-3 py-0.5 text-base font-medium text-orange-700">
                 {TSK_GROUP_LABELS[report.group] ?? report.group}
