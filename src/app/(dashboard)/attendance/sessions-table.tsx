@@ -106,6 +106,7 @@ export default function SessionsTable({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
   function toggleMonth(key: string) {
     setOpenMonths((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -119,6 +120,10 @@ export default function SessionsTable({
   function cancelEdit() {
     setEditingId(null);
     setDraft("");
+  }
+
+  function toggleExpand(id: string) {
+    setExpandedNoteId((prev) => (prev === id ? null : id));
   }
 
   async function saveNote(eventId: string) {
@@ -216,7 +221,7 @@ export default function SessionsTable({
                       const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
                       const isApproved = approvedSet.has(approvedKey);
                       return (
-                        <tr key={event.id} className="border-b last:border-0">
+                        <tr key={event.id} className={`border-b last:border-0${expandedNoteId === event.id ? " [&>td]:align-top" : ""}`}>
                           <td className="px-4 py-3 pl-16 font-medium text-gray-500">{event.dateLabel}</td>
                           <td className="px-4 py-3">
                             {event.group ? (
@@ -251,13 +256,36 @@ export default function SessionsTable({
                                 <button onClick={cancelEdit} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
                               </div>
                             ) : (
-                              <span
-                                className={`text-gray-500 text-sm max-w-32 truncate block ${isAdmin && !isApproved ? "cursor-pointer hover:text-gray-700 group" : ""}`}
-                                onClick={isAdmin && !isApproved ? () => startEdit(event.id) : undefined}
-                                title={isAdmin && !isApproved ? "Click to edit note" : undefined}
-                              >
-                                {notes[event.id] || <span className={isAdmin && !isApproved ? "text-gray-300 group-hover:text-gray-400 italic" : "text-gray-400"}>add note</span>}
-                              </span>
+                              <div className="flex items-center gap-1.5 w-36">
+                                {notes[event.id] ? (
+                                  <span
+                                    className={`flex-1 min-w-0 text-sm text-gray-500 cursor-pointer select-none ${
+                                      expandedNoteId === event.id ? "whitespace-normal break-words" : "truncate"
+                                    }`}
+                                    onClick={() => toggleExpand(event.id)}
+                                  >
+                                    {notes[event.id]}
+                                  </span>
+                                ) : (
+                                  <span
+                                    className={`flex-1 text-sm italic ${isAdmin && !isApproved ? "cursor-pointer text-gray-300 hover:text-gray-400" : "text-gray-400"}`}
+                                    onClick={isAdmin && !isApproved ? () => startEdit(event.id) : undefined}
+                                  >
+                                    {isAdmin && !isApproved ? "add note" : "—"}
+                                  </span>
+                                )}
+                                {isAdmin && !isApproved && (
+                                  <button
+                                    onClick={() => startEdit(event.id)}
+                                    className="shrink-0 text-gray-300 hover:text-orange-500 transition-colors"
+                                    title="Edit note"
+                                  >
+                                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                                      <path d="M11.5 2.5a1.414 1.414 0 012 2L5 13H3v-2L11.5 2.5z" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </td>
                           <td className="px-4 py-3">
