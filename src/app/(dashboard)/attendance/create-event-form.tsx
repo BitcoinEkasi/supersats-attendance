@@ -47,19 +47,21 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
     return () => clearTimeout(timer);
   }, [mobile, router]);
 
-  async function handleMobileCreate() {
+  async function handleMobileCreate(cancelled = false) {
     if (!selected || !group) return;
     setLoading(true);
     setError("");
     const res = await fetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: "today", category: selected, group, note: note.trim() || null }),
+      body: JSON.stringify({ date: "today", category: selected, group, note: note.trim() || null, cancelled }),
     });
     const result = await res.json();
     if (result.error) {
       setError(result.error);
       setLoading(false);
+    } else if (cancelled) {
+      router.push("/attendance");
     } else {
       router.push(`/attendance/${result.id}`);
     }
@@ -135,11 +137,18 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
                   className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base focus:border-orange-400 focus:outline-none"
                 />
                 <button
-                  onClick={handleMobileCreate}
+                  onClick={() => handleMobileCreate(false)}
                   disabled={loading}
                   className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white disabled:opacity-50 active:bg-orange-700"
                 >
                   {loading ? "Starting…" : "Start Session"}
+                </button>
+                <button
+                  onClick={() => handleMobileCreate(true)}
+                  disabled={loading}
+                  className="w-full rounded-2xl border-2 border-amber-300 bg-amber-50 py-4 text-base font-semibold text-amber-700 disabled:opacity-50 active:bg-amber-100"
+                >
+                  {loading ? "Saving…" : "✕ Record as Cancelled"}
                 </button>
               </div>
             )}

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
 import CancelEventButton from "./cancel-event-button";
+import NoteInput from "./[eventId]/note-input";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, groupSortIndex, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
@@ -49,6 +50,7 @@ export default async function AttendancePage() {
                     </span>
                   )}
                 </div>
+                <NoteInput eventId={e.id} note={e.note} />
                 <CancelEventButton eventId={e.id} cancelled={e.cancelled} eventDate={fmtDate(e.date)} mobile />
                 {!e.cancelled && (
                   <Link
