@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
 import NoteInput from "./[eventId]/note-input";
@@ -24,6 +25,11 @@ export default async function AttendancePage() {
       where: { date: { gte: todayStart, lte: todayEnd }, ...groupFilter },
       orderBy: { createdAt: "desc" },
     });
+
+    // Single active session → go straight to attendance capture
+    if (todayEvents.length === 1 && !todayEvents[0].cancelled) {
+      redirect(`/attendance/${todayEvents[0].id}`);
+    }
 
     if (todayEvents.length > 0) {
       const sorted = [...todayEvents].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group));
