@@ -6,7 +6,7 @@ import AttendanceCapture from "./attendance-capture";
 import CategorySelect from "./category-select";
 import NoteInput from "./note-input";
 import MidnightRedirect from "./midnight-redirect";
-import CancelEventButton from "./cancel-event-button";
+import CancelEventButton from "../cancel-event-button";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
