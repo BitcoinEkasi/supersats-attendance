@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
+import CancelEventButton from "./cancel-event-button";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, groupSortIndex, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
@@ -25,29 +25,43 @@ export default async function AttendancePage() {
       orderBy: { createdAt: "desc" },
     });
 
-    if (todayEvents.length === 1) {
-      redirect(`/attendance/${todayEvents[0].id}`);
-    }
-
-    if (todayEvents.length > 1) {
+    if (todayEvents.length > 0) {
+      const sorted = [...todayEvents].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group));
       return (
         <div className="flex min-h-dvh flex-col justify-center px-6 py-12">
-          <h1 className="text-2xl font-bold text-gray-900">Choose your session</h1>
-          <p className="mt-1 text-sm text-gray-400">Multiple sessions are running today</p>
-          <div className="mt-8 space-y-3">
-            {[...todayEvents].sort((a, b) => groupSortIndex(a.group) - groupSortIndex(b.group)).map((e) => (
-              <Link
+          <h1 className="text-2xl font-bold text-gray-900">
+            {todayEvents.length === 1 ? "Today's Session" : "Today's Sessions"}
+          </h1>
+          <p className="mt-1 text-sm text-gray-400">{fmtDate(todayEvents[0].date)}</p>
+          <div className="mt-8 space-y-4">
+            {sorted.map((e) => (
+              <div
                 key={e.id}
-                href={`/attendance/${e.id}`}
-                className="flex w-full items-center justify-between rounded-2xl border-2 border-gray-200 bg-white px-5 py-5 text-left transition-all active:scale-98 hover:border-orange-400"
+                className={`rounded-2xl border-2 bg-white px-5 py-5 space-y-3 ${e.cancelled ? "border-amber-200" : "border-gray-200"}`}
               >
-                <span className="text-lg font-semibold text-gray-700">
-                  {e.group ? TSK_GROUP_LABELS[e.group] ?? e.group : "All groups"}
-                </span>
-                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold text-gray-700">
+                    {e.group ? TSK_GROUP_LABELS[e.group] ?? e.group : "All groups"}
+                  </span>
+                  {e.cancelled && (
+                    <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                      Cancelled
+                    </span>
+                  )}
+                </div>
+                <CancelEventButton eventId={e.id} cancelled={e.cancelled} eventDate={fmtDate(e.date)} mobile />
+                {!e.cancelled && (
+                  <Link
+                    href={`/attendance/${e.id}`}
+                    className="flex w-full items-center justify-between rounded-xl bg-orange-600 px-4 py-3 text-white font-semibold active:bg-orange-700"
+                  >
+                    <span>Capture Attendance</span>
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
         </div>
