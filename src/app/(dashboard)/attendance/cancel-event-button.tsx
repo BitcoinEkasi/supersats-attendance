@@ -7,10 +7,12 @@ export default function CancelEventButton({
   eventId,
   cancelled,
   eventDate,
+  mobile = false,
 }: {
   eventId: string;
   cancelled: boolean;
   eventDate: string;
+  mobile?: boolean;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,25 @@ export default function CancelEventButton({
     } else {
       router.refresh();
     }
+  }
+
+  if (mobile) {
+    return (
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={handleToggle}
+          disabled={loading}
+          className={`w-full rounded-2xl border-2 px-5 py-4 text-left text-base font-semibold transition-all disabled:opacity-40 active:scale-98 ${
+            cancelled
+              ? "border-green-300 bg-green-50 text-green-700"
+              : "border-amber-300 bg-amber-50 text-amber-700"
+          }`}
+        >
+          {loading ? "Saving…" : cancelled ? "✓ Restore Session" : "✕ Cancel Session (unsafe conditions)"}
+        </button>
+        {error && <span className="text-xs text-red-500">{error}</span>}
+      </div>
+    );
   }
 
   return (

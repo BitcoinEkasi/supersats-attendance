@@ -6,6 +6,7 @@ import AttendanceCapture from "./attendance-capture";
 import CategorySelect from "./category-select";
 import NoteInput from "./note-input";
 import MidnightRedirect from "./midnight-redirect";
+import CancelEventButton from "./cancel-event-button";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
@@ -84,7 +85,7 @@ export default async function EventAttendancePage({
       <div className="flex flex-col">
         <MidnightRedirect />
         <div className="flex items-start justify-between border-b border-gray-100 bg-white px-4 py-4">
-          <div>
+          <div className="w-full">
             <p className="font-semibold text-gray-900">
               {event.date.toLocaleDateString("en-GB", { weekday: "long" })} {fmtDate(event.date)}
               {groupLabel && (
@@ -95,15 +96,30 @@ export default async function EventAttendancePage({
             </p>
             <CategorySelect eventId={event.id} category={event.category} group={event.group} />
             <NoteInput eventId={event.id} note={event.note} />
+            <div className="mt-3">
+              <CancelEventButton
+                eventId={event.id}
+                cancelled={event.cancelled}
+                eventDate={fmtDate(event.date)}
+                mobile
+              />
+            </div>
           </div>
         </div>
 
-        <AttendanceCapture
-          eventId={event.id}
-          participants={participants}
-          existing={event.attendanceRecords}
-          mobile
-        />
+        {event.cancelled ? (
+          <div className="px-4 py-8 text-center">
+            <p className="text-lg font-semibold text-amber-700">Session Cancelled</p>
+            <p className="mt-1 text-sm text-gray-500">This session is not counted toward rewards. Use the button above to restore it.</p>
+          </div>
+        ) : (
+          <AttendanceCapture
+            eventId={event.id}
+            participants={participants}
+            existing={event.attendanceRecords}
+            mobile
+          />
+        )}
       </div>
     );
   }
