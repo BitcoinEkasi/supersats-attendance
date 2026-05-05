@@ -143,13 +143,6 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
                 >
                   {loading ? "Starting…" : "Start Session"}
                 </button>
-                <button
-                  onClick={() => handleMobileCreate(true)}
-                  disabled={loading}
-                  className="w-full rounded-2xl border-2 border-amber-300 bg-amber-50 py-4 text-base font-semibold text-amber-700 disabled:opacity-50 active:bg-amber-100"
-                >
-                  {loading ? "Saving…" : "✕ Record as Cancelled"}
-                </button>
               </div>
             )}
           </>
