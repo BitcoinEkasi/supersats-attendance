@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import DeleteEventButton from "./delete-event-button";
+import CancelEventButton from "./cancel-event-button";
 import { TSK_GROUP_LABELS, groupSortIndex } from "@/lib/tsk-groups";
 
 const categoryLabels: Record<string, string> = {
@@ -45,6 +46,7 @@ export type EventRow = {
   category: string;
   group: string | null;
   note: string | null;
+  cancelled: boolean;
   presentCount: number;
   totalCount: number;
   monthKey: string;    // YYYY-MM
@@ -216,16 +218,23 @@ export default function SessionsTable({
                       const approvedKey = `${event.monthKey}:${event.group ?? "null"}`;
                       const isApproved = approvedSet.has(approvedKey);
                       return (
-                        <tr key={event.id} className="border-b last:border-0">
+                        <tr key={event.id} className={`border-b last:border-0 ${event.cancelled ? "opacity-60" : ""}`}>
                           <td className="px-4 py-3 pl-16 font-medium text-gray-500">{event.dateLabel}</td>
                           <td className="px-4 py-3">
-                            {event.group ? (
-                              <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
-                                {TSK_GROUP_LABELS[event.group] ?? event.group}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
+                            <div className="flex flex-wrap items-center gap-1">
+                              {event.group ? (
+                                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
+                                  {TSK_GROUP_LABELS[event.group] ?? event.group}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-400">—</span>
+                              )}
+                              {event.cancelled && (
+                                <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500">
+                                  Cancelled
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
@@ -294,7 +303,14 @@ export default function SessionsTable({
                               <Link href={`/attendance/${event.id}`} className="text-orange-600 hover:text-orange-800">
                                 View
                               </Link>
-                              {!isApproved && (
+                              {isAdmin && !isApproved && (
+                                <CancelEventButton
+                                  eventId={event.id}
+                                  cancelled={event.cancelled}
+                                  eventDate={event.dateLabel}
+                                />
+                              )}
+                              {!isApproved && !event.cancelled && (
                                 <DeleteEventButton eventId={event.id} eventDate={event.dateLabel} />
                               )}
                             </div>

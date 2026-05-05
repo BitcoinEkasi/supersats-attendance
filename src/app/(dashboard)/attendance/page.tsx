@@ -80,6 +80,7 @@ export default async function AttendancePage() {
     category: e.category,
     group: e.group,
     note: e.note,
+    cancelled: e.cancelled,
     presentCount: e.attendanceRecords.length,
     totalCount: e._count.attendanceRecords,
     monthKey: `${e.date.getUTCFullYear()}-${String(e.date.getUTCMonth() + 1).padStart(2, "0")}`,

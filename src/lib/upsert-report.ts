@@ -23,7 +23,7 @@ export async function upsertMonthlyReport(
       date: { gte: monthStart, lte: monthEnd },
       ...(group ? { group } : {}),
     },
-    select: { id: true, date: true },
+    select: { id: true, date: true, cancelled: true },
   });
 
   if (events.length === 0) return;
@@ -87,6 +87,7 @@ export async function upsertMonthlyReport(
     for (const participant of participants) {
       const attendableEvents = events.filter(
         (e) =>
+          !e.cancelled &&
           e.date >= participant.registrationDate &&
           (!participant.retiredAt || e.date <= participant.retiredAt)
       );

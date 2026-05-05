@@ -170,6 +170,7 @@ model Event {
   category  EventCategory
   group     TskGroup?
   note      String?
+  cancelled Boolean       @default(false)
   createdBy String        @map("created_by")
   createdAt DateTime      @default(now()) @map("created_at")
 
