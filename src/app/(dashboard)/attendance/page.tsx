@@ -123,7 +123,7 @@ export default async function AttendancePage() {
               </div>
             </div>
           )}
-          <CreateEventForm />
+          <CreateEventForm isAdmin={role === "ADMINISTRATOR"} />
         </div>
       </div>
     </div>
