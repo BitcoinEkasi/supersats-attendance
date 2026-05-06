@@ -25,7 +25,7 @@ function visibleCategories(group: string | null) {
   return categories.filter((c) => !SHARKS_ONLY.has(c.value) || group === "SHARKS");
 }
 
-export default function CreateEventForm({ mobile = false, fixedGroup = null, isAdmin = false }: { mobile?: boolean; fixedGroup?: TskGroupKey | null; isAdmin?: boolean }) {
+export default function CreateEventForm({ mobile = false, fixedGroup = null }: { mobile?: boolean; fixedGroup?: TskGroupKey | null }) {
   const router = useRouter();
   const [group, setGroup] = useState<TskGroupKey | null>(fixedGroup);
   const [selected, setSelected] = useState<EventCategory | null>(null);
@@ -47,21 +47,19 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
     return () => clearTimeout(timer);
   }, [mobile, router]);
 
-  async function handleMobileCreate(cancelled = false) {
+  async function handleMobileCreate() {
     if (!selected || !group) return;
     setLoading(true);
     setError("");
     const res = await fetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: "today", category: selected, group, note: note.trim() || null, cancelled }),
+      body: JSON.stringify({ date: "today", category: selected, group, note: note.trim() || null }),
     });
     const result = await res.json();
     if (result.error) {
       setError(result.error);
       setLoading(false);
-    } else if (cancelled) {
-      router.push("/attendance");
     } else {
       router.push(`/attendance/${result.id}`);
     }
@@ -137,7 +135,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
                   className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base focus:border-orange-400 focus:outline-none"
                 />
                 <button
-                  onClick={() => handleMobileCreate(false)}
+                  onClick={handleMobileCreate}
                   disabled={loading}
                   className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white disabled:opacity-50 active:bg-orange-700"
                 >
@@ -155,7 +153,6 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
   const [desktopLoading, setDesktopLoading] = useState(false);
   const [desktopError, setDesktopError] = useState("");
   const [desktopGroup, setDesktopGroup] = useState<string>("");
-  const [cancelledOnCreate, setCancelledOnCreate] = useState(false);
   const inputCls = "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
 
   async function handleDesktopSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -171,7 +168,6 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
         category: formData.get("category"),
         group: formData.get("group"),
         note: formData.get("note"),
-        cancelled: cancelledOnCreate,
       }),
     });
     const result = await res.json();
@@ -180,9 +176,6 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
     } else if (result.error) {
       setDesktopError(result.error);
       setDesktopLoading(false);
-    } else if (cancelledOnCreate) {
-      setCancelledOnCreate(false);
-      router.refresh();
     } else {
       router.push(`/attendance/${result.id}`);
     }
@@ -221,23 +214,12 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null, isA
           <label className="block text-sm font-medium text-gray-700">Note</label>
           <textarea name="note" rows={2} className={inputCls} placeholder="Optional note about this session" />
         </div>
-        {isAdmin && (
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={cancelledOnCreate}
-              onChange={(e) => setCancelledOnCreate(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-            />
-            <span className="text-sm text-gray-600">Mark session as cancelled (weather / no session)</span>
-          </label>
-        )}
         <button
           type="submit"
           disabled={desktopLoading}
           className="w-full rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
         >
-          {desktopLoading ? "Creating..." : cancelledOnCreate ? "Record Cancelled Session" : "Create & Capture Attendance"}
+          {desktopLoading ? "Creating..." : "Create & Capture Attendance"}
         </button>
       </form>
     </div>

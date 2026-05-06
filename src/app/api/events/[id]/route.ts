@@ -81,10 +81,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json();
 
   try {
-    const data: { note?: string | null; category?: EventCategory; cancelled?: boolean } = {};
+    const data: { note?: string | null; category?: EventCategory } = {};
     if ("note" in body) data.note = body.note?.trim() || null;
     if ("category" in body) data.category = body.category as EventCategory;
-    if ("cancelled" in body && user.role === "ADMINISTRATOR") data.cancelled = Boolean(body.cancelled);
 
     await prisma.event.update({ where: { id }, data });
     return Response.json({ success: true });

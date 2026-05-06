@@ -27,12 +27,11 @@ export async function POST(req: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { date, category, note, group, cancelled } = body as {
+  const { date, category, note, group } = body as {
     date?: string;
     category?: EventCategory;
     note?: string;
     group?: string;
-    cancelled?: boolean;
   };
 
   if (!date || !category) {
@@ -61,7 +60,6 @@ export async function POST(req: Request) {
         category,
         group: tskGroup,
         note: note?.trim() || null,
-        cancelled: user.role === "ADMINISTRATOR" ? Boolean(cancelled) : false,
         createdBy: user.id,
       },
     });

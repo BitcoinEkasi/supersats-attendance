@@ -98,19 +98,12 @@ export default async function EventAttendancePage({
           </div>
         </div>
 
-        {event.cancelled ? (
-          <div className="px-4 py-8 text-center">
-            <p className="text-lg font-semibold text-amber-700">Session Cancelled</p>
-            <p className="mt-1 text-sm text-gray-500">This session is not counted toward rewards.</p>
-          </div>
-        ) : (
-          <AttendanceCapture
-            eventId={event.id}
-            participants={participants}
-            existing={event.attendanceRecords}
-            mobile
-          />
-        )}
+        <AttendanceCapture
+          eventId={event.id}
+          participants={participants}
+          existing={event.attendanceRecords}
+          mobile
+        />
       </div>
     );
   }
@@ -132,27 +125,15 @@ export default async function EventAttendancePage({
         </h2>
       </div>
 
-      {event.cancelled && (
-        <div className="mb-4 rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-          This session was cancelled — attendance is not counted toward rewards.
-        </div>
-      )}
-
       {event.note && (
         <p className="mb-4 rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-700">{event.note}</p>
       )}
 
-      {event.cancelled ? (
-        <p className="rounded-md border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-          Attendance capture is disabled for cancelled sessions.
-        </p>
-      ) : (
-        <AttendanceCapture
-          eventId={event.id}
-          participants={participants}
-          existing={event.attendanceRecords}
-        />
-      )}
+      <AttendanceCapture
+        eventId={event.id}
+        participants={participants}
+        existing={event.attendanceRecords}
+      />
     </div>
   );
 }
