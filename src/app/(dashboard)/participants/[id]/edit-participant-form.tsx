@@ -526,7 +526,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
         <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Participation</p>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div>
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
@@ -572,23 +572,6 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                   </div>
                 )}
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500 font-medium">Division</p>
-                <p className="text-sm text-gray-700">{getDivisionLabel(participant.dateOfBirth, participant.gender)}</p>
-                <div className="pt-1">
-                  <label className="block text-sm font-medium text-gray-700">Stance</label>
-                  <select
-                    value={stance}
-                    onChange={(e) => { setStance(e.target.value); setSaved(false); setIsDirty(true); }}
-                    className={inputCls}
-                  >
-                    <option value="">— select —</option>
-                    <option value="Regular">Regular</option>
-                    <option value="Goofy">Goofy</option>
-                  </select>
-                  <input type="hidden" name="stance" value={stance} />
-                </div>
-              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div />
@@ -621,6 +604,25 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
 
         <div className="border-t pt-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-xs font-medium text-gray-500">Division</p>
+              <p className="mt-1 text-sm text-gray-700">{getDivisionLabel(participant.dateOfBirth, participant.gender)}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Stance</label>
+              <select
+                value={stance}
+                onChange={(e) => { setStance(e.target.value); setSaved(false); setIsDirty(true); }}
+                className={inputCls}
+              >
+                <option value="">— select —</option>
+                <option value="Regular">Regular</option>
+                <option value="Goofy">Goofy</option>
+              </select>
+              <input type="hidden" name="stance" value={stance} />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">TSK Level</label>
