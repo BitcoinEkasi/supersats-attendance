@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
 import { getNextTskId } from "@/lib/tsk-id";
+import { isValidGroup, participantWhereForGroup } from "@/lib/tsk-groups";
 import type { ParticipantStatus } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -10,21 +11,31 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") ?? undefined;
+  const group = searchParams.get("group") ?? undefined;
+  const status = searchParams.get("status") ?? undefined;
+  const slim = searchParams.get("slim") === "true";
 
-  const where = search
-    ? {
-        OR: [
-          { tskId: { contains: search } },
-          { surname: { contains: search } },
-          { fullNames: { contains: search } },
-          { knownAs: { contains: search } },
-        ],
-      }
-    : {};
+  const where: Record<string, unknown> = {};
+
+  if (search) {
+    where.OR = [
+      { tskId: { contains: search } },
+      { surname: { contains: search } },
+      { fullNames: { contains: search } },
+      { knownAs: { contains: search } },
+    ];
+  }
+  if (status === "ACTIVE" || status === "RETIRED") {
+    where.status = status;
+  }
+  if (group && isValidGroup(group)) {
+    Object.assign(where, participantWhereForGroup(group));
+  }
 
   const participants = await prisma.participant.findMany({
     where,
     orderBy: [{ surname: "asc" }, { fullNames: "asc" }],
+    ...(slim ? { select: { id: true, tskId: true, surname: true, fullNames: true, knownAs: true } } : {}),
   });
 
   return Response.json(participants);

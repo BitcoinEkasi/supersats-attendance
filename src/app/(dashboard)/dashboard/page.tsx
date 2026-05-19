@@ -3,6 +3,7 @@ import PendingMovesTable from "./pending-moves-table";
 import DivisionBreakdownTable from "./division-breakdown-table";
 import CollapsibleSection from "./collapsible-section";
 import AbsenceReport from "./absence-report";
+import AttendanceChart from "./attendance-chart";
 
 export default async function DashboardPage() {
   const flagCount = await prisma.absenceFlag.count();
@@ -14,6 +15,9 @@ export default async function DashboardPage() {
         defaultOpen={flagCount > 0}
       >
         <AbsenceReport />
+      </CollapsibleSection>
+      <CollapsibleSection title="Attendance Analytics">
+        <AttendanceChart />
       </CollapsibleSection>
       <CollapsibleSection title="Pending Level Changes">
         <PendingMovesTable />
