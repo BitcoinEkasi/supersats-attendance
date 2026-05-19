@@ -152,7 +152,7 @@ export default function SessionsTable({
         <tr>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Date</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Group</th>
-          <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
+          <th className="px-4 py-3 text-left font-medium text-gray-500">Activity</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Attendees</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Note</th>
           <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>

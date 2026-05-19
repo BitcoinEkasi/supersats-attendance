@@ -103,7 +103,7 @@ export default function MonthlyAttendanceHistory({
                           <thead>
                             <tr className="text-left text-gray-400">
                               <th className="pb-1 pl-2 font-medium">Date</th>
-                              <th className="pb-1 font-medium">Category</th>
+                              <th className="pb-1 font-medium">Activity</th>
                               <th className="pb-1 font-medium">Status</th>
                             </tr>
                           </thead>

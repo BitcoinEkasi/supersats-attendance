@@ -106,7 +106,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
                   {TSK_GROUP_LABELS[group]}
                 </button>
               )}
-              {" · "}Select a category to start
+              {" · "}Select an activity to start
             </p>
 
             <div className="mt-8 space-y-3">
@@ -202,9 +202,9 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
           <input name="date" type="date" required defaultValue={getSASTDateString()} className={inputCls} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Category *</label>
+          <label className="block text-sm font-medium text-gray-700">Activity *</label>
           <select name="category" required className={inputCls}>
-            <option value="">Select category...</option>
+            <option value="">Select activity...</option>
             {visibleCategories(desktopGroup).map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
