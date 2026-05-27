@@ -14,6 +14,7 @@ type Entry = {
   percentage: string | number;
   rewardSats: number;
   payoutStatus: string;
+  cardId?: string | null;
   participant: {
     tskId: string;
     surname: string;
@@ -75,6 +76,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attended</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attendance %</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Reward (sats)</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Card</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
             <th className="px-4 py-3"></th>
           </tr>
@@ -82,7 +84,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
         <tbody>
           {filtered.length === 0 ? (
             <tr>
-              <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-400">
+              <td colSpan={11} className="px-4 py-8 text-center text-sm text-gray-400">
                 No participants match your search.
               </td>
             </tr>
@@ -113,6 +115,9 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                       </span>
                     )}
                     {entry.rewardSats > 0 ? <>🗲 {entry.rewardSats.toLocaleString()}</> : null}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                    {entry.cardId ?? "—"}
                   </td>
                   <td className="px-4 py-3">
                     {entry.rewardSats === 0 ? (

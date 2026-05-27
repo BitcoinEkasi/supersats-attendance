@@ -12,6 +12,7 @@ import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
 import RefreshButton from "../refresh-button";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import { getBoltUser } from "@/lib/bolt";
 
 export default async function ReportDetailPage({
   params,
@@ -62,6 +63,15 @@ export default async function ReportDetailPage({
   const missingCards = report.entries
     .filter((e) => e.rewardSats > 0 && e.participant.paymentMethod === "BOLT_CARD" && !e.participant.boltUserId)
     .map((e) => ({ tskId: e.participant.tskId, name: `${e.participant.knownAs ?? e.participant.fullNames} ${e.participant.surname}` }));
+
+  const boltCardIds = await Promise.all(
+    report.entries
+      .filter((e) => e.participant.boltUserId)
+      .map((e) =>
+        getBoltUser(e.participant.boltUserId!).then((u) => ({ participantId: e.participantId, cardId: u?.card?.card_id ?? null }))
+      )
+  );
+  const cardIdMap: Record<string, string | null> = Object.fromEntries(boltCardIds.map((b) => [b.participantId, b.cardId]));
 
   const tierCounts = REWARD_TIERS.map((tier) => ({
     ...tier,
@@ -187,6 +197,7 @@ export default async function ReportDetailPage({
         entries={report.entries.map(e => ({
           ...e,
           percentage: e.percentage.toString(),
+          cardId: cardIdMap[e.participantId] ?? null,
           participant: {
             tskId: e.participant.tskId,
             surname: e.participant.surname,
