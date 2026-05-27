@@ -12,7 +12,7 @@ interface InvoiceData {
   ineligible_count: number;
 }
 
-export default function ApproveButton({ reportId, disabled = false, approveUrl, checkUrl, confirmMessage, label }: { reportId: string; disabled?: boolean; approveUrl?: string; checkUrl?: string; confirmMessage?: string; label?: string }) {
+export default function ApproveButton({ reportId, disabled = false, approveUrl, checkUrl, confirmMessage, label, missingCards }: { reportId: string; disabled?: boolean; approveUrl?: string; checkUrl?: string; confirmMessage?: string; label?: string; missingCards?: { tskId: string; name: string }[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,14 +47,23 @@ export default function ApproveButton({ reportId, disabled = false, approveUrl, 
     router.refresh();
   }
 
+  const hasCardWarning = (missingCards?.length ?? 0) > 0;
+
   return (
     <div>
+      {hasCardWarning && (
+        <div className="mb-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          <p className="font-semibold">⚠ Cannot approve — {missingCards!.length} participant{missingCards!.length !== 1 ? "s have" : " has"} earned rewards but no bolt card issued:</p>
+          <p className="mt-1">{missingCards!.map((c) => `[${c.tskId}] ${c.name}`).join(", ")}</p>
+          <p className="mt-1 text-xs">Issue their cards first, then refresh and approve.</p>
+        </div>
+      )}
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       {notice && <p className="mb-2 text-sm text-amber-700">{notice}</p>}
       <button
         onClick={handleApprove}
-        disabled={loading || disabled}
-        title={disabled ? "Month is not yet complete" : undefined}
+        disabled={loading || disabled || hasCardWarning}
+        title={disabled ? "Month is not yet complete" : hasCardWarning ? "Issue bolt cards first" : undefined}
         className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? "Approving..." : (label ?? "Approve Report")}

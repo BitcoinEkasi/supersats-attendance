@@ -29,6 +29,7 @@ export default async function ReportDetailPage({
               select: {
                 tskId: true, surname: true, fullNames: true, knownAs: true,
                 dateOfBirth: true, gender: true, isAssistantCoach: true, assistantCoachSince: true,
+                boltUserId: true, paymentMethod: true,
               },
             },
           },
@@ -57,6 +58,10 @@ export default async function ReportDetailPage({
       ? report.entries.reduce((sum, e) => sum + Number(e.percentage), 0) / totalParticipants
       : 0;
   const qualifyingParticipants = report.entries.filter((e) => e.rewardSats > 0).length;
+
+  const missingCards = report.entries
+    .filter((e) => e.rewardSats > 0 && e.participant.paymentMethod === "BOLT_CARD" && !e.participant.boltUserId)
+    .map((e) => ({ tskId: e.participant.tskId, name: `${e.participant.knownAs ?? e.participant.fullNames} ${e.participant.surname}` }));
 
   const tierCounts = REWARD_TIERS.map((tier) => ({
     ...tier,
@@ -104,7 +109,7 @@ export default async function ReportDetailPage({
             <RefreshButton refreshUrl={`/api/reports/${report.id}/refresh`} />
           )}
           {role === "ADMINISTRATOR" && report.status === "PENDING" && (
-            <ApproveButton reportId={report.id} disabled={!monthComplete} />
+            <ApproveButton reportId={report.id} disabled={!monthComplete} missingCards={missingCards} />
           )}
         </div>
       </div>
