@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { TSK_GROUPS, TSK_GROUP_LABELS, getGroupForStatus, type TskGroupKey } from "@/lib/tsk-groups";
 
 type Participant = {
   id: string;
@@ -12,6 +13,7 @@ type Participant = {
   boltUserId: string | null;
   paymentMethod: string;
   lightningAddress: string | null;
+  tskStatus: string | null;
 };
 
 type Row = {
@@ -27,6 +29,7 @@ export default function SpecialPayoutForm({ participants }: { participants: Part
   const [defaultAmount, setDefaultAmount] = useState("");
   const [defaultNote, setDefaultNote] = useState("");
   const [filter, setFilter] = useState<"all" | "BOLT_CARD" | "LIGHTNING_ADDRESS">("all");
+  const [groupFilter, setGroupFilter] = useState<"all" | TskGroupKey>("all");
   const [rows, setRows] = useState<Row[]>(
     participants.map((p) => ({ participantId: p.id, checked: true, amountSats: "", note: "" }))
   );
@@ -51,23 +54,23 @@ export default function SpecialPayoutForm({ participants }: { participants: Part
     );
   }
 
+  function isVisible(p: Participant) {
+    if (filter !== "all" && p.paymentMethod !== filter) return false;
+    if (groupFilter !== "all" && getGroupForStatus(p.tskStatus) !== groupFilter) return false;
+    return true;
+  }
+
   function toggleAll(checked: boolean) {
-    const visibleIds = new Set(
-      participants
-        .filter((p) => filter === "all" || p.paymentMethod === filter)
-        .map((p) => p.id)
-    );
+    const visibleIds = new Set(participants.filter(isVisible).map((p) => p.id));
     setRows((prev) => prev.map((r) => (visibleIds.has(r.participantId) ? { ...r, checked } : r)));
   }
 
-  const visibleParticipants = participants.filter(
-    (p) => filter === "all" || p.paymentMethod === filter
-  );
+  const visibleParticipants = participants.filter(isVisible);
 
   const selectedCount = rows.filter((r) => {
     const p = participantMap[r.participantId];
     if (!p) return false;
-    if (filter !== "all" && p.paymentMethod !== filter) return false;
+    if (!isVisible(p)) return false;
     return r.checked;
   }).length;
 
@@ -144,9 +147,10 @@ export default function SpecialPayoutForm({ participants }: { participants: Part
 
       {/* Participant table */}
       <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-        <div className="border-b px-4 py-3 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Filter:</span>
+        <div className="border-b px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700">Payment:</span>
             {(["all", "BOLT_CARD", "LIGHTNING_ADDRESS"] as const).map((f) => (
               <button
                 key={f}
@@ -161,6 +165,19 @@ export default function SpecialPayoutForm({ participants }: { participants: Part
             <span className="text-xs text-gray-500">{selectedCount} selected</span>
             <button onClick={() => toggleAll(true)} className="text-xs text-orange-600 hover:underline">Select all</button>
             <button onClick={() => toggleAll(false)} className="text-xs text-gray-500 hover:underline">Deselect all</button>
+          </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700">Group:</span>
+            {(["all", ...TSK_GROUPS] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setGroupFilter(g)}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${groupFilter === g ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              >
+                {g === "all" ? "All" : TSK_GROUP_LABELS[g]}
+              </button>
+            ))}
           </div>
         </div>
         <table className="w-full text-sm">

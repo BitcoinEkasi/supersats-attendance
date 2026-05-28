@@ -18,6 +18,7 @@ export default async function NewSpecialPayoutPage() {
       boltUserId: true,
       paymentMethod: true,
       lightningAddress: true,
+      tskStatus: true,
     },
     orderBy: { surname: "asc" },
   });
