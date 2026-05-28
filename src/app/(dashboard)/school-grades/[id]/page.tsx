@@ -60,7 +60,7 @@ export default async function SchoolGradesDetailPage({ params }: { params: Promi
               approveUrl={`/api/academic-payouts/${id}/approve`}
               checkUrl={`/api/academic-payouts/${id}/check-payout`}
               label="Approve & Pay"
-              confirmMessage="Approve this school grades payout? Ensure all grades have been verified."
+              confirmMessage="Approve this school grades payout? Ensure all grades have been verified. You will then be able to pay from reserves or via invoice."
             />
           )}
         </div>

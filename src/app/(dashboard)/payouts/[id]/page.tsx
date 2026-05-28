@@ -51,7 +51,7 @@ export default async function SpecialPayoutDetailPage({ params }: { params: Prom
               approveUrl={`/api/payouts/${id}/approve`}
               checkUrl={`/api/payouts/${id}/check-payout`}
               label="Approve & Pay"
-              confirmMessage={`Approve "${payout.title}"? This will generate a Lightning invoice for the total amount.`}
+              confirmMessage={`Approve "${payout.title}"? You will then be able to pay from reserves or via invoice.`}
             />
           )}
         </div>

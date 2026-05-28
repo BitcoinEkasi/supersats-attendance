@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { createPayoutBatch, createBoltUser } from "@/lib/bolt";
+import { createPayoutBatch, directPayoutBatch, getBoltReserve, createBoltUser } from "@/lib/bolt";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -22,7 +22,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   });
   if (!payout) return Response.json({ error: "Payout not found" }, { status: 404 });
   if (payout.status !== "APPROVED") return Response.json({ error: "Payout must be approved first" }, { status: 400 });
-  if (payout.payoutStatus !== "unpaid") return Response.json({ error: "Invoice already created" }, { status: 400 });
+  if (payout.payoutStatus !== "unpaid") return Response.json({ error: "Payout already created" }, { status: 400 });
 
   for (const e of payout.entries) {
     if (e.participant.paymentMethod === "LIGHTNING_ADDRESS" && !e.participant.boltUserId) {
@@ -43,39 +43,78 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ error: "No eligible participants with Bolt accounts", ineligible_count: ineligibleCount }, { status: 400 });
   }
 
-  try {
-    const batch = await createPayoutBatch({
-      memo: `TSK special payout – ${payout.title}`,
-      payouts: eligible.map((e) => ({
-        user_id: Number(e.participant.boltUserId),
-        amount_sats: e.amountSats,
-        description: e.note ?? payout.title,
-        payout_type: e.participant.paymentMethod === "LIGHTNING_ADDRESS" ? "ln_address" : "internal",
-        ln_address: e.participant.paymentMethod === "LIGHTNING_ADDRESS" ? (e.participant.lightningAddress ?? undefined) : undefined,
-      })),
-    });
+  const totalSats = eligible.reduce((sum, e) => sum + e.amountSats, 0);
+  const memo = `TSK special payout – ${payout.title}`;
+  const payoutItems = eligible.map((e) => ({
+    user_id: Number(e.participant.boltUserId),
+    amount_sats: e.amountSats,
+    description: e.note ?? payout.title,
+    payout_type: e.participant.paymentMethod === "LIGHTNING_ADDRESS" ? "ln_address" : "internal",
+    ln_address: e.participant.paymentMethod === "LIGHTNING_ADDRESS" ? (e.participant.lightningAddress ?? undefined) : undefined,
+  }));
 
-    await prisma.specialPayout.update({
-      where: { id },
-      data: {
-        paymentRequest: batch.payment_request,
-        paymentHash: batch.payment_hash,
-        totalPayoutSats: batch.total_sats,
-        batchId: batch.batch_id,
-        payoutStatus: "invoiced",
-      },
-    });
+  // Check bolt reserves
+  let reserveSats = 0;
+  try {
+    const reserveData = await getBoltReserve();
+    reserveSats = reserveData.reserve_sats;
+  } catch (err: any) {
+    console.error(`[special-create-payout] Failed to fetch bolt reserve:`, err.message);
+  }
+
+  if (reserveSats >= totalSats) {
+    // Direct payout from reserves — no invoice needed
+    const batch = await directPayoutBatch({ memo, payouts: payoutItems });
+
+    await prisma.$transaction([
+      prisma.specialPayout.update({
+        where: { id },
+        data: { batchId: batch.batch_id, totalPayoutSats: totalSats, payoutStatus: "paid" },
+      }),
+      prisma.specialPayoutEntry.updateMany({
+        where: { payoutId: id, amountSats: { gt: 0 } },
+        data: { payoutStatus: "paid" },
+      }),
+    ]);
 
     return Response.json({
-      invoice: {
-        payment_request: batch.payment_request,
-        qr_base64: batch.qr_base64,
-        total_sats: batch.total_sats,
-        eligible_count: eligible.length,
-        ineligible_count: ineligibleCount,
-      },
+      success: true,
+      direct: true,
+      total_sats: totalSats,
+      eligible_count: eligible.length,
+      ineligible_count: ineligibleCount,
     });
-  } catch (err: any) {
-    return Response.json({ error: err.message }, { status: 502 });
   }
+
+  // Invoice-based payout (full or shortfall top-up)
+  const shortfall = totalSats - reserveSats;
+  const useTopup = reserveSats > 0;
+
+  const batch = await createPayoutBatch({
+    memo,
+    payouts: payoutItems,
+    ...(useTopup ? { invoice_sats: shortfall } : {}),
+  });
+
+  await prisma.specialPayout.update({
+    where: { id },
+    data: {
+      paymentRequest: batch.payment_request,
+      paymentHash: batch.payment_hash,
+      totalPayoutSats: batch.total_sats,
+      batchId: batch.batch_id,
+      payoutStatus: "invoiced",
+    },
+  });
+
+  return Response.json({
+    invoice: {
+      payment_request: batch.payment_request,
+      qr_base64: batch.qr_base64,
+      total_sats: batch.total_sats,
+      ...(useTopup ? { topup_sats: shortfall, reserve_sats: reserveSats, full_total_sats: totalSats } : {}),
+      eligible_count: eligible.length,
+      ineligible_count: ineligibleCount,
+    },
+  });
 }
