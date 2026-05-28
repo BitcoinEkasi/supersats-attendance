@@ -178,11 +178,11 @@ function LockedYearBody({ report }: { report: SchoolReport }) {
 export default function SchoolReportsSection({
   participantId,
   reports,
-  tskStatus,
+  grade,
 }: {
   participantId: string;
   reports: SchoolReport[];
-  tskStatus: string | null;
+  grade: string | null;
 }) {
   const router = useRouter();
   const currentYear = new Date().getFullYear();
@@ -223,7 +223,7 @@ export default function SchoolReportsSection({
           const isLocked = year < currentYear;
           const isOpen = openYears.has(year);
           const report = reportByYear[year];
-          const heading = tskStatus ? `${year} — ${tskStatus}` : `${year}`;
+          const heading = grade ? `${year} — ${grade}` : `${year}`;
 
           return (
             <div
