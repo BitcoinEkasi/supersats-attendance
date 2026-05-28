@@ -401,6 +401,7 @@ export default async function ParticipantDetailPage({
           <SchoolReportsSection
             participantId={participant.id}
             reports={participant.schoolReports}
+            tskStatus={participant.tskStatus ?? null}
           />
         </div>
       )}
