@@ -76,9 +76,8 @@ export default async function ReportDetailPage({
   const tierCounts = REWARD_TIERS.map((tier) => ({
     ...tier,
     count: report.entries.filter((e) => {
-      const pct = Number(e.percentage);
-      if (tier.sats === 7500) return pct >= 100;
-      return pct >= tier.min && pct <= tier.max;
+      const matched = REWARD_TIERS.find((t) => Number(e.percentage) >= t.min);
+      return matched === tier;
     }).length,
   }));
 
