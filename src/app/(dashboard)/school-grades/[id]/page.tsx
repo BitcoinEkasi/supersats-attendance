@@ -94,9 +94,8 @@ export default async function SchoolGradesDetailPage({ params }: { params: Promi
         <div className="mt-4 grid grid-cols-4 gap-3 lg:grid-cols-8">
           {REWARD_TIERS.map((tier) => {
             const count = payout.entries.filter((e) => {
-              const pct = e.gradePercent;
-              if (tier.sats === 10000) return pct >= 100;
-              return pct >= tier.min && pct <= tier.max;
+              const matched = REWARD_TIERS.find((t) => e.gradePercent >= t.min);
+              return matched === tier;
             }).length;
             return (
               <div key={tier.label} className="text-center">
