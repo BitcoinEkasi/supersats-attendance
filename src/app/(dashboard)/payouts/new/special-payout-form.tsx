@@ -38,13 +38,20 @@ export default function SpecialPayoutForm({ participants }: { participants: Part
 
   const participantMap = Object.fromEntries(participants.map((p) => [p.id, p]));
 
+  function isVisible(p: Participant) {
+    if (filter !== "all" && p.paymentMethod !== filter) return false;
+    if (groupFilter !== "all" && getGroupForStatus(p.tskStatus) !== groupFilter) return false;
+    return true;
+  }
+
   function applyDefaults() {
+    const visibleIds = new Set(participants.filter(isVisible).map((p) => p.id));
     setRows((prev) =>
-      prev.map((r) => ({
-        ...r,
-        amountSats: defaultAmount || r.amountSats,
-        note: defaultNote || r.note,
-      }))
+      prev.map((r) =>
+        visibleIds.has(r.participantId)
+          ? { ...r, amountSats: defaultAmount || r.amountSats, note: defaultNote || r.note }
+          : r
+      )
     );
   }
 
@@ -52,12 +59,6 @@ export default function SpecialPayoutForm({ participants }: { participants: Part
     setRows((prev) =>
       prev.map((r) => (r.participantId === participantId ? { ...r, [field]: value } : r))
     );
-  }
-
-  function isVisible(p: Participant) {
-    if (filter !== "all" && p.paymentMethod !== filter) return false;
-    if (groupFilter !== "all" && getGroupForStatus(p.tskStatus) !== groupFilter) return false;
-    return true;
   }
 
   function toggleAll(checked: boolean) {
