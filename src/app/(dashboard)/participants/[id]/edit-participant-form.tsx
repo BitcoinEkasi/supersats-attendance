@@ -300,12 +300,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Registration Date</label>
-            <input
-              name="registrationDate"
-              type="date"
-              defaultValue={participant.registrationDate.toISOString().split("T")[0]}
-              className={inputCls}
-            />
+            <div className={readonlyCls}>{participant.registrationDate.toISOString().split("T")[0]}</div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Indemnity Form</label>

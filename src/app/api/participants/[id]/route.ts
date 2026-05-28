@@ -181,7 +181,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         notes: body.notes?.trim() || null,
         paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
         lightningAddress: body.lightningAddress?.trim() || null,
-        ...(body.registrationDate ? { registrationDate: new Date(body.registrationDate + "T00:00:00Z") } : {}),
         ...(body.profilePicture !== undefined ? { profilePicture: body.profilePicture || null } : {}),
       },
     });
