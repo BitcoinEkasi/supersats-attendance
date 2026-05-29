@@ -12,13 +12,21 @@ type HistoryRow = {
   createdBy: string;
 };
 
+function fmtZar(sats: number, zarPerSat: number | null): string | null {
+  if (!zarPerSat) return null;
+  const zar = sats * zarPerSat;
+  return `R ${zar.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function RewardSettingsForm({
   currentMinSats,
   currentMaxSats,
+  zarPerSat,
   history,
 }: {
   currentMinSats: number;
   currentMaxSats: number;
+  zarPerSat: number | null;
   history: HistoryRow[];
 }) {
   const router = useRouter();
@@ -90,6 +98,9 @@ export default function RewardSettingsForm({
                 <div key={t.label} className="text-center">
                   <p className={`text-sm font-bold ${t.color}`}>{t.sats.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">{t.label}</p>
+                  {fmtZar(t.sats, zarPerSat) && (
+                    <p className="text-xs text-gray-400">{fmtZar(t.sats, zarPerSat)}</p>
+                  )}
                 </div>
               ))}
             </div>

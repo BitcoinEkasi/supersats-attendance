@@ -12,7 +12,7 @@ import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
 import RefreshButton from "../refresh-button";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
-import { getBoltUser } from "@/lib/bolt";
+import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 
 export default async function ReportDetailPage({
   params,
@@ -20,7 +20,7 @@ export default async function ReportDetailPage({
   params: Promise<{ month: string }>;
 }) {
   const { month: reportId } = await params;
-  const [report, session, rewardSettings] = await Promise.all([
+  const [report, session, rewardSettings, zarPerSat] = await Promise.all([
     prisma.monthlyReport.findUnique({
       where: { id: reportId },
       include: {
@@ -40,6 +40,7 @@ export default async function ReportDetailPage({
     }),
     auth(),
     getActiveRewardSettings(),
+    getZarPerSat(),
   ]);
   const REWARD_TIERS = buildTiers(rewardSettings.minSats, rewardSettings.maxSats);
 
@@ -160,6 +161,9 @@ export default async function ReportDetailPage({
               <p className="text-xs font-medium text-gray-700">
                 {tier.sats > 0 ? `🗲 ${tier.sats} sats` : "No reward"}
               </p>
+              {tier.sats > 0 && zarPerSat && (
+                <p className="text-xs text-gray-400">({satsToZar(tier.sats, zarPerSat)})</p>
+              )}
             </div>
           ))}
         </div>

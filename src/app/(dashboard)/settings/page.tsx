@@ -4,14 +4,16 @@ import { prisma } from "@/lib/db";
 import BackupRestore from "./backup-restore";
 import RewardSettingsForm from "./reward-settings-form";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
+import { getZarPerSat } from "@/lib/bolt";
 
 export default async function SettingsPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMINISTRATOR") redirect("/dashboard");
 
-  const [current, history] = await Promise.all([
+  const [current, history, zarPerSat] = await Promise.all([
     getActiveRewardSettings(),
     prisma.rewardSettings.findMany({ orderBy: { effectiveFrom: "desc" }, take: 10 }),
+    getZarPerSat(),
   ]);
 
   return (
@@ -26,6 +28,7 @@ export default async function SettingsPage() {
         <RewardSettingsForm
           currentMinSats={current.minSats}
           currentMaxSats={current.maxSats}
+          zarPerSat={zarPerSat}
           history={history.map((h) => ({
             id: h.id,
             minSats: h.minSats,
