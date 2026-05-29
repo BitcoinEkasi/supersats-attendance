@@ -584,11 +584,16 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                     <span className="text-sm font-medium text-gray-700">Assistant Coach</span>
                   </label>
                 )}
-                {isAssistantCoach && (participant as any).assistantCoachSince && (
-                  <p className="text-xs text-gray-500">
-                    AC since {fmtDate(new Date((participant as any).assistantCoachSince))}
-                  </p>
-                )}
+                {isAssistantCoach && (participant as any).assistantCoachSince && (() => {
+                  const since = new Date((participant as any).assistantCoachSince);
+                  const now = new Date();
+                  const elapsed = (now.getFullYear() - since.getUTCFullYear()) * 12 + (now.getMonth() - since.getUTCMonth());
+                  return (
+                    <p className="text-xs text-gray-500">
+                      AC since {fmtDate(since)} ({elapsed} month{elapsed !== 1 ? "s" : ""})
+                    </p>
+                  );
+                })()}
                 <input type="hidden" name="isAssistantCoach" value={isAssistantCoach && isAcEligible(tskStatus) ? "on" : ""} />
               </div>
             </div>
