@@ -24,7 +24,6 @@ export function getAcMultiplier(assistantCoachSince: Date | string, reportMonth:
   const since = assistantCoachSince instanceof Date ? assistantCoachSince : new Date(assistantCoachSince);
   const [reportYear, reportMon] = reportMonth.split("-").map(Number);
   const elapsed = (reportYear - since.getUTCFullYear()) * 12 + (reportMon - (since.getUTCMonth() + 1));
-  if (elapsed <= 0)  return 1;
   if (elapsed <= 5)  return 7;
   if (elapsed <= 11) return 9;
   if (elapsed <= 17) return 11;
