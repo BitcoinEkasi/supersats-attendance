@@ -133,8 +133,14 @@ export default function RewardSettingsForm({
               {history.map((h, i) => (
                 <tr key={h.id} className={`border-b ${i === 0 ? "font-medium" : "text-gray-500"}`}>
                   <td className="py-1.5">{new Date(h.effectiveFrom).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
-                  <td className="py-1.5">{h.minSats.toLocaleString()}</td>
-                  <td className="py-1.5">{h.maxSats.toLocaleString()}</td>
+                  <td className="py-1.5">
+                    {h.minSats.toLocaleString()}
+                    {zarPerSat && <span className="ml-1 text-xs text-gray-400">({fmtZar(h.minSats, zarPerSat)})</span>}
+                  </td>
+                  <td className="py-1.5">
+                    {h.maxSats.toLocaleString()}
+                    {zarPerSat && <span className="ml-1 text-xs text-gray-400">({fmtZar(h.maxSats, zarPerSat)})</span>}
+                  </td>
                   <td className="py-1.5 text-xs">{h.createdBy}</td>
                 </tr>
               ))}
