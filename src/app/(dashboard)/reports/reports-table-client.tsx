@@ -11,7 +11,7 @@ function fmtMonth(key: string) {
   return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`;
 }
 
-type ReportEntry = { rewardSats: number; percentage: number };
+type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number };
 type ReportRow = { id: string; month: string; group: string | null; status: string; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
@@ -74,7 +74,7 @@ export function ReportsTableClient({
               className="cursor-pointer border-b bg-gray-50 hover:bg-gray-100"
               onClick={() => toggle(month)}
             >
-              <td className="px-4 py-2" colSpan={7}>
+              <td className="px-4 py-2" colSpan={8}>
                 <div className="flex items-center gap-2">
                   <ChevronIcon open={isOpen} />
                   <span className="font-semibold text-gray-700">{fmtMonth(month)}</span>
@@ -88,6 +88,7 @@ export function ReportsTableClient({
             {isOpen &&
               monthReports.map((report) => {
                 const totalSatsRow = report.entries.reduce((s, e) => s + e.rewardSats, 0);
+                const totalSessions = report.entries.length > 0 ? Math.max(...report.entries.map((e) => e.totalEvents)) : 0;
                 const avgPct =
                   report.entries.length > 0
                     ? report.entries.reduce((s, e) => s + e.percentage, 0) / report.entries.length
@@ -104,6 +105,7 @@ export function ReportsTableClient({
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={report.status} /></td>
                     <td className="px-4 py-3">{report.entries.length}</td>
+                    <td className="px-4 py-3">{totalSessions}</td>
                     <td className="px-4 py-3 font-medium text-orange-600">
                       🗲 {totalSatsRow.toLocaleString()} sats
                       {fmtZar(totalSatsRow, zarPerSat) && (

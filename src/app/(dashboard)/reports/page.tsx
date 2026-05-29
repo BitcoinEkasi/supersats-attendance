@@ -12,7 +12,7 @@ export default async function ReportsPage() {
     prisma.monthlyReport.findMany({
     orderBy: { month: "desc" },
     include: {
-      entries: { select: { rewardSats: true, percentage: true } },
+      entries: { select: { rewardSats: true, percentage: true, totalEvents: true } },
     },
   }),
     getZarPerSat().catch(() => null),
@@ -31,7 +31,7 @@ export default async function ReportsPage() {
       month: r.month,
       group: r.group,
       status: r.status,
-      entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage) })),
+      entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage), totalEvents: e.totalEvents })),
     });
   }
   for (const month of monthKeys) {
@@ -52,6 +52,7 @@ export default async function ReportsPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Group</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Participants</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Sessions</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Total Rewards</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Avg Attendance</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
@@ -60,7 +61,7 @@ export default async function ReportsPage() {
             {reports.length === 0 ? (
               <tbody>
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                     No reports yet. Reports will appear automatically once attendance is recorded.
                   </td>
                 </tr>
