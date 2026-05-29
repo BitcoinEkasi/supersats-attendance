@@ -14,6 +14,12 @@ function fmtMonth(key: string) {
 type ReportEntry = { rewardSats: number; percentage: number };
 type ReportRow = { id: string; month: string; group: string | null; status: string; entries: ReportEntry[] };
 
+function fmtZar(sats: number, zarPerSat: number | null): string | null {
+  if (!zarPerSat) return null;
+  const zar = sats * zarPerSat;
+  return `R ${zar.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
@@ -37,10 +43,12 @@ export function ReportsTableClient({
   monthKeys,
   byMonth,
   role,
+  zarPerSat,
 }: {
   monthKeys: string[];
   byMonth: Record<string, ReportRow[]>;
   role: string | undefined | null;
+  zarPerSat: number | null;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -71,7 +79,7 @@ export function ReportsTableClient({
                   <ChevronIcon open={isOpen} />
                   <span className="font-semibold text-gray-700">{fmtMonth(month)}</span>
                   <span className="text-xs text-gray-400">
-                    {monthReports.length} group{monthReports.length !== 1 ? "s" : ""} · {totalParticipants} participants · 🗲 {totalSats.toLocaleString()} sats
+                    {monthReports.length} group{monthReports.length !== 1 ? "s" : ""} · {totalParticipants} participants · 🗲 {totalSats.toLocaleString()} sats{fmtZar(totalSats, zarPerSat) ? ` (${fmtZar(totalSats, zarPerSat)})` : ""}
                   </span>
                 </div>
               </td>
@@ -96,7 +104,12 @@ export function ReportsTableClient({
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={report.status} /></td>
                     <td className="px-4 py-3">{report.entries.length}</td>
-                    <td className="px-4 py-3 font-medium text-orange-600">🗲 {totalSatsRow.toLocaleString()} sats</td>
+                    <td className="px-4 py-3 font-medium text-orange-600">
+                      🗲 {totalSatsRow.toLocaleString()} sats
+                      {fmtZar(totalSatsRow, zarPerSat) && (
+                        <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(totalSatsRow, zarPerSat)})</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">{avgPct.toFixed(1)}%</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">

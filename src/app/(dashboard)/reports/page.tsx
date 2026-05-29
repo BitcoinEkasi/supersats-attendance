@@ -1,18 +1,22 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { groupSortIndex } from "@/lib/tsk-groups";
+import { getZarPerSat } from "@/lib/bolt";
 import { ReportsTableClient } from "./reports-table-client";
 
 export default async function ReportsPage() {
   const session = await auth();
   const role = session?.user?.role;
 
-  const reports = await prisma.monthlyReport.findMany({
+  const [reports, zarPerSat] = await Promise.all([
+    prisma.monthlyReport.findMany({
     orderBy: { month: "desc" },
     include: {
       entries: { select: { rewardSats: true, percentage: true } },
     },
-  });
+  }),
+    getZarPerSat().catch(() => null),
+  ]);
 
   // Serialize (convert Prisma Decimal → number) and group by month, sorting groups by canonical order
   const monthKeys: string[] = [];
@@ -62,7 +66,7 @@ export default async function ReportsPage() {
                 </tr>
               </tbody>
             ) : (
-              <ReportsTableClient monthKeys={monthKeys} byMonth={byMonth} role={role} />
+              <ReportsTableClient monthKeys={monthKeys} byMonth={byMonth} role={role} zarPerSat={zarPerSat ?? null} />
             )}
           </table>
         </div>
