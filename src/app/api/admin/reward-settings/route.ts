@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
+import { getZarPerSat } from "@/lib/bolt";
 import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
@@ -17,6 +18,8 @@ export async function POST(req: Request) {
     return Response.json({ error: "Min sats must be less than max sats" }, { status: 400 });
   }
 
+  const zarPerSat = await getZarPerSat().catch(() => null);
+
   const setting = await prisma.rewardSettings.create({
     data: {
       id: randomUUID(),
@@ -24,6 +27,7 @@ export async function POST(req: Request) {
       maxSats,
       effectiveFrom: new Date(),
       createdBy: user.name ?? user.id,
+      zarPerSat: zarPerSat ?? undefined,
     },
   });
 

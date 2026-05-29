@@ -35,6 +35,7 @@ export default async function SettingsPage() {
             maxSats: h.maxSats,
             effectiveFrom: h.effectiveFrom.toISOString(),
             createdBy: h.createdBy,
+            zarPerSat: h.zarPerSat ?? null,
           }))}
         />
       </div>

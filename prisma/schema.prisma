@@ -356,6 +356,7 @@ model RewardSettings {
   effectiveFrom DateTime @map("effective_from")
   createdAt     DateTime @default(now()) @map("created_at")
   createdBy     String   @map("created_by")
+  zarPerSat     Float?   @map("zar_per_sat")
 
   @@map("reward_settings")
 }
