@@ -197,6 +197,7 @@ export default async function ReportDetailPage({
       <ReportTable
         reportMonth={report.month}
         rewardTiers={REWARD_TIERS}
+        zarPerSat={zarPerSat ?? null}
         entries={report.entries.map(e => ({
           ...e,
           percentage: e.percentage.toString(),

@@ -29,7 +29,13 @@ type Entry = {
 
 type RewardTier = ReturnType<typeof buildTiers>[number];
 
-export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD_TIERS }: { entries: Entry[]; reportMonth: string; rewardTiers?: RewardTier[] }) {
+function fmtZar(sats: number, zarPerSat: number | null): string | null {
+  if (!zarPerSat) return null;
+  const zar = sats * zarPerSat;
+  return `R ${zar.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD_TIERS, zarPerSat = null }: { entries: Entry[]; reportMonth: string; rewardTiers?: RewardTier[]; zarPerSat?: number | null }) {
   const [search, setSearch] = useState("");
 
   const q = search.trim().toLowerCase();
@@ -114,7 +120,14 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                         AC{getAcMultiplier(p.assistantCoachSince, reportMonth)}
                       </span>
                     )}
-                    {entry.rewardSats > 0 ? <>🗲 {entry.rewardSats.toLocaleString()}</> : null}
+                    {entry.rewardSats > 0 ? (
+                      <>
+                        🗲 {entry.rewardSats.toLocaleString()}
+                        {fmtZar(entry.rewardSats, zarPerSat) && (
+                          <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(entry.rewardSats, zarPerSat)})</span>
+                        )}
+                      </>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">
                     {entry.cardId ?? "—"}
