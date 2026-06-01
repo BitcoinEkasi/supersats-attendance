@@ -151,11 +151,9 @@ export default async function ReportDetailPage({
           <p className="mt-1 text-2xl font-bold text-green-600">{qualifyingParticipants}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">
-            Average Attendance
-            <span className="block text-xs text-gray-400">(rounded down to nearest 5%)</span>
-          </p>
+          <p className="text-sm text-gray-500">Average Attendance</p>
           <p className="mt-1 text-2xl font-bold">{Math.floor(avgPercentage / 5) * 5}%</p>
+          <span className="text-xs text-gray-400">(rounded down to nearest 5%)</span>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Rewards</p>
