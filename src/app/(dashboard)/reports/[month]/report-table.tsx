@@ -80,7 +80,10 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
             <th className="px-4 py-3 text-left font-medium text-gray-500">Division</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Sessions</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attended</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">Attendance %</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">
+              Attendance %
+              <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 5%)</span>
+            </th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Reward (sats)</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Card</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>

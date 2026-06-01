@@ -51,7 +51,10 @@ export default function MonthlyAttendanceHistory({
         <thead>
           <tr className="border-b text-left text-gray-500">
             <th className="pb-2">Month</th>
-            <th className="pb-2">Attendance</th>
+            <th className="pb-2">
+              Attendance
+              <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 5%)</span>
+            </th>
             <th className="pb-2">Reward</th>
             <th className="pb-2">Payout</th>
             <th className="pb-2"></th>
