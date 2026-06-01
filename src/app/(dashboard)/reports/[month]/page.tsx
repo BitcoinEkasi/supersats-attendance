@@ -10,7 +10,6 @@ import ApproveButton from "../approve-button";
 import ReportTable from "./report-table";
 import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
-import RefreshButton from "../refresh-button";
 import { TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
@@ -131,10 +130,7 @@ export default async function ReportDetailPage({
             </span>
           )}
           <ExportButton reportId={report.id} month={report.month} />
-          {role === "ADMINISTRATOR" && report.status === "PENDING" && (
-            <RefreshButton refreshUrl={`/api/reports/${report.id}/refresh`} />
-          )}
-          {role === "ADMINISTRATOR" && report.status === "PENDING" && (
+{role === "ADMINISTRATOR" && report.status === "PENDING" && (
             <ApproveButton reportId={report.id} disabled={!monthComplete} missingCards={missingCards} />
           )}
         </div>
