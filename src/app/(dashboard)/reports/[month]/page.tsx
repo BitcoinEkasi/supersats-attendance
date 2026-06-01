@@ -11,8 +11,9 @@ import ReportTable from "./report-table";
 import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
 import RefreshButton from "../refresh-button";
-import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import { TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
+import { upsertMonthlyReport } from "@/lib/upsert-report";
 
 export default async function ReportDetailPage({
   params,
@@ -20,6 +21,21 @@ export default async function ReportDetailPage({
   params: Promise<{ month: string }>;
 }) {
   const { month: reportId } = await params;
+
+  // Auto-refresh: recalculate from latest attendance data on every open (PENDING only)
+  const reportMeta = await prisma.monthlyReport.findUnique({
+    where: { id: reportId },
+    select: { month: true, group: true, status: true, generatedBy: true },
+  });
+  if (!reportMeta) notFound();
+  if (reportMeta.status !== "APPROVED") {
+    await upsertMonthlyReport(
+      reportMeta.month,
+      reportMeta.generatedBy,
+      (reportMeta.group as TskGroupKey | null) ?? null,
+    );
+  }
+
   const [report, session, rewardSettings, zarPerSat] = await Promise.all([
     prisma.monthlyReport.findUnique({
       where: { id: reportId },
