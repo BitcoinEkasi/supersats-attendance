@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { type buildTiers } from "@/lib/rewards";
+import { REWARD_TIERS, type buildTiers } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getAcMultiplier } from "@/lib/tsk-levels";
 
