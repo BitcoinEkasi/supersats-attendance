@@ -65,7 +65,7 @@ export default function MonthlyAttendanceHistory({
               <>
                 <tr key={entry.id} className="border-b">
                   <td className="py-2 font-medium">{entry.reportMonth}</td>
-                  <td className="py-2">{entry.attended}/{entry.totalEvents} ({entry.percentage.toFixed(1)}%)</td>
+                  <td className="py-2">{entry.attended}/{entry.totalEvents} ({entry.percentage < 70 ? "<70%" : `${Math.floor(entry.percentage / 5) * 5}%`})</td>
                   <td className="py-2">
                     {isAssistantCoach && assistantCoachSince && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">

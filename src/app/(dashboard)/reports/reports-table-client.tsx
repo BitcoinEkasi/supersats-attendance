@@ -112,7 +112,7 @@ export function ReportsTableClient({
                         <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(totalSatsRow, zarPerSat)})</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">{avgPct.toFixed(1)}%</td>
+                    <td className="px-4 py-3">{avgPct < 70 ? "<70%" : `${Math.floor(avgPct / 5) * 5}%`}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Link href={`/reports/${report.id}`} className="text-orange-600 hover:text-orange-800">View</Link>

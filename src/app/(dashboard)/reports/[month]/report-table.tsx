@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { REWARD_TIERS, type buildTiers } from "@/lib/rewards";
+import { type buildTiers } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getAcMultiplier } from "@/lib/tsk-levels";
 
@@ -97,9 +97,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
           ) : (
             filtered.map((entry) => {
               const pct = Number(entry.percentage);
-              const tier = REWARD_TIERS.find((t) =>
-                t.sats === 7500 ? pct >= 100 : pct >= t.min && pct <= t.max,
-              );
+              const tier = rewardTiers.find((t) => pct >= t.min);
               const p = entry.participant;
               const name = `${p.surname}, ${p.fullNames}${p.knownAs ? ` (${p.knownAs})` : ""}`;
 
@@ -112,7 +110,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                   <td className="px-4 py-3">{entry.totalEvents}</td>
                   <td className="px-4 py-3">{entry.attended}</td>
                   <td className="px-4 py-3">
-                    <span className={tier?.color || ""}>{pct.toFixed(1)}%</span>
+                    <span className={tier?.color || ""}>{pct < 70 ? "<70%" : `${Math.floor(pct / 5) * 5}%`}</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
                     {p.isAssistantCoach && p.assistantCoachSince && (

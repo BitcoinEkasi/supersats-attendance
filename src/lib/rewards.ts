@@ -3,14 +3,14 @@ export const DEFAULT_MAX_SATS = 10000;
 
 // 7 tiers from 70% to 100% — exponential curve between minSats and maxSats
 const TIER_THRESHOLDS = [
-  { min: 100, max: 100, label: "100%",   color: "text-yellow-600", idx: 6 },
-  { min: 95,  max: 99,  label: "95–99%", color: "text-green-700",  idx: 5 },
-  { min: 90,  max: 94,  label: "90–94%", color: "text-green-600",  idx: 4 },
-  { min: 85,  max: 89,  label: "85–89%", color: "text-blue-700",   idx: 3 },
-  { min: 80,  max: 84,  label: "80–84%", color: "text-blue-600",   idx: 2 },
-  { min: 75,  max: 79,  label: "75–79%", color: "text-gray-700",   idx: 1 },
-  { min: 70,  max: 74,  label: "70–74%", color: "text-gray-600",   idx: 0 },
-  { min: 0,   max: 69,  label: "<70%",   color: "text-red-600",    idx: -1 },
+  { min: 100, max: 100, label: "100%", color: "text-yellow-600", idx: 6 },
+  { min: 95,  max: 99,  label: "95%",  color: "text-green-700",  idx: 5 },
+  { min: 90,  max: 94,  label: "90%",  color: "text-green-600",  idx: 4 },
+  { min: 85,  max: 89,  label: "85%",  color: "text-blue-700",   idx: 3 },
+  { min: 80,  max: 84,  label: "80%",  color: "text-blue-600",   idx: 2 },
+  { min: 75,  max: 79,  label: "75%",  color: "text-gray-700",   idx: 1 },
+  { min: 70,  max: 74,  label: "70%",  color: "text-gray-600",   idx: 0 },
+  { min: 0,   max: 69,  label: "<70%", color: "text-red-600",    idx: -1 },
 ];
 
 export function buildTiers(minSats: number, maxSats: number) {
@@ -39,5 +39,10 @@ export function calculateRewardSats(pct: number): number {
 }
 
 export function getRewardTierLabel(sats: number): string {
-  return REWARD_TIERS.find((t) => t.sats === sats)?.label ?? "Below 70%";
+  return REWARD_TIERS.find((t) => t.sats === sats)?.label ?? "<70%";
+}
+
+export function fmtPct(pct: number): string {
+  if (pct < 70) return "<70%";
+  return `${Math.floor(pct / 5) * 5}%`;
 }
