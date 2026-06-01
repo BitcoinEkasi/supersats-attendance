@@ -1,12 +1,24 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { groupSortIndex } from "@/lib/tsk-groups";
+import { groupSortIndex, type TskGroupKey } from "@/lib/tsk-groups";
 import { getZarPerSat } from "@/lib/bolt";
 import { ReportsTableClient } from "./reports-table-client";
+import { upsertMonthlyReport } from "@/lib/upsert-report";
 
 export default async function ReportsPage() {
   const session = await auth();
   const role = session?.user?.role;
+
+  // Auto-refresh all pending reports from latest attendance data
+  const pendingReports = await prisma.monthlyReport.findMany({
+    where: { status: "PENDING" },
+    select: { month: true, group: true, generatedBy: true },
+  });
+  await Promise.all(
+    pendingReports.map((r) =>
+      upsertMonthlyReport(r.month, r.generatedBy, (r.group as TskGroupKey | null) ?? null)
+    )
+  );
 
   const [reports, zarPerSat] = await Promise.all([
     prisma.monthlyReport.findMany({
