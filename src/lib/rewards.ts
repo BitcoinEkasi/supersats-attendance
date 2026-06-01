@@ -43,6 +43,5 @@ export function getRewardTierLabel(sats: number): string {
 }
 
 export function fmtPct(pct: number): string {
-  if (pct < 70) return "<70%";
   return `${Math.floor(pct / 5) * 5}%`;
 }

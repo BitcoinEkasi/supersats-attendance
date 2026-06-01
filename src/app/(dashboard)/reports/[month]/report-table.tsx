@@ -110,7 +110,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                   <td className="px-4 py-3">{entry.totalEvents}</td>
                   <td className="px-4 py-3">{entry.attended}</td>
                   <td className="px-4 py-3">
-                    <span className={tier?.color || ""}>{pct < 70 ? "<70%" : `${Math.floor(pct / 5) * 5}%`}</span>
+                    <span className={tier?.color || ""}>{`${Math.floor(pct / 5) * 5}%`}</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
                     {p.isAssistantCoach && p.assistantCoachSince && (
