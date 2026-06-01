@@ -140,7 +140,7 @@ export default async function ReportDetailPage({
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Average Attendance</p>
-          <p className="mt-1 text-2xl font-bold">{avgPercentage.toFixed(1)}%</p>
+          <p className="mt-1 text-2xl font-bold">{Math.floor(avgPercentage / 5) * 5}%</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Rewards</p>
