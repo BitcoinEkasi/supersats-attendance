@@ -40,6 +40,7 @@ export default function RewardSettingsForm({
   const min = parseInt(minSats) || 0;
   const max = parseInt(maxSats) || 0;
   const previewTiers = min > 0 && max > min ? buildTiers(min, max) : null;
+  const stepFactor = min > 0 && max > min ? Math.pow(max / min, 1 / 6) : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +94,14 @@ export default function RewardSettingsForm({
         {/* Live tier preview */}
         {previewTiers && (
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Tier Preview</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Tier Preview</p>
+              {stepFactor && (
+                <p className="text-xs text-gray-400">
+                  ×<span className="font-semibold text-gray-600">{stepFactor.toFixed(2)}</span> per step
+                </p>
+              )}
+            </div>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
               {previewTiers.filter(t => t.sats > 0).reverse().map((t) => (
                 <div key={t.label} className="text-center">
