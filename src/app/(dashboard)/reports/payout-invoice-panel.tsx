@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 
 interface PayoutInvoicePanelProps {
@@ -28,10 +29,12 @@ export default function PayoutInvoicePanel({
   paidMessage,
   topupNote,
 }: PayoutInvoicePanelProps) {
+  const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
   const [checking, setChecking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatedQr, setGeneratedQr] = useState<string>("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (qrBase64 || !paymentRequest) return;
@@ -42,18 +45,25 @@ export default function PayoutInvoicePanel({
     }).then((url) => setGeneratedQr(url));
   }, [paymentRequest, qrBase64]);
 
-  // Auto-check status on mount so a page refresh reflects payment automatically
   useEffect(() => {
     if (initialStatus === "paid") return;
     checkStatus();
+    pollRef.current = setInterval(checkStatus, 5000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function checkStatus() {
     setChecking(true);
     const res = await fetch(checkUrl ?? `/api/reports/${reportId}/check-payout`);
     const data = await res.json();
-    setStatus(data.payout_status);
     setChecking(false);
+    if (data.payout_status === "paid") {
+      setStatus("paid");
+      if (pollRef.current) clearInterval(pollRef.current);
+      router.refresh();
+    } else {
+      setStatus(data.payout_status);
+    }
   }
 
   function copyInvoice() {
