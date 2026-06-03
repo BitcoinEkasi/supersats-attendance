@@ -10,6 +10,15 @@ interface InvoiceData {
   total_sats: number;
   eligible_count: number;
   ineligible_count: number;
+  topup_sats?: number;
+  reserve_sats?: number;
+  full_total_sats?: number;
+}
+
+interface DirectResult {
+  total_sats: number;
+  eligible_count: number;
+  ineligible_count: number;
 }
 
 export default function ApproveButton({ reportId, disabled = false, approveUrl, checkUrl, confirmMessage, label, missingCards }: { reportId: string; disabled?: boolean; approveUrl?: string; checkUrl?: string; confirmMessage?: string; label?: string; missingCards?: { tskId: string; name: string }[] }) {
@@ -18,6 +27,7 @@ export default function ApproveButton({ reportId, disabled = false, approveUrl, 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
+  const [direct, setDirect] = useState<DirectResult | null>(null);
 
   async function handleApprove() {
     if (!confirm(confirmMessage ?? "Approve this report? This confirms that the results have been reviewed and are correct.")) return;
@@ -31,7 +41,9 @@ export default function ApproveButton({ reportId, disabled = false, approveUrl, 
       setError(result.error);
       return;
     }
-    if (result.invoice) {
+    if (result.direct) {
+      setDirect({ total_sats: result.total_sats, eligible_count: result.eligible_count, ineligible_count: result.ineligible_count });
+    } else if (result.invoice) {
       setInvoice(result.invoice);
     } else if (result.invoice_error) {
       setError(`Approved, but failed to create payout invoice: ${result.invoice_error}`);
@@ -68,6 +80,17 @@ export default function ApproveButton({ reportId, disabled = false, approveUrl, 
       >
         {loading ? "Approving..." : (label ?? "Approve Report")}
       </button>
+      {direct && (
+        <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4">
+          <p className="font-semibold text-green-800">⚡ Rewards Paid</p>
+          <p className="mt-1 text-sm text-green-700">
+            Paid directly from bolt reserves — {direct.total_sats.toLocaleString()} sats distributed to {direct.eligible_count} participant{direct.eligible_count !== 1 ? "s" : ""}.
+            {direct.ineligible_count > 0 && (
+              <span className="ml-1 text-amber-700">{direct.ineligible_count} participant{direct.ineligible_count !== 1 ? "s" : ""} without bolt account excluded.</span>
+            )}
+          </p>
+        </div>
+      )}
       {invoice && (
         <PayoutInvoicePanel
           reportId={reportId}
@@ -78,6 +101,16 @@ export default function ApproveButton({ reportId, disabled = false, approveUrl, 
           ineligibleCount={invoice.ineligible_count}
           initialStatus="invoiced"
           checkUrl={checkUrl}
+          paidMessage={
+            invoice.full_total_sats
+              ? `Payment received. ${invoice.eligible_count} participant cards have been topped up (${invoice.full_total_sats.toLocaleString()} sats total: ${invoice.reserve_sats?.toLocaleString()} from reserves + ${invoice.topup_sats?.toLocaleString()} via invoice).`
+              : undefined
+          }
+          topupNote={
+            invoice.topup_sats
+              ? `${invoice.reserve_sats?.toLocaleString()} sats drawn from bolt reserves · ${invoice.topup_sats.toLocaleString()} sats top-up invoice`
+              : undefined
+          }
         />
       )}
     </div>
