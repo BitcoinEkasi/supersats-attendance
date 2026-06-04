@@ -166,6 +166,7 @@ export async function updateBoltUserMeta(boltUserId: number, meta: {
   division?: string | null;
   tsk_level?: string | null;
   ac?: boolean | null;
+  tsk_group?: string | null;
 }): Promise<void> {
   await boltFetch(`/api/v1/users/${boltUserId}`, {
     method: 'PATCH',

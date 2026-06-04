@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     // Sync to Bolt after all changes for this participant
     const freshP = await prisma.participant.findUnique({
       where: { id: changes[0].participantId },
-      select: { boltUserId: true, tskStatus: true, isAssistantCoach: true, dateOfBirth: true, gender: true },
+      select: { boltUserId: true, tskStatus: true, isAssistantCoach: true, dateOfBirth: true, gender: true, group: true },
     });
     if (freshP?.boltUserId && freshP.dateOfBirth) {
       try {
@@ -96,6 +96,7 @@ export async function POST(req: Request) {
           division,
           tsk_level: freshP.tskStatus,
           ac: freshP.isAssistantCoach,
+          tsk_group: freshP.group ?? null,
         });
       } catch { /* non-critical */ }
     }

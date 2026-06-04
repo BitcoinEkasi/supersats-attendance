@@ -97,7 +97,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const newTskStatus = body.tskStatus?.trim() || null;
   const existing = await prisma.participant.findUnique({
     where: { id },
-    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
+    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true, group: true },
   });
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
 
@@ -235,6 +235,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           division,
           tsk_level: appliedTskStatus,
           ac: appliedIsAc,
+          tsk_group: existing.group ?? null,
         });
       } catch { /* non-critical */ }
     }
