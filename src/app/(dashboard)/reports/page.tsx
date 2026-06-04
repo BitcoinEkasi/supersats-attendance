@@ -43,6 +43,7 @@ export default async function ReportsPage() {
       month: r.month,
       group: r.group,
       status: r.status,
+      zarPerSat: r.zarPerSat ?? null,
       entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage), totalEvents: e.totalEvents })),
     });
   }

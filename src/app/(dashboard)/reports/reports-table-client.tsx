@@ -12,7 +12,7 @@ function fmtMonth(key: string) {
 }
 
 type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number };
-type ReportRow = { id: string; month: string; group: string | null; status: string; entries: ReportEntry[] };
+type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
   if (!zarPerSat) return null;
@@ -108,8 +108,8 @@ export function ReportsTableClient({
                     <td className="px-4 py-3">{totalSessions}</td>
                     <td className="px-4 py-3 font-medium text-orange-600">
                       🗲 {totalSatsRow.toLocaleString()} sats
-                      {fmtZar(totalSatsRow, zarPerSat) && (
-                        <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(totalSatsRow, zarPerSat)})</span>
+                      {fmtZar(totalSatsRow, report.status === "APPROVED" ? (report.zarPerSat ?? zarPerSat) : zarPerSat) && (
+                        <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(totalSatsRow, report.status === "APPROVED" ? (report.zarPerSat ?? zarPerSat) : zarPerSat)})</span>
                       )}
                     </td>
                     <td className="px-4 py-3">{`${Math.floor(avgPct / 5) * 5}%`}</td>
