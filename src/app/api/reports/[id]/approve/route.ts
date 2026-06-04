@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { getSASTNow } from "@/lib/sast";
-import { createPayoutBatch, directPayoutBatch, getBoltReserve, createBoltUser } from "@/lib/bolt";
+import { createPayoutBatch, directPayoutBatch, getBoltReserve, createBoltUser, getZarPerSat } from "@/lib/bolt";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,9 +40,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     );
   }
 
+  const zarPerSat = await getZarPerSat();
+
   await prisma.monthlyReport.update({
     where: { id },
-    data: { status: "APPROVED", approvedAt: new Date(), approvedBy: user.id },
+    data: { status: "APPROVED", approvedAt: new Date(), approvedBy: user.id, zarPerSat },
   });
 
   // Entries with a reward

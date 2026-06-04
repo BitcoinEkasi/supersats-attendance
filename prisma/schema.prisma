@@ -242,6 +242,7 @@ model MonthlyReport {
   payoutStatus    String       @default("unpaid") @map("payout_status")
   totalPayoutSats Int          @default(0) @map("total_payout_sats")
   batchId         Int?         @map("batch_id")
+  zarPerSat       Float?       @map("zar_per_sat")
 
   entries MonthlyReportEntry[]
 

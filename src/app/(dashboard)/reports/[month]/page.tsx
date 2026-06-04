@@ -35,7 +35,7 @@ export default async function ReportDetailPage({
     );
   }
 
-  const [report, session, rewardSettings, zarPerSat] = await Promise.all([
+  const [report, session, rewardSettings, liveZarPerSat] = await Promise.all([
     prisma.monthlyReport.findUnique({
       where: { id: reportId },
       include: {
@@ -60,6 +60,9 @@ export default async function ReportDetailPage({
   const REWARD_TIERS = buildTiers(rewardSettings.minSats, rewardSettings.maxSats);
 
   if (!report) notFound();
+
+  // Use locked-in rate for approved reports, live rate for pending
+  const zarPerSat = report.status === "APPROVED" ? (report.zarPerSat ?? liveZarPerSat) : liveZarPerSat;
 
   const role = session?.user?.role;
 
