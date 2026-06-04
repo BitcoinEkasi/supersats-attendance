@@ -35,7 +35,7 @@ function fmtZar(sats: number, zarPerSat: number | null): string | null {
   return `R ${zar.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD_TIERS, zarPerSat = null }: { entries: Entry[]; reportMonth: string; rewardTiers?: RewardTier[]; zarPerSat?: number | null }) {
+export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD_TIERS, zarPerSat = null, zarLocked = false }: { entries: Entry[]; reportMonth: string; rewardTiers?: RewardTier[]; zarPerSat?: number | null; zarLocked?: boolean }) {
   const [search, setSearch] = useState("");
 
   const q = search.trim().toLowerCase();
@@ -125,7 +125,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                       <>
                         🗲 {entry.rewardSats.toLocaleString()}
                         {fmtZar(entry.rewardSats, zarPerSat) && (
-                          <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(entry.rewardSats, zarPerSat)})</span>
+                          <span className={`ml-1 text-xs font-normal ${zarLocked ? "text-green-600" : "text-gray-400"}`}>({fmtZar(entry.rewardSats, zarPerSat)})</span>
                         )}
                       </>
                     ) : null}

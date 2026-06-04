@@ -109,7 +109,9 @@ export function ReportsTableClient({
                     <td className="px-4 py-3 font-medium text-orange-600">
                       🗲 {totalSatsRow.toLocaleString()} sats
                       {fmtZar(totalSatsRow, report.status === "APPROVED" ? (report.zarPerSat ?? zarPerSat) : zarPerSat) && (
-                        <span className="ml-1 text-xs font-normal text-gray-400">({fmtZar(totalSatsRow, report.status === "APPROVED" ? (report.zarPerSat ?? zarPerSat) : zarPerSat)})</span>
+                        <span className={`ml-1 text-xs font-normal ${report.status === "APPROVED" && report.zarPerSat ? "text-green-600" : "text-gray-400"}`}>
+                          ({fmtZar(totalSatsRow, report.status === "APPROVED" ? (report.zarPerSat ?? zarPerSat) : zarPerSat)})
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3">{`${Math.floor(avgPct / 5) * 5}%`}</td>

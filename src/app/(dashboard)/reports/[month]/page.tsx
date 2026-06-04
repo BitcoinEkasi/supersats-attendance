@@ -178,7 +178,7 @@ export default async function ReportDetailPage({
                 {tier.sats > 0 ? `🗲 ${tier.sats} sats` : "No reward"}
               </p>
               {tier.sats > 0 && zarPerSat && (
-                <p className="text-xs text-gray-400">({satsToZar(tier.sats, zarPerSat)})</p>
+                <p className={`text-xs ${report.status === "APPROVED" && report.zarPerSat ? "text-green-600" : "text-gray-400"}`}>({satsToZar(tier.sats, zarPerSat)})</p>
               )}
             </div>
           ))}
@@ -214,6 +214,7 @@ export default async function ReportDetailPage({
         reportMonth={report.month}
         rewardTiers={REWARD_TIERS}
         zarPerSat={zarPerSat ?? null}
+        zarLocked={report.status === "APPROVED" && !!report.zarPerSat}
         entries={report.entries.map(e => ({
           ...e,
           percentage: e.percentage.toString(),
