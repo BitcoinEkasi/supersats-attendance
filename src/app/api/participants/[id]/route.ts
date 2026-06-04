@@ -5,6 +5,7 @@ import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { updateBoltUserDisplayName, updateBoltUserMeta } from "@/lib/bolt";
 import { getDivisionLabel } from "@/lib/sa-id";
 import { isAcEligible } from "@/lib/tsk-levels";
+import { getGroupForStatus } from "@/lib/tsk-groups";
 import { getSASTNow } from "@/lib/sast";
 import { randomUUID } from "crypto";
 import type { ParticipantStatus, PaymentMethod } from "@prisma/client";
@@ -97,7 +98,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const newTskStatus = body.tskStatus?.trim() || null;
   const existing = await prisma.participant.findUnique({
     where: { id },
-    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true, group: true },
+    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
   });
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
 
@@ -235,7 +236,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           division,
           tsk_level: appliedTskStatus,
           ac: appliedIsAc,
-          tsk_group: existing.group ?? null,
+          tsk_group: getGroupForStatus(appliedTskStatus),
         });
       } catch { /* non-critical */ }
     }

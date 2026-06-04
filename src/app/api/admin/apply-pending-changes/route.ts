@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { isAcEligible } from "@/lib/tsk-levels";
+import { getGroupForStatus } from "@/lib/tsk-groups";
 // requireAuth used for non-cron requests; CRON_SECRET used for scheduled calls
 import { updateBoltUserMeta } from "@/lib/bolt";
 import { getDivisionLabel } from "@/lib/sa-id";
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
     // Sync to Bolt after all changes for this participant
     const freshP = await prisma.participant.findUnique({
       where: { id: changes[0].participantId },
-      select: { boltUserId: true, tskStatus: true, isAssistantCoach: true, dateOfBirth: true, gender: true, group: true },
+      select: { boltUserId: true, tskStatus: true, isAssistantCoach: true, dateOfBirth: true, gender: true },
     });
     if (freshP?.boltUserId && freshP.dateOfBirth) {
       try {
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
           division,
           tsk_level: freshP.tskStatus,
           ac: freshP.isAssistantCoach,
-          tsk_group: freshP.group ?? null,
+          tsk_group: getGroupForStatus(freshP.tskStatus),
         });
       } catch { /* non-critical */ }
     }
