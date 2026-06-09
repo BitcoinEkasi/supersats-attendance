@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Marshal Login",
+  title: "TSK Marshal",
   manifest: "/marshal-manifest.json",
 };
 

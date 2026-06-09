@@ -1,6 +1,6 @@
 {
-  "name": "Marshal Login",
-  "short_name": "Marshal",
+  "name": "TSK Marshal",
+  "short_name": "TSK Marshal",
   "description": "TSK Marshal group login",
   "start_url": "/marshal",
   "scope": "/marshal",
