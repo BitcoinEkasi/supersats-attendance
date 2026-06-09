@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import InstallBanner from "./install-banner";
 
 export const metadata: Metadata = {
   title: "TSK Marshal",
@@ -15,6 +16,7 @@ export default function MarshalLayout({ children }: { children: React.ReactNode 
         }
       `}</Script>
       {children}
+      <InstallBanner />
     </>
   );
 }
