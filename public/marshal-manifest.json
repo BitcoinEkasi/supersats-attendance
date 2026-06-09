@@ -3,7 +3,7 @@
   "short_name": "TSK Marshal",
   "description": "TSK Marshal group login",
   "start_url": "/marshal",
-  "scope": "/marshal",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#ea580c",

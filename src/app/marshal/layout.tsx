@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function MarshalLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator)navigator.serviceWorker.register('/marshal-sw.js',{scope:'/marshal'}).catch(function(){});` }} />
+      <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator)navigator.serviceWorker.register('/marshal-sw.js').catch(function(){});` }} />
       {children}
       <InstallBanner />
     </>

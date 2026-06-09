@@ -6,6 +6,9 @@ export default function InstallBanner() {
   const [prompt, setPrompt] = useState<any>(null);
 
   useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/marshal-sw.js').catch(() => {});
+    }
     const handler = (e: Event) => { e.preventDefault(); setPrompt(e); };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
