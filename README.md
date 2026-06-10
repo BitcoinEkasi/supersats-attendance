@@ -1,6 +1,6 @@
 # TSK Bitcoin Rewards Platform — System Documentation
 
-**BitcoinEkasi** · [tsk.bitcoinekasi.xyz](https://tsk.bitcoinekasi.xyz) · [bolt.bitcoinekasi.xyz](https://bolt.bitcoinekasi.xyz) · April 2026
+**BitcoinEkasi** · [tsk.bitcoinekasi.xyz](https://tsk.bitcoinekasi.xyz) · [bolt.bitcoinekasi.xyz](https://bolt.bitcoinekasi.xyz) · June 2026
 
 ---
 
@@ -25,6 +25,16 @@
   - [3.8 Security](#38-security)
 - [Part 4 — How the Two Systems Work Together](#part-4--how-the-two-systems-work-together)
 - [Part 5 — Deployment & Operations](#part-5--deployment--operations)
+- [Part 6 — Updates (June 2026)](#part-6--updates-june-2026)
+  - [6.1 TSK Groups](#61-tsk-groups)
+  - [6.2 Monthly Report Improvements](#62-monthly-report-improvements)
+  - [6.3 Reward Settings](#63-reward-settings)
+  - [6.4 Payout Reserve Flow](#64-payout-reserve-flow)
+  - [6.5 ZAR Rate Locking](#65-zar-rate-locking)
+  - [6.6 BoltCard Admin — Group Filters](#66-boltcard-admin--group-filters)
+  - [6.7 Balance Check Page](#67-balance-check-page-balance_check)
+  - [6.8 Progressive Web Apps](#68-progressive-web-apps)
+  - [6.9 SSL Certificate Maintenance](#69-ssl-certificate-maintenance)
 
 ---
 
@@ -163,13 +173,18 @@ A participant starts `ACTIVE`. When retired, the Administrator selects a reason 
 
 The `retiredAt` date is set to the current timestamp. On retirement, the monthly report for the current month is automatically regenerated.
 
-#### Junior Coach System
+#### Assistant Coach System
 
-| Level | Multiplier | Effect on 10,000 sat base reward |
-|-------|-----------|----------------------------------|
-| 1 | 5× | 50,000 sats |
-| 2 | 7.5× | 75,000 sats |
-| 3 | 10× | 100,000 sats |
+Participants at Dolphin L5, Dolphin L6, or Free Surfer level are eligible to become Assistant Coaches. The reward multiplier scales with time served:
+
+| Months as AC | Multiplier |
+|---|---|
+| 0 – 5 | ×6 |
+| 6 – 11 | ×9 |
+| 12 – 17 | ×12 |
+| 18 – 23 | ×15 |
+| 24 – 29 | ×18 |
+| 30+ | ×21 |
 
 #### Change Requests
 
@@ -259,23 +274,20 @@ Key design decisions:
 
 #### Reward Tiers
 
-| Attendance % | Base Reward (sats) |
-|-------------|-------------------|
-| 100% | 10,000 |
-| 95 – 99% | 8,200 |
-| 90 – 94% | 6,700 |
-| 85 – 89% | 5,500 |
-| 80 – 84% | 4,500 |
-| 75 – 79% | 3,700 |
-| 70 – 74% | 3,000 |
-| < 70% | 0 |
+Reward tiers are configured in **Settings → Reward Settings**. Administrators set a minimum reward (paid at 70% attendance) and a maximum reward (paid at 100%). The 7 tiers between them follow an exponential curve:
 
-#### Junior Coach Multiplier
+```
+ratio = (maxSats / minSats) ^ (1/6)
+tierSats = minSats × ratio ^ tierIndex   (index 0 = 70%, index 6 = 100%)
+```
+
+The per-step multiplier (e.g. ×1.22) is displayed live in the settings preview alongside ZAR equivalents. Attendance below 70% earns no reward.
+
+#### Assistant Coach Multiplier
 
 ```typescript
-const JC_MULTIPLIERS = { 1: 5, 2: 7.5, 3: 10 };
-const rewardSats = participant.isJuniorCoach
-  ? Math.round(baseReward * (JC_MULTIPLIERS[participant.juniorCoachLevel ?? 1] ?? 5))
+const rewardSats = participant.isAssistantCoach && participant.assistantCoachSince
+  ? Math.round(baseReward * getAcMultiplier(participant.assistantCoachSince, reportMonth))
   : baseReward;
 ```
 
@@ -297,7 +309,12 @@ const rewardSats = participant.isJuniorCoach
 
 #### Monthly Report Payout Flow
 
-When an Administrator approves a monthly report, TSK calls Bolt's `POST /api/v1/payout/batch` with a list of `{ userId, amountSats, payoutType }` items. Bolt credits internal balances or sends outbound Lightning payments accordingly.
+On approval, TSK first checks the Bolt reserve balance (`GET /api/v1/payout/reserve`):
+
+1. **Reserves sufficient** → calls `POST /api/v1/payout/batch/direct`. Cards are topped up instantly, no Lightning invoice required.
+2. **Reserves insufficient** → calls `POST /api/v1/payout/batch` with `invoice_sats = shortfall`. Only the gap needs to be topped up via Lightning.
+
+The invoice panel auto-polls every 5 seconds and reloads the page automatically on payment confirmation. A fallback **Pay Rewards** button on already-approved reports uses the same reserve-check logic.
 
 #### Academic Payouts
 
@@ -616,4 +633,111 @@ docker system prune -f
 
 ---
 
-*BitcoinEkasi — TSK Bitcoin Rewards Platform — April 2026*
+---
+
+## Part 6 — Updates (June 2026)
+
+### 6.1 TSK Groups
+
+Participants are organised into five groups based on their TSK level:
+
+| Group | TSK Levels |
+|-------|-----------|
+| **Turtles** | Turtle L1, Turtle L2 |
+| **Seals** | Seal L3, Seal L4 |
+| **Dolphins** | Dolphin L5, Dolphin L6 |
+| **Sharks** | Shark L7 |
+| **Free Surfers** | Free Surfer |
+
+Monthly reports are generated per group. Each group's report is approved and paid independently, allowing partial-month payouts when reserves are limited. The group is derived from the participant's `tskStatus` via `getGroupForStatus()` in `src/lib/tsk-groups.ts`.
+
+---
+
+### 6.2 Monthly Report Improvements
+
+- Attendance percentage is **floored to the nearest 5%** throughout the UI (e.g. 83% displays as 80%) — the precise value is retained in the database.
+- The monthly reports overview **auto-refreshes all PENDING reports** on page load so figures always reflect the latest attendance data.
+- Report detail pages also auto-refresh PENDING reports on open.
+- A **Sessions column** was added to the reports overview table.
+- ZAR values display in **green** when the exchange rate is locked (approved reports) and grey when live (pending reports).
+
+---
+
+### 6.3 Reward Settings
+
+The Reward Settings page (`/settings`) now shows a live tier preview with:
+- The **per-step multiplier** (e.g. ×1.22) displayed in the preview header, updating in real time as min/max values change.
+- ZAR equivalents per tier using the live exchange rate.
+- A change history table showing previous min/max configurations.
+
+---
+
+### 6.4 Payout Reserve Flow
+
+The approve-report flow checks Bolt reserves before generating any invoice:
+
+1. TSK calls `GET /api/v1/payout/reserve` on the Bolt server.
+2. If `reserveSats ≥ totalRewardSats` → `POST /api/v1/payout/batch/direct`. Instant payout, no invoice.
+3. If `reserveSats < totalRewardSats` → `POST /api/v1/payout/batch` with `invoice_sats = shortfall`. Only the gap is invoiced.
+
+The **Pay Rewards** fallback button (shown on already-approved but unpaid reports) follows the same logic. The invoice panel polls payment status every 5 seconds and triggers a full page refresh automatically on confirmation.
+
+---
+
+### 6.5 ZAR Rate Locking
+
+A `zar_per_sat` column was added to `MonthlyReport`. On approval, the live exchange rate is fetched and stored permanently on the report record. Approved reports always display the rate from their approval date — the figure is fixed for audit purposes. Pending reports continue to show the live rate.
+
+---
+
+### 6.6 BoltCard Admin — Group Filters
+
+The admin dashboard (`/admin`) and the TSK Balances view (`/balances`) gained a **group filter dropdown**:
+
+| Filter | Shows |
+|--------|-------|
+| All | All users |
+| Turtles / Seals / Dolphins / Sharks / Free Surfers | Filtered by TSK group |
+| Assistant Coaches | Filtered by the `ac` flag |
+
+The `tsk_group`, `ac`, `division`, and `tsk_level` fields are synced from TSK Rewards to Bolt automatically whenever a participant profile is saved (`PATCH /api/v1/users/:id`). A one-off bulk sync populates all existing participants using a cross-database SQL query.
+
+---
+
+### 6.7 Balance Check Page (/balance_check)
+
+An NFC-based card balance reader for staff. Opening the URL in Chrome on Android and tapping a participant's BoltCard shows:
+
+- Participant name, balance in sats and ZAR
+- Card ID, surfing division, TSK level
+- Last 50 transactions
+
+The page uses the Web NFC API (`NDEFReader`). Chrome requires a user gesture to activate NFC — the entire screen is a tap target on first load, making it feel seamless. After reading a card the scanner stays active for the next tap.
+
+---
+
+### 6.8 Progressive Web Apps
+
+Three pages are installable as standalone PWAs on Android Chrome:
+
+| App Name | URL | Description |
+|----------|-----|-------------|
+| **TSK Bolt Balances** | bolt.bitcoinekasi.xyz/balances | Full participant balance overview with group filter |
+| **TSK Bolt Check** | bolt.bitcoinekasi.xyz/balance_check | NFC card balance reader |
+| **TSK Marshal** | tsk.bitcoinekasi.xyz/marshal | Marshal group login |
+
+Each PWA has its own web app manifest and a minimal pass-through service worker. An in-page **install banner** appears automatically on first visit (powered by the `beforeinstallprompt` event). Once installed, the apps open in standalone mode with no browser chrome and appear in the Android app drawer.
+
+**Implementation notes:**
+- **Bolt (Vite SPA):** The Express server injects the manifest `<link>` and SW registration `<script>` directly into the HTML response for the two PWA routes, ensuring Chrome detects them at parse time rather than after React hydrates.
+- **TSK Marshal (Next.js):** The manifest is linked via `metadata.manifest` in `src/app/marshal/layout.tsx`. Static PWA files (manifests, service workers, icons) are excluded from the NextAuth middleware matcher so they are served without auth cookies.
+
+---
+
+### 6.9 SSL Certificate Maintenance
+
+The certbot renewal configuration for `tsk.bitcoinekasi.xyz` was updated from the `standalone` authenticator to the `nginx` authenticator. The standalone plugin attempted to bind port 80, which nginx already held, causing renewal failures. With the nginx plugin, certbot performs the ACME challenge through the running nginx instance without requiring a port release.
+
+---
+
+*BitcoinEkasi — TSK Bitcoin Rewards Platform — June 2026*
