@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { buildTiers } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
-import { getSASTNow } from "@/lib/sast";
+import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import ExportButton from "./export-button";
 import ApproveButton from "../approve-button";
@@ -35,7 +35,7 @@ export default async function ReportDetailPage({
     );
   }
 
-  const [report, session, rewardSettings, liveZarPerSat] = await Promise.all([
+  const [report, session, rewardSettings, liveZarPerSat, monthEvents] = await Promise.all([
     prisma.monthlyReport.findUnique({
       where: { id: reportId },
       include: {
@@ -56,6 +56,13 @@ export default async function ReportDetailPage({
     auth(),
     getActiveRewardSettings(),
     getZarPerSat(),
+    prisma.event.findMany({
+      where: {
+        date: { gte: getStartOfSASTMonth(reportMeta.month), lte: getEndOfSASTMonth(reportMeta.month) },
+        ...(reportMeta.group ? { group: reportMeta.group } : {}),
+      },
+      select: { category: true },
+    }),
   ]);
   const REWARD_TIERS = buildTiers(rewardSettings.minSats, rewardSettings.maxSats);
 
@@ -72,12 +79,23 @@ export default async function ReportDetailPage({
 
   const totalSats = report.entries.reduce((sum, e) => sum + e.rewardSats, 0);
   const totalParticipants = report.entries.length;
-  const totalSessions = report.entries.length > 0 ? Math.max(...report.entries.map((e) => e.totalEvents)) : 0;
+  const totalSessions = monthEvents.length;
   const avgPercentage =
     totalParticipants > 0
       ? report.entries.reduce((sum, e) => sum + Number(e.percentage), 0) / totalParticipants
       : 0;
   const qualifyingParticipants = report.entries.filter((e) => e.rewardSats > 0).length;
+
+  const categoryLabels: Record<string, string> = {
+    SURFING: "Surfing", FITNESS: "Fitness", SKATING: "Skating",
+    BEACH_CLEAN_UP: "Beach Clean Up", BEACH_ACTIVITIES: "Beach Activities",
+    SIMULATED_HEATS: "Simulated Heats", VIDEO_ANALYSIS: "Video Analysis",
+    MENTAL_TRAINING: "Mental Training", SCORING_REVIEW: "Scoring Review", OTHER: "Other",
+  };
+  const activityBreakdown = monthEvents.reduce<Record<string, number>>((acc, e) => {
+    acc[e.category] = (acc[e.category] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const missingCards = report.entries
     .filter((e) => e.rewardSats > 0 && e.participant.paymentMethod === "BOLT_CARD" && !e.participant.boltUserId)
@@ -148,6 +166,19 @@ export default async function ReportDetailPage({
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Sessions</p>
           <p className="mt-1 text-2xl font-bold">{totalSessions}</p>
+          {Object.entries(activityBreakdown).length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Activity</p>
+              <ul className="space-y-0.5">
+                {Object.entries(activityBreakdown).map(([cat, count]) => (
+                  <li key={cat} className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{categoryLabels[cat] ?? cat}</span>
+                    <span className="ml-2 font-medium text-gray-700">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Qualifying</p>
