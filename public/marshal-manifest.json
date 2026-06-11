@@ -1,7 +1,7 @@
 {
-  "name": "TSK Marshal",
-  "short_name": "TSK Marshal",
-  "description": "TSK Marshal group login",
+  "name": "Marshal",
+  "short_name": "Marshal",
+  "description": "Marshal attendance capture — group login and session check-in",
   "start_url": "/marshal",
   "scope": "/",
   "display": "standalone",

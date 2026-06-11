@@ -98,6 +98,26 @@ Defaults (configurable in the admin UI):
 | 70–79% | 5 000 sats |
 | < 70% | 0 sats |
 
+## Progressive Web App (PWA)
+
+The marshal attendance interface is installable as a PWA on Android via Chrome — no app store required.
+
+### Marshal PWA (`/marshal`)
+
+Marshals visit `yourdomain.com/marshal` on their Android phone and tap **Add to Home Screen** when Chrome prompts. The app opens in standalone mode (no browser chrome) and is optimised for portrait mobile use.
+
+**Per-group passcodes** control which group a marshal can check in. Set these via env vars:
+
+```
+MARSHAL_PASSCODE_TURTLES=your-passcode
+MARSHAL_PASSCODE_SEALS=your-passcode
+# etc. — one per group defined in src/lib/tsk-groups.ts
+```
+
+**Customising the app name and icons:**
+- Name and short name: edit `public/marshal-manifest.json`
+- Icons: replace `public/icons/marshal-192.png` and `public/icons/marshal-512.png` with your own (192×192 and 512×512 PNG)
+
 ## Companion project
 
 Payouts are handled by **[supersats-rewards](https://github.com/BitcoinEkasi/supersats-rewards)** — the BoltCard and Lightning Network payment server that this app calls when approving monthly reports.
