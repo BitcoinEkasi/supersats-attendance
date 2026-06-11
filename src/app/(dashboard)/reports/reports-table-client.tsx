@@ -67,6 +67,21 @@ export function ReportsTableClient({
         const totalSats = monthReports.reduce((s, r) => s + r.entries.reduce((a, e) => a + e.rewardSats, 0), 0);
         const totalParticipants = monthReports.reduce((s, r) => s + r.entries.length, 0);
 
+        // Use each report's locked rate if approved, else fall back to live rate
+        const allLocked = monthReports.every((r) => r.status === "APPROVED" && r.zarPerSat != null);
+        const monthZarParts = monthReports.map((r) => {
+          const rate = r.status === "APPROVED" && r.zarPerSat != null ? r.zarPerSat : zarPerSat;
+          if (rate == null) return null;
+          return r.entries.reduce((a, e) => a + e.rewardSats, 0) * rate;
+        });
+        const monthZar =
+          monthZarParts.every((p) => p != null)
+            ? (monthZarParts as number[]).reduce((s, p) => s + p, 0)
+            : null;
+        const fmtMonthZar = monthZar != null
+          ? `R ${monthZar.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : null;
+
         return (
           <>
             <tr
@@ -79,7 +94,10 @@ export function ReportsTableClient({
                   <ChevronIcon open={isOpen} />
                   <span className="font-semibold text-gray-700">{fmtMonth(month)}</span>
                   <span className="text-xs text-gray-400">
-                    {monthReports.length} group{monthReports.length !== 1 ? "s" : ""} · {totalParticipants} participants · 🗲 {totalSats.toLocaleString()} sats{fmtZar(totalSats, zarPerSat) ? ` (${fmtZar(totalSats, zarPerSat)})` : ""}
+                    {monthReports.length} group{monthReports.length !== 1 ? "s" : ""} · {totalParticipants} participants · 🗲 {totalSats.toLocaleString()} sats
+                    {fmtMonthZar && (
+                      <span className={allLocked ? "text-green-600" : ""}> ({fmtMonthZar})</span>
+                    )}
                   </span>
                 </div>
               </td>
