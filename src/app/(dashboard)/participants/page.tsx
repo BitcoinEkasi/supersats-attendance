@@ -62,7 +62,7 @@ export default async function ParticipantsPage({
     acCount,
     retiredCount,
   ] = await Promise.all([
-    prisma.participant.findMany({ where, orderBy: [{ surname: "asc" }, { fullNames: "asc" }] }),
+    prisma.participant.findMany({ where, orderBy: [{ registrationDate: "desc" }] }),
     prisma.participant.count({ where: { status: "ACTIVE" } }),
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.turtles] } } }),
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.seals] } } }),
