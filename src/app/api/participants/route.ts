@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { parseSaId } from "@/lib/sa-id";
 import { getNextTskId } from "@/lib/tsk-id";
 import { isValidGroup, participantWhereForGroup } from "@/lib/tsk-groups";
+import { TSK_LEVELS } from "@/lib/tsk-levels";
 import type { ParticipantStatus } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -55,6 +56,12 @@ export async function POST(req: Request) {
     return Response.json({ error: "Surname, full names, and ID number are required" }, { status: 400 });
   }
 
+  const tskStatus = body.tskStatus?.trim();
+  const validLevels = TSK_LEVELS.map((l) => l.value) as string[];
+  if (!tskStatus || !validLevels.includes(tskStatus)) {
+    return Response.json({ error: "A valid TSK level is required" }, { status: 400 });
+  }
+
   const parsed = parseSaId(idNumber);
   if ("error" in parsed) {
     return Response.json({ error: parsed.error }, { status: 400 });
@@ -92,7 +99,7 @@ export async function POST(req: Request) {
           idDocumentUploadedAt: body.idDocumentUploadedAt ? new Date(body.idDocumentUploadedAt) : null,
           indemnityFormUrl: body.indemnityFormUrl?.trim() || null,
           indemnityUploadedAt: body.indemnityUploadedAt ? new Date(body.indemnityUploadedAt) : null,
-          tskStatus: body.tskStatus?.trim() || null,
+          tskStatus,
           weightKg: body.weightKg ? parseFloat(body.weightKg) || null : null,
           heightCm: body.heightCm ? parseFloat(body.heightCm) || null : null,
           tshirtSize: body.tshirtSize?.trim() || null,

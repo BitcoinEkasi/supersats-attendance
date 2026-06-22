@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { fmtDate } from "@/lib/format-date";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { TSK_LEVELS } from "@/lib/tsk-levels";
 
 function expectedGradeFromDob(dob: string): string {
   const birthYear = parseInt(dob.substring(0, 4));
@@ -408,12 +409,14 @@ export default function AddParticipantForm() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Performance</p>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Level</label>
-              <select name="tskStatus" className={inputCls}>
+              <label className="block text-sm font-medium text-gray-700">TSK Level *</label>
+              <select name="tskStatus" required className={inputCls}>
                 <option value="">— select —</option>
-                <option value="Turtle">Turtle (Grom)</option>
-                <option value="Seal">Seal (Intermediate)</option>
-                <option value="Dolphin">Dolphin (Advanced)</option>
+                {TSK_LEVELS.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {level.value}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
