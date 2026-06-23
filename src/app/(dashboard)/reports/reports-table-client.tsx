@@ -66,6 +66,8 @@ export function ReportsTableClient({
         const isOpen = !collapsed.has(month);
         const totalSats = monthReports.reduce((s, r) => s + r.entries.reduce((a, e) => a + e.rewardSats, 0), 0);
         const totalParticipants = monthReports.reduce((s, r) => s + r.entries.length, 0);
+        const totalRecruited = monthReports.reduce((s, r) => s + r.recruited, 0);
+        const totalRetired = monthReports.reduce((s, r) => s + r.retired, 0);
 
         // Use each report's locked rate if approved, else fall back to live rate
         const allLocked = monthReports.every((r) => r.status === "APPROVED" && r.zarPerSat != null);
@@ -94,7 +96,14 @@ export function ReportsTableClient({
                   <ChevronIcon open={isOpen} />
                   <span className="font-semibold text-gray-700">{fmtMonth(month)}</span>
                   <span className="text-xs text-gray-400">
-                    {monthReports.length} group{monthReports.length !== 1 ? "s" : ""} · {totalParticipants} participants · 🗲 {totalSats.toLocaleString()} sats
+                    {monthReports.length} group{monthReports.length !== 1 ? "s" : ""} · {totalParticipants}
+                    {(totalRecruited > 0 || totalRetired > 0) && (
+                      <>
+                        {" "}({totalRecruited > 0 && <span className="text-green-600">+{totalRecruited}</span>}
+                        {totalRecruited > 0 && totalRetired > 0 && " "}
+                        {totalRetired > 0 && <span className="text-red-500">−{totalRetired}</span>})
+                      </>
+                    )} participants · 🗲 {totalSats.toLocaleString()} sats
                     {fmtMonthZar && (
                       <span className={allLocked ? "text-green-600" : ""}> ({fmtMonthZar})</span>
                     )}
