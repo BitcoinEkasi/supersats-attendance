@@ -165,6 +165,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         idDocumentUploadedAt: body.idDocumentUploadedAt ? new Date(body.idDocumentUploadedAt) : null,
         indemnityFormUrl: body.indemnityFormUrl?.trim() || null,
         indemnityUploadedAt: body.indemnityUploadedAt ? new Date(body.indemnityUploadedAt) : null,
+        mediaReleaseUrl: body.mediaReleaseUrl?.trim() || null,
+        mediaReleaseUploadedAt: body.mediaReleaseUploadedAt ? new Date(body.mediaReleaseUploadedAt) : null,
         tskStatus: appliedTskStatus,
         ...(applyNow && tskStatusChanged ? { tskStatusUpdatedAt: now } : {}),
         weightKg: newWeightKg,

@@ -16,7 +16,7 @@ export async function GET() {
     "Guardian", "Guardian ID", "Relationship",
     "Address", "Contact 1", "Contact 2", "Housing Type",
     "Bolt Card",
-    "ID Document", "Indemnity Form",
+    "ID Document", "Participation Waiver", "Media Release",
   ];
 
   function esc(val: string | null | undefined): string {
@@ -54,6 +54,7 @@ export async function GET() {
     p.boltUserId ? "Yes" : "No",
     p.idDocumentUrl ? "Yes" : "No",
     p.indemnityFormUrl ? "Yes" : "No",
+    (p as any).mediaReleaseUrl ? "Yes" : "No",
   ].join(","));
 
   const csv = [headers.join(","), ...rows].join("\n");
