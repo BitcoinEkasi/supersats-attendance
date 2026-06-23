@@ -12,7 +12,7 @@ function fmtMonth(key: string) {
 }
 
 type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number };
-type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; entries: ReportEntry[] };
+type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
   if (!zarPerSat) return null;
@@ -122,7 +122,16 @@ export function ReportsTableClient({
                       </span>
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={report.status} /></td>
-                    <td className="px-4 py-3">{report.entries.length}</td>
+                    <td className="px-4 py-3">
+                      {report.entries.length}
+                      {(report.recruited > 0 || report.retired > 0) && (
+                        <span className="ml-1 text-xs font-medium">
+                          ({report.recruited > 0 && <span className="text-green-600">+{report.recruited}</span>}
+                          {report.recruited > 0 && report.retired > 0 && " "}
+                          {report.retired > 0 && <span className="text-red-500">−{report.retired}</span>})
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">{totalSessions}</td>
                     <td className="px-4 py-3 font-medium text-orange-600">
                       🗲 {totalSatsRow.toLocaleString()} sats
