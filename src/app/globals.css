@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@media print {
+  /* Hide anything tagged as UI-only */
+  [data-print-hide] { display: none !important; }
+
+  /* Undo the flex/overflow constraints from the dashboard shell */
+  [data-print-layout] { display: block !important; height: auto !important; }
+  [data-print-content] { display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+  main { overflow: visible !important; height: auto !important; }
+
+  /* Keep table rows together across page breaks */
+  tr { break-inside: avoid; }
+
+  /* Page margins */
+  @page { margin: 1.5cm; }
+}
