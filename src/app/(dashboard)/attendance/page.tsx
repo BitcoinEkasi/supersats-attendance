@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
-import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
+import { getStartOfSASTToday, getEndOfSASTToday, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, groupSortIndex, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
 
@@ -58,7 +58,7 @@ export default async function AttendancePage() {
   }
 
   // Desktop layout
-  const [events, todayEvents, approvedReports] = await Promise.all([
+  const [events, todayEvents, approvedReports, allParticipants] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
       include: {
@@ -71,6 +71,7 @@ export default async function AttendancePage() {
       where: { status: "APPROVED" },
       select: { month: true, group: true },
     }),
+    prisma.participant.findMany({ select: { registrationDate: true, retiredAt: true } }),
   ]);
 
   const eventRows = events.map((e) => ({
@@ -85,6 +86,18 @@ export default async function AttendancePage() {
     monthKey: `${e.date.getUTCFullYear()}-${String(e.date.getUTCMonth() + 1).padStart(2, "0")}`,
   }));
 
+  // Build per-month recruited/retired deltas
+  const uniqueMonths = [...new Set(eventRows.map((e) => e.monthKey))];
+  const monthDeltas: Record<string, { recruited: number; retired: number }> = {};
+  for (const month of uniqueMonths) {
+    const monthStart = getStartOfSASTMonth(month);
+    const monthEnd = getEndOfSASTMonth(month);
+    monthDeltas[month] = {
+      recruited: allParticipants.filter((p) => p.registrationDate >= monthStart && p.registrationDate <= monthEnd).length,
+      retired: allParticipants.filter((p) => p.retiredAt !== null && p.retiredAt >= monthStart && p.retiredAt <= monthEnd).length,
+    };
+  }
+
   // Build "YYYY-MM:GROUP" keys for approved reports
   const approvedMonthGroups = approvedReports.map((r) => `${r.month}:${r.group ?? "null"}`);
 
@@ -98,7 +111,7 @@ export default async function AttendancePage() {
             <div className="border-b px-4 py-3">
               <h3 className="font-semibold text-gray-900">Sessions</h3>
             </div>
-            <SessionsTable events={eventRows} approvedMonthGroups={approvedMonthGroups} isAdmin={role === "ADMINISTRATOR"} />
+            <SessionsTable events={eventRows} approvedMonthGroups={approvedMonthGroups} monthDeltas={monthDeltas} isAdmin={role === "ADMINISTRATOR"} />
           </div>
         </div>
 
