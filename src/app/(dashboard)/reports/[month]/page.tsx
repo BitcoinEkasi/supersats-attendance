@@ -218,9 +218,9 @@ export default async function ReportDetailPage({
               Pending Approval
             </span>
           )}
-          <span data-print-hide><ExportButton reportId={report.id} month={report.month} /></span>
+          <ExportButton reportId={report.id} month={report.month} />
           {role === "ADMINISTRATOR" && report.status === "PENDING" && (
-            <span data-print-hide><ApproveButton reportId={report.id} disabled={!monthComplete} missingCards={missingCards} /></span>
+            <ApproveButton reportId={report.id} disabled={!monthComplete} missingCards={missingCards} />
           )}
         </div>
       </div>
@@ -331,18 +331,18 @@ export default async function ReportDetailPage({
 
       {/* Payout invoice panel (shown after approval when invoice exists) */}
       {report.status === "APPROVED" && report.payoutStatus !== "unpaid" && report.paymentRequest && (
-        <div data-print-hide><PayoutInvoicePanel
+        <PayoutInvoicePanel
           reportId={report.id}
           paymentRequest={report.paymentRequest}
           qrBase64=""
           totalSats={report.totalPayoutSats}
           initialStatus={report.payoutStatus}
-        /></div>
+        />
       )}
 
       {/* Create payout button (shown when approved but no payout yet) */}
       {report.status === "APPROVED" && report.payoutStatus === "unpaid" && role === "ADMINISTRATOR" && (
-        <div data-print-hide><CreatePayoutButton reportId={report.id} /></div>
+        <CreatePayoutButton reportId={report.id} />
       )}
 
       <ReportTable
