@@ -139,6 +139,17 @@ export default async function ReportDetailPage({
       })
     : [];
 
+  const priorHistory = levelChangesThisMonth.length > 0
+    ? await prisma.tskLevelHistory.findMany({
+        where: { participantId: { in: levelChangesThisMonth.map((c) => c.participantId) }, changedAt: { lt: monthStart } },
+        orderBy: { changedAt: "desc" },
+      })
+    : [];
+  const prevLevelMap = new Map<string, string>();
+  for (const h of priorHistory) {
+    if (!prevLevelMap.has(h.participantId)) prevLevelMap.set(h.participantId, h.level);
+  }
+
   const [nextYear, nextMonthNum] = (() => {
     const [y, m] = reportMeta.month.split("-").map(Number);
     return m === 12 ? [y + 1, 1] : [y, m + 1];
@@ -236,13 +247,13 @@ export default async function ReportDetailPage({
             <p className="text-xs text-gray-500">
               Transition {pendingChanges.length}
               {pendingChanges.length > 0 && (
-                <span className="text-gray-400"> ({pendingChanges.map((c) => `${c.participant.fullNames} ${c.participant.surname} → ${c.newValue}`).join(", ")})</span>
+                <span className="text-gray-400"> ({pendingChanges.map((c) => `${c.participant.fullNames} ${c.participant.surname}${c.oldValue ? ` ${c.oldValue}` : ""} → ${c.newValue}`).join(", ")})</span>
               )}
             </p>
             <p className="text-xs text-gray-500">
               Joined {joined.length}
               {joined.length > 0 && (
-                <span className="text-gray-400"> ({joined.map((c) => `${c.participant.fullNames} ${c.participant.surname} → ${c.level}`).join(", ")})</span>
+                <span className="text-gray-400"> ({joined.map((c) => `${c.participant.fullNames} ${c.participant.surname}${prevLevelMap.get(c.participantId) ? ` ${prevLevelMap.get(c.participantId)}` : ""} → ${c.level}`).join(", ")})</span>
               )}
             </p>
           </div>
