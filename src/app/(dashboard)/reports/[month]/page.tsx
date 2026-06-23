@@ -229,7 +229,16 @@ export default async function ReportDetailPage({
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Participants</p>
-          <p className="mt-1 text-2xl font-bold">{totalParticipants}</p>
+          <p className="mt-1 text-2xl font-bold">
+            {totalParticipants}
+            {(recruited.length > 0 || retired.length > 0) && (
+              <span className="ml-2 text-base font-medium">
+                ({recruited.length > 0 && <span className="text-green-600">+{recruited.length}</span>}
+                {recruited.length > 0 && retired.length > 0 && " "}
+                {retired.length > 0 && <span className="text-red-500">−{retired.length}</span>})
+              </span>
+            )}
+          </p>
           <div className="mt-2 space-y-0.5">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Movement</p>
             <p className="text-xs text-gray-500">
