@@ -66,12 +66,10 @@ function ChevronIcon({ open }: { open: boolean }) {
 export default function SessionsTable({
   events,
   approvedMonthGroups,
-  monthDeltas = {},
   isAdmin = false,
 }: {
   events: EventRow[];
   approvedMonthGroups: string[];
-  monthDeltas?: Record<string, { recruited: number; retired: number }>;
   isAdmin?: boolean;
 }) {
   const approvedSet = new Set(approvedMonthGroups);
@@ -182,9 +180,6 @@ export default function SessionsTable({
                     {fmtMonth(monthKey)}
                     <span className="ml-1 text-xs font-normal text-gray-400">
                       {allSessions.length} {allSessions.length === 1 ? "session" : "sessions"} · {totalPresent} total attendees
-                      {(() => { const d = monthDeltas[monthKey]; return d && (d.recruited > 0 || d.retired > 0) ? (
-                        <> · {d.recruited > 0 && <span className="text-green-600">+{d.recruited}</span>}{d.recruited > 0 && d.retired > 0 && " "}{d.retired > 0 && <span className="text-red-500">−{d.retired}</span>} participants</>
-                      ) : null; })()}
                     </span>
                   </span>
                 </td>
