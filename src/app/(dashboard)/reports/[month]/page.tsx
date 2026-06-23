@@ -139,17 +139,6 @@ export default async function ReportDetailPage({
       })
     : [];
 
-  const priorHistory = levelChangesThisMonth.length > 0
-    ? await prisma.tskLevelHistory.findMany({
-        where: { participantId: { in: levelChangesThisMonth.map((c) => c.participantId) }, changedAt: { lt: monthStart } },
-        orderBy: { changedAt: "desc" },
-      })
-    : [];
-  const prevLevelMap = new Map<string, string>();
-  for (const h of priorHistory) {
-    if (!prevLevelMap.has(h.participantId)) prevLevelMap.set(h.participantId, h.level);
-  }
-
   const [nextYear, nextMonthNum] = (() => {
     const [y, m] = reportMeta.month.split("-").map(Number);
     return m === 12 ? [y + 1, 1] : [y, m + 1];
@@ -176,18 +165,7 @@ export default async function ReportDetailPage({
       .map((e) => e.participantId)
   );
 
-  const toByLevel = new Map<string, typeof levelChangesThisMonth>();
-  const fromByLevel = new Map<string, typeof levelChangesThisMonth>();
-  for (const c of levelChangesThisMonth) {
-    if (recruitedParticipantIds.has(c.participantId)) continue;
-    if (!toByLevel.has(c.level)) toByLevel.set(c.level, []);
-    toByLevel.get(c.level)!.push(c);
-    const old = prevLevelMap.get(c.participantId);
-    if (old) {
-      if (!fromByLevel.has(old)) fromByLevel.set(old, []);
-      fromByLevel.get(old)!.push(c);
-    }
-  }
+  const joined = levelChangesThisMonth.filter((c) => !recruitedParticipantIds.has(c.participantId));
 
   const tierCounts = REWARD_TIERS.map((tier) => ({
     ...tier,
@@ -256,29 +234,17 @@ export default async function ReportDetailPage({
               )}
             </p>
             <p className="text-xs text-gray-500">
-              Pending {pendingChanges.length}
+              Transition {pendingChanges.length}
               {pendingChanges.length > 0 && (
                 <span className="text-gray-400"> ({pendingChanges.map((c) => `${c.participant.fullNames} ${c.participant.surname} → ${c.newValue}`).join(", ")})</span>
               )}
             </p>
-            {levelChangesThisMonth.length === 0 ? (
-              <p className="text-xs text-gray-500">Transitions 0</p>
-            ) : (
-              <>
-                {[...toByLevel.entries()].map(([level, changes]) => (
-                  <p key={`to-${level}`} className="text-xs text-gray-500">
-                    To {level} {changes.length}
-                    <span className="text-gray-400"> ({changes.map((c) => `${c.participant.fullNames} ${c.participant.surname}`).join(", ")})</span>
-                  </p>
-                ))}
-                {[...fromByLevel.entries()].map(([level, changes]) => (
-                  <p key={`from-${level}`} className="text-xs text-gray-500">
-                    From {level}
-                    <span className="text-gray-400"> ({changes.map((c) => `${c.participant.fullNames} ${c.participant.surname}`).join(", ")})</span>
-                  </p>
-                ))}
-              </>
-            )}
+            <p className="text-xs text-gray-500">
+              Joined {joined.length}
+              {joined.length > 0 && (
+                <span className="text-gray-400"> ({joined.map((c) => `${c.participant.fullNames} ${c.participant.surname} → ${c.level}`).join(", ")})</span>
+              )}
+            </p>
           </div>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
