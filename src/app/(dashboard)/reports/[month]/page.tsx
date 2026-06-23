@@ -167,9 +167,19 @@ export default async function ReportDetailPage({
       })
     : [];
 
+  const recruitedParticipantIds = new Set(
+    report.entries
+      .filter((e) => {
+        const rd = e.participant.registrationDate;
+        return rd >= monthStart && rd <= monthEnd;
+      })
+      .map((e) => e.participantId)
+  );
+
   const toByLevel = new Map<string, typeof levelChangesThisMonth>();
   const fromByLevel = new Map<string, typeof levelChangesThisMonth>();
   for (const c of levelChangesThisMonth) {
+    if (recruitedParticipantIds.has(c.participantId)) continue;
     if (!toByLevel.has(c.level)) toByLevel.set(c.level, []);
     toByLevel.get(c.level)!.push(c);
     const old = prevLevelMap.get(c.participantId);
