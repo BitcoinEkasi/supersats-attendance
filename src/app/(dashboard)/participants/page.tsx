@@ -95,7 +95,6 @@ export default async function ParticipantsPage({
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
   const last4Months = [
-    priorMonthYM(currentYM, 3),
     priorMonthYM(currentYM, 2),
     priorMonthYM(currentYM, 1),
     currentYM,
@@ -327,7 +326,7 @@ export default async function ParticipantsPage({
                               key={ym}
                               className={pct === null ? "text-gray-300" : pct >= 70 ? "text-green-600 font-medium" : "text-red-500 font-medium"}
                             >
-                              {isCurrent && pct !== null ? "~" : ""}{monthLabel(ym)} {pct !== null ? `${Math.round(pct)}%` : "—"}
+                              {monthLabel(ym)} {pct !== null ? `${Math.round(pct)}%` : "—"}
                             </span>
                           );
                         })}
