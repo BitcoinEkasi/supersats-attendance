@@ -7,6 +7,7 @@ import { fmtDate } from "@/lib/format-date";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import { TSK_GROUP_LEVELS } from "@/lib/tsk-groups";
 import { getAcMultiplier } from "@/lib/tsk-levels";
+import { getSASTNow } from "@/lib/sast";
 
 const LEVEL_GROUPS = {
   turtles:     TSK_GROUP_LEVELS.TURTLES,
@@ -85,11 +86,41 @@ export default async function ParticipantsPage({
   };
 
   const withBolt = participants.filter((p) => p.boltUserId);
-  const [boltResults, zarPerSat] = await Promise.all([
+
+  const { year, month: currentMonth } = getSASTNow();
+  const currentYM = `${year}-${String(currentMonth).padStart(2, "0")}`;
+  function priorMonthYM(ym: string, n: number): string {
+    const [y, m] = ym.split("-").map(Number);
+    const d = new Date(y, m - 1 - n, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  const last4Months = [
+    priorMonthYM(currentYM, 3),
+    priorMonthYM(currentYM, 2),
+    priorMonthYM(currentYM, 1),
+    currentYM,
+  ];
+
+  const [boltResults, zarPerSat, trendEntries] = await Promise.all([
     Promise.all(withBolt.map((p) => getBoltUser(p.boltUserId!).then((u) => ({ id: p.id, user: u })))),
     withBolt.length > 0 ? getZarPerSat() : Promise.resolve(null),
+    participants.length > 0
+      ? prisma.monthlyReportEntry.findMany({
+          where: {
+            participantId: { in: participants.map((p) => p.id) },
+            report: { month: { in: last4Months } },
+          },
+          select: { participantId: true, percentage: true, report: { select: { month: true } } },
+        })
+      : Promise.resolve([]),
   ]);
   const boltMap = new Map(boltResults.map(({ id, user }) => [id, user]));
+
+  const trendMap = new Map<string, Map<string, number>>();
+  for (const e of trendEntries) {
+    if (!trendMap.has(e.participantId)) trendMap.set(e.participantId, new Map());
+    trendMap.get(e.participantId)!.set(e.report.month, Number(e.percentage));
+  }
 
   const tabDef: { key: Tab; label: string; badge: string }[] = [
     { key: "active",      label: "All Active",  badge: "bg-green-100 text-green-700" },
@@ -101,6 +132,32 @@ export default async function ParticipantsPage({
     { key: "ac",          label: "Assistant Coaches", badge: "bg-yellow-100 text-yellow-700" },
     { key: "retired",     label: "Retired",           badge: "bg-red-100 text-red-600" },
   ];
+
+  function monthLabel(ym: string): string {
+    const [y, m] = ym.split("-").map(Number);
+    return new Date(y, m - 1).toLocaleString("en-GB", { month: "short" });
+  }
+
+  function Sparkline({ values }: { values: (number | null)[] }) {
+    const pts = values
+      .map((v, i) => (v !== null ? { x: i, y: v } : null))
+      .filter((p): p is { x: number; y: number } => p !== null);
+    if (pts.length < 2) return null;
+    const W = 56, H = 16, PAD = 2;
+    const xScale = (i: number) => PAD + (i / (values.length - 1)) * (W - PAD * 2);
+    const yScale = (v: number) => H - PAD - (v / 100) * (H - PAD * 2);
+    const points = pts.map((p) => `${xScale(p.x)},${yScale(p.y)}`).join(" ");
+    const first = pts[0].y, last = pts[pts.length - 1].y;
+    const color = last > first + 5 ? "#16a34a" : last < first - 5 ? "#dc2626" : "#9ca3af";
+    return (
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="inline-block align-middle shrink-0">
+        <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        {pts.map((p, i) => (
+          <circle key={i} cx={xScale(p.x)} cy={yScale(p.y)} r="1.5" fill={color} />
+        ))}
+      </svg>
+    );
+  }
 
   const tabCls = "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap";
   const selectedCls = "bg-white text-gray-900 shadow-sm border border-gray-200";
@@ -253,6 +310,31 @@ export default async function ParticipantsPage({
                       })()}
                     </div>
                   )}
+
+                  {/* Attendance trend */}
+                  {(() => {
+                    const trend = trendMap.get(p.id);
+                    const dataPoints = last4Months.map((ym) => trend?.get(ym) ?? null);
+                    if (!dataPoints.some((v) => v !== null)) return null;
+                    return (
+                      <div className="mt-0.5 flex items-center gap-2 text-xs">
+                        <span className="text-gray-400 shrink-0">Attendance</span>
+                        {last4Months.map((ym, i) => {
+                          const pct = dataPoints[i];
+                          const isCurrent = ym === currentYM;
+                          return (
+                            <span
+                              key={ym}
+                              className={pct === null ? "text-gray-300" : pct >= 70 ? "text-green-600 font-medium" : "text-red-500 font-medium"}
+                            >
+                              {isCurrent && pct !== null ? "~" : ""}{monthLabel(ym)} {pct !== null ? `${Math.round(pct)}%` : "—"}
+                            </span>
+                          );
+                        })}
+                        <Sparkline values={dataPoints} />
+                      </div>
+                    );
+                  })()}
                 </div>
               </Link>
             ))
