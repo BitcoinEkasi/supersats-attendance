@@ -298,6 +298,11 @@ export default async function ReportDetailPage({
           <p className="mt-1 text-2xl font-bold text-orange-600">
             🗲 {totalSats.toLocaleString()} sats
           </p>
+          {zarPerSat && totalSats > 0 && (
+            <p className={`mt-0.5 text-sm font-medium ${report.status === "APPROVED" && report.zarPerSat ? "text-green-600" : "text-gray-400"}`}>
+              {satsToZar(totalSats, zarPerSat)}
+            </p>
+          )}
         </div>
       </div>
 
