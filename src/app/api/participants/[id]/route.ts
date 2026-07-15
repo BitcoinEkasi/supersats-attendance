@@ -75,7 +75,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
       if (body.status === "ACTIVE") { data.retiredAt = null; data.retiredReason = null; data.retiredReasonOther = null; }
       await prisma.participant.update({ where: { id }, data });
-      if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
+      if (body.status === "RETIRED") {
+        const p = await prisma.participant.findUnique({ where: { id }, select: { tskStatus: true } });
+        const group = getGroupForStatus(p?.tskStatus ?? null);
+        if (group) await upsertMonthlyReport(currentMonthStr(), user.id, group);
+      }
       return Response.json({ success: true });
     } catch {
       return Response.json({ error: "Failed to update status" }, { status: 500 });
@@ -222,7 +226,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
     }
 
-    if (body.status === "RETIRED") await upsertMonthlyReport(currentMonthStr(), user.id);
+    if (body.status === "RETIRED") {
+      const group = getGroupForStatus(appliedTskStatus);
+      if (group) await upsertMonthlyReport(currentMonthStr(), user.id, group);
+    }
 
     const pendingQueued = !applyNow && (tskStatusChanged || acChanged);
 
