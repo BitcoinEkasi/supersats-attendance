@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   try {
     const participant = await prisma.$transaction(async (tx) => {
       const tskId = await getNextTskId(tx);
-      return tx.participant.create({
+      const created = await tx.participant.create({
         data: {
           tskId,
           surname,
@@ -110,6 +110,12 @@ export async function POST(req: Request) {
           notes: body.notes?.trim() || null,
         },
       });
+      // Seed the level timeline with the registration-level entry so the
+      // participant's current level dates from registration.
+      await tx.tskLevelHistory.create({
+        data: { participantId: created.id, level: tskStatus, changedAt: registrationDate },
+      });
+      return created;
     });
 
     return Response.json({ id: participant.id, tskId: participant.tskId });

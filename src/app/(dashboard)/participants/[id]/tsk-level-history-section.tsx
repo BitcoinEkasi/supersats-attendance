@@ -6,6 +6,9 @@ import { TSK_LEVEL_MAP } from "@/lib/tsk-levels";
 
 type HistoryEntry = { id: string; level: string; changedAt: string | Date };
 
+// Sentinel level for the pre-leveling-system tenure segment (see backfill).
+export const PRIOR_PROGRESSION_LEVEL = "Prior progression";
+
 function formatLevelDuration(from: Date, to: Date): string {
   const months =
     (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
@@ -70,6 +73,7 @@ export default function TskLevelHistorySection({
             const from = new Date(entry.changedAt);
             const to = idx < sorted.length - 1 ? new Date(sorted[idx + 1].changedAt) : endBoundary;
             const isLast = idx === sorted.length - 1;
+            const isPrior = entry.level === PRIOR_PROGRESSION_LEVEL;
             const duration = formatLevelDuration(from, to);
 
             return (
@@ -81,8 +85,10 @@ export default function TskLevelHistorySection({
 
                 <div className="flex flex-1 items-start justify-between pb-4">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{entry.level}</p>
-                    {TSK_LEVEL_MAP[entry.level as keyof typeof TSK_LEVEL_MAP] && (
+                    <p className={`text-sm font-semibold ${isPrior ? "text-gray-500" : "text-gray-900"}`}>{entry.level}</p>
+                    {isPrior ? (
+                      <p className="text-xs italic text-gray-400">before leveling system</p>
+                    ) : TSK_LEVEL_MAP[entry.level as keyof typeof TSK_LEVEL_MAP] && (
                       <p className="text-xs italic text-gray-400">{TSK_LEVEL_MAP[entry.level as keyof typeof TSK_LEVEL_MAP]}</p>
                     )}
                     <p className="mt-0.5 text-xs text-gray-500">
