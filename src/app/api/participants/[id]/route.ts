@@ -4,7 +4,7 @@ import { parseSaId } from "@/lib/sa-id";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { updateBoltUserDisplayName, updateBoltUserMeta } from "@/lib/bolt";
 import { getDivisionLabel } from "@/lib/sa-id";
-import { isAcEligible } from "@/lib/tsk-levels";
+import { isAcEligible, TSK_LEVELS } from "@/lib/tsk-levels";
 import { getGroupForStatus } from "@/lib/tsk-groups";
 import { getSASTNow } from "@/lib/sast";
 import { randomUUID } from "crypto";
@@ -100,6 +100,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const newTskStatus = body.tskStatus?.trim() || null;
+  const validLevels = TSK_LEVELS.map((l) => l.value) as string[];
+  if (!newTskStatus || !validLevels.includes(newTskStatus)) {
+    return Response.json({ error: "A valid TSK level is required" }, { status: 400 });
+  }
+
   const existing = await prisma.participant.findUnique({
     where: { id },
     select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
