@@ -32,9 +32,11 @@ function levelColor(level: string): string {
 export default function TskLevelHistorySection({
   participantId,
   history,
+  retiredAt = null,
 }: {
   participantId: string;
   history: HistoryEntry[];
+  retiredAt?: string | Date | null;
 }) {
   const router = useRouter();
 
@@ -42,6 +44,8 @@ export default function TskLevelHistorySection({
     (a, b) => new Date(a.changedAt).getTime() - new Date(b.changedAt).getTime()
   );
   const now = new Date();
+  const retiredDate = retiredAt ? new Date(retiredAt) : null;
+  const endBoundary = retiredDate ?? now;
 
   async function handleDelete(historyId: string) {
     await fetch(`/api/participants/${participantId}/tsk-level-history`, {
@@ -64,7 +68,7 @@ export default function TskLevelHistorySection({
         <ol className="space-y-0">
           {sorted.map((entry, idx) => {
             const from = new Date(entry.changedAt);
-            const to = idx < sorted.length - 1 ? new Date(sorted[idx + 1].changedAt) : now;
+            const to = idx < sorted.length - 1 ? new Date(sorted[idx + 1].changedAt) : endBoundary;
             const isLast = idx === sorted.length - 1;
             const duration = formatLevelDuration(from, to);
 
@@ -84,7 +88,9 @@ export default function TskLevelHistorySection({
                     <p className="mt-0.5 text-xs text-gray-500">
                       {fmtDate(from)}
                       {" → "}
-                      {isLast ? "present" : fmtDate(to)}
+                      {isLast
+                        ? (retiredDate ? `${fmtDate(retiredDate)} (retired)` : "present")
+                        : fmtDate(to)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

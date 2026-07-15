@@ -646,11 +646,14 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                 )}
                 {isAssistantCoach && (participant as any).assistantCoachSince && (() => {
                   const since = new Date((participant as any).assistantCoachSince);
-                  const now = new Date();
-                  const elapsed = (now.getFullYear() - since.getUTCFullYear()) * 12 + (now.getMonth() - since.getUTCMonth());
+                  const retired = (participant as any).retiredAt ? new Date((participant as any).retiredAt) : null;
+                  const end = retired ?? new Date();
+                  const elapsed = (end.getFullYear() - since.getUTCFullYear()) * 12 + (end.getMonth() - since.getUTCMonth());
                   return (
                     <p className="text-xs text-gray-500">
-                      AC since {fmtDate(since)} ({elapsed} month{elapsed !== 1 ? "s" : ""})
+                      {retired
+                        ? <>AC {fmtDate(since)} → {fmtDate(retired)} ({elapsed} month{elapsed !== 1 ? "s" : ""})</>
+                        : <>AC since {fmtDate(since)} ({elapsed} month{elapsed !== 1 ? "s" : ""})</>}
                     </p>
                   );
                 })()}
@@ -720,6 +723,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
             <TskLevelHistorySection
               participantId={participant.id}
               history={participant.tskLevelHistory.map((h) => ({ ...h, changedAt: h.changedAt.toISOString() }))}
+              retiredAt={(participant as any).retiredAt ? new Date((participant as any).retiredAt).toISOString() : null}
             />
           </div>
         </div>
