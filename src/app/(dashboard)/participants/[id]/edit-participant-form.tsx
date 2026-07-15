@@ -631,32 +631,48 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
             <div className="grid grid-cols-2 gap-4">
               <div />
               <div className="flex flex-col gap-2 pb-2">
-                {!isAcEligible(tskStatus) ? (
-                  <p className="text-xs text-gray-400 italic">Assistant Coach only available at Dolphin L5, Dolphin L6, or Free Surfer</p>
+                {(participant as any).retiredAt ? (
+                  // Retired: AC role has ended. Show read-only history (flag preserved for reward multipliers).
+                  isAssistantCoach && (participant as any).assistantCoachSince ? (() => {
+                    const since = new Date((participant as any).assistantCoachSince);
+                    const retired = new Date((participant as any).retiredAt);
+                    const elapsed = (retired.getFullYear() - since.getUTCFullYear()) * 12 + (retired.getMonth() - since.getUTCMonth());
+                    return (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-medium text-gray-500">Was Assistant Coach</span>
+                        <span className="text-xs text-gray-500">
+                          AC {fmtDate(since)} → {fmtDate(retired)} ({elapsed} month{elapsed !== 1 ? "s" : ""})
+                        </span>
+                      </div>
+                    );
+                  })() : null
                 ) : (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isAssistantCoach}
-                      onChange={(e) => { setIsAssistantCoach(e.target.checked); setSaved(false); setIsDirty(true); }}
-                      className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Assistant Coach</span>
-                  </label>
+                  <>
+                    {!isAcEligible(tskStatus) ? (
+                      <p className="text-xs text-gray-400 italic">Assistant Coach only available at Dolphin L5, Dolphin L6, or Free Surfer</p>
+                    ) : (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isAssistantCoach}
+                          onChange={(e) => { setIsAssistantCoach(e.target.checked); setSaved(false); setIsDirty(true); }}
+                          className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Assistant Coach</span>
+                      </label>
+                    )}
+                    {isAssistantCoach && (participant as any).assistantCoachSince && (() => {
+                      const since = new Date((participant as any).assistantCoachSince);
+                      const now = new Date();
+                      const elapsed = (now.getFullYear() - since.getUTCFullYear()) * 12 + (now.getMonth() - since.getUTCMonth());
+                      return (
+                        <p className="text-xs text-gray-500">
+                          AC since {fmtDate(since)} ({elapsed} month{elapsed !== 1 ? "s" : ""})
+                        </p>
+                      );
+                    })()}
+                  </>
                 )}
-                {isAssistantCoach && (participant as any).assistantCoachSince && (() => {
-                  const since = new Date((participant as any).assistantCoachSince);
-                  const retired = (participant as any).retiredAt ? new Date((participant as any).retiredAt) : null;
-                  const end = retired ?? new Date();
-                  const elapsed = (end.getFullYear() - since.getUTCFullYear()) * 12 + (end.getMonth() - since.getUTCMonth());
-                  return (
-                    <p className="text-xs text-gray-500">
-                      {retired
-                        ? <>AC {fmtDate(since)} → {fmtDate(retired)} ({elapsed} month{elapsed !== 1 ? "s" : ""})</>
-                        : <>AC since {fmtDate(since)} ({elapsed} month{elapsed !== 1 ? "s" : ""})</>}
-                    </p>
-                  );
-                })()}
                 <input type="hidden" name="isAssistantCoach" value={isAssistantCoach && isAcEligible(tskStatus) ? "on" : ""} />
               </div>
             </div>
