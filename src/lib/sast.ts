@@ -37,3 +37,16 @@ export function getEndOfSASTMonth(yearMonth: string): Date {
   const lastDay = new Date(y, m, 0).getDate();
   return new Date(`${yearMonth}-${String(lastDay).padStart(2, "0")}T23:59:59.999Z`);
 }
+
+/** Every calendar day in a SAST month ("YYYY-MM"), as "YYYY-MM-DD" strings, in order. */
+export function getDaysInSASTMonth(yearMonth: string): string[] {
+  const [y, m] = yearMonth.split("-").map(Number);
+  const lastDay = new Date(y, m, 0).getDate(); // same trick as getEndOfSASTMonth
+  return Array.from({ length: lastDay }, (_, i) => `${yearMonth}-${String(i + 1).padStart(2, "0")}`);
+}
+
+/** True if the date falls on a programme day (Tue-Sat). Sun/Mon are official off days. */
+export function isProgrammeDay(dateStr: string): boolean {
+  const day = new Date(`${dateStr}T12:00:00.000Z`).getUTCDay(); // 0=Sun..6=Sat, noon-UTC anchor matches event storage
+  return day !== 0 && day !== 1;
+}

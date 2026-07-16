@@ -16,21 +16,22 @@ import {
 } from "recharts";
 import { TSK_GROUPS, TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 import { getSASTNow } from "@/lib/sast";
+import type { DayEntry, StatsData } from "@/lib/types/attendance-stats";
 
-type DayEntry = {
-  date: string;
-  label: string;
-  presentCount: number;
-  sessions: number;
-  trend: number | null;
-};
+const DAY_MIN_WIDTH = 64; // px per day column
 
-type StatsData = {
-  days: DayEntry[];
-  totalParticipants: number;
-  average: number;
-  isParticipantView: boolean;
-};
+function cellFill(entry: DayEntry, isParticipantView: boolean): string {
+  switch (entry.dayType) {
+    case "off":
+      return "#e5e7eb"; // gray-200, muted — not a signal
+    case "gap":
+      return "#7c3aed"; // violet-600 — deliberately not red, which already means "marked absent" in participant view
+    case "session":
+      return isParticipantView
+        ? entry.presentCount > 0 ? "#22c55e" : "#ef4444"
+        : "#f97316";
+  }
+}
 
 type SlimParticipant = {
   id: string;
@@ -136,8 +137,22 @@ export default function AttendanceChart() {
       {data && !loading && (
         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
           <span>
-            <span className="font-medium text-gray-900">{data.days.length}</span> session days
+            <span className="font-medium text-gray-900">
+              {data.days.filter((d) => d.dayType !== "off").length}
+            </span> potential sessions
           </span>
+          <span>
+            <span className="font-medium text-green-600">
+              {data.days.filter((d) => d.dayType === "session").length}
+            </span> held
+          </span>
+          {data.days.filter((d) => d.dayType === "gap").length > 0 && (
+            <span>
+              <span className="font-medium" style={{ color: "#7c3aed" }}>
+                {data.days.filter((d) => d.dayType === "gap").length}
+              </span> gaps
+            </span>
+          )}
           <span>
             <span className="font-medium text-gray-900">{data.average}</span> avg{" "}
             {data.isParticipantView ? "attendance (0/1)" : "attendees"}
@@ -159,77 +174,74 @@ export default function AttendanceChart() {
         <div className="h-64 animate-pulse rounded-lg bg-gray-100" />
       )}
 
-      {!loading && data && data.days.length === 0 && (
+      {!loading && data && data.days.every((d) => d.dayType !== "session") && (
         <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">
           No sessions recorded for this period
         </div>
       )}
 
-      {!loading && data && data.days.length > 0 && (
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
-            <Tooltip
-              formatter={(value, name) => {
-                const v = typeof value === "number" ? value : Number(value);
-                if (name === "trend") return [v.toFixed(1), "Trend"];
-                if (name === "presentCount") return [v, data.isParticipantView ? "Present" : "Attended"];
-                return [v, String(name)];
-              }}
-              labelFormatter={(label) => {
-                const day = data.days.find((d) => d.label === label);
-                return day ? new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }) : label;
-              }}
-            />
-            <Legend
-              formatter={(value) => {
-                if (value === "presentCount") return data.isParticipantView ? "Present" : "Attended";
-                if (value === "trend") return "Trend (regression)";
-                return value;
-              }}
-            />
-
-            <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]}>
-              {data.days.map((entry, index) => (
-                <Cell
-                  key={index}
-                  fill={
-                    data.isParticipantView
-                      ? entry.presentCount > 0 ? "#22c55e" : "#ef4444"
-                      : "#f97316"
-                  }
+      {!loading && data && data.days.some((d) => d.dayType === "session") && (
+        <div className="overflow-x-auto">
+          <div style={{ minWidth: `${data.days.length * DAY_MIN_WIDTH}px` }}>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} />
+                <YAxis tick={{ fontSize: 12 }} domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
+                <Tooltip
+                  formatter={(value, name) => {
+                    const v = typeof value === "number" ? value : Number(value);
+                    if (name === "trend") return [v.toFixed(1), "Trend"];
+                    if (name === "presentCount") return [v, data.isParticipantView ? "Present" : "Attended"];
+                    return [v, String(name)];
+                  }}
+                  labelFormatter={(label) => {
+                    const day = data.days.find((d) => d.label === label);
+                    return day ? new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }) : label;
+                  }}
                 />
-              ))}
-            </Bar>
+                <Legend
+                  formatter={(value) => {
+                    if (value === "presentCount") return data.isParticipantView ? "Present" : "Attended";
+                    if (value === "trend") return "Trend (regression)";
+                    return value;
+                  }}
+                />
 
-            <ReferenceLine
-              y={data.totalParticipants}
-              stroke="#3b82f6"
-              strokeWidth={1.5}
-              label={{ value: `Registered: ${data.totalParticipants}`, position: "insideTopRight", fontSize: 11, fill: "#3b82f6" }}
-            />
+                <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]} minPointSize={4}>
+                  {data.days.map((entry, index) => (
+                    <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
+                  ))}
+                </Bar>
 
-            <ReferenceLine
-              y={data.average}
-              stroke="#9ca3af"
-              strokeDasharray="5 5"
-              label={{ value: `Avg: ${data.average}`, position: "insideBottomRight", fontSize: 11, fill: "#9ca3af" }}
-            />
+                <ReferenceLine
+                  y={data.totalParticipants}
+                  stroke="#3b82f6"
+                  strokeWidth={1.5}
+                  label={{ value: `Registered: ${data.totalParticipants}`, position: "insideTopRight", fontSize: 11, fill: "#3b82f6" }}
+                />
 
-            {data.days.some((d) => d.trend !== null) && (
-              <Line
-                dataKey="trend"
-                name="trend"
-                stroke="#f97316"
-                strokeWidth={1.5}
-                dot={false}
-                connectNulls
-              />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
+                <ReferenceLine
+                  y={data.average}
+                  stroke="#9ca3af"
+                  strokeDasharray="5 5"
+                  label={{ value: `Avg: ${data.average}`, position: "insideBottomRight", fontSize: 11, fill: "#9ca3af" }}
+                />
+
+                {data.days.some((d) => d.trend !== null) && (
+                  <Line
+                    dataKey="trend"
+                    name="trend"
+                    stroke="#f97316"
+                    strokeWidth={1.5}
+                    dot={false}
+                    connectNulls
+                  />
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       )}
     </div>
   );

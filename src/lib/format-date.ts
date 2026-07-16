@@ -7,3 +7,11 @@ export function fmtDate(date: Date): string {
   const year = date.getUTCFullYear().toString().slice(-2);
   return `${day} ${month} '${year}`;
 }
+
+const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** Format a Date as "01 (Wed)". Uses UTC to match DB storage/noon-anchor convention. */
+export function fmtDayWithWeekday(date: Date): string {
+  const day = date.getUTCDate().toString().padStart(2, "0");
+  return `${day} (${WEEKDAYS_SHORT[date.getUTCDay()]})`;
+}

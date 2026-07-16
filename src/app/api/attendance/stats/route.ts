@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
+import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay } from "@/lib/sast";
+import { fmtDayWithWeekday } from "@/lib/format-date";
 import { isValidGroup, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
+import type { DayEntry, DayType } from "@/lib/types/attendance-stats";
 
 export async function GET(req: Request) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -44,19 +46,20 @@ export async function GET(req: Request) {
     dayMap.set(dateStr, existing);
   }
 
-  type DayEntry = { date: string; label: string; presentCount: number; sessions: number; trend: number | null };
-
-  const baseDays: DayEntry[] = Array.from(dayMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, data]) => ({
+  const allDates = getDaysInSASTMonth(month);
+  const baseDays: DayEntry[] = allDates.map((date) => {
+    const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0 };
+    const programmeDay = isProgrammeDay(date);
+    const dayType: DayType = !programmeDay ? "off" : agg.sessions > 0 ? "session" : "gap";
+    return {
       date,
-      label: String(parseInt(date.split("-")[2], 10)),
-      presentCount: data.presentCount,
-      sessions: data.sessions,
+      label: fmtDayWithWeekday(new Date(`${date}T12:00:00.000Z`)),
+      presentCount: agg.presentCount,
+      sessions: agg.sessions,
+      dayType,
       trend: null,
-    }));
-
-  const n = baseDays.length;
+    };
+  });
 
   const totalParticipants = participantId
     ? 1
@@ -67,19 +70,28 @@ export async function GET(req: Request) {
         },
       });
 
-  const average = n > 0 ? baseDays.reduce((sum, d) => sum + d.presentCount, 0) / n : 0;
+  const sessionDays = baseDays.filter((d) => d.dayType === "session");
+  const average = sessionDays.length > 0
+    ? sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / sessionDays.length
+    : 0;
 
-  const days: DayEntry[] = baseDays.map((d, i) => ({ ...d, trend: null as number | null }));
+  const programmeDays = baseDays.filter((d) => d.dayType !== "off");
+  const n = programmeDays.length;
+
+  const days: DayEntry[] = baseDays.map((d) => ({ ...d }));
 
   if (n >= 2) {
-    const ys = baseDays.map((d) => d.presentCount);
+    const ys = programmeDays.map((d) => d.presentCount);
     const meanX = (n - 1) / 2;
-    const meanY = average;
-    const denom = baseDays.reduce((acc, _, i) => acc + (i - meanX) ** 2, 0);
-    const slope = denom === 0 ? 0 : baseDays.reduce((acc, d, i) => acc + (i - meanX) * (d.presentCount - meanY), 0) / denom;
+    const meanY = ys.reduce((a, b) => a + b, 0) / n;
+    const denom = programmeDays.reduce((acc, _, i) => acc + (i - meanX) ** 2, 0);
+    const slope = denom === 0 ? 0 : programmeDays.reduce((acc, d, i) => acc + (i - meanX) * (d.presentCount - meanY), 0) / denom;
     const intercept = meanY - slope * meanX;
-    for (let i = 0; i < n; i++) {
-      days[i].trend = Math.max(0, Math.round((intercept + slope * i) * 10) / 10);
+    let i = 0;
+    for (const day of days) {
+      if (day.dayType === "off") continue;
+      day.trend = Math.max(0, Math.round((intercept + slope * i) * 10) / 10);
+      i++;
     }
   }
 
