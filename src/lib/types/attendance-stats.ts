@@ -3,6 +3,7 @@ export type DayType = "off" | "gap" | "session";
 export type DayEntry = {
   date: string;
   label: string;
+  weekday: string;
   presentCount: number;
   sessions: number;
   dayType: DayType;

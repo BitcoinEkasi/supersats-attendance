@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay } from "@/lib/sast";
-import { fmtDayWithWeekday } from "@/lib/format-date";
+import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { isValidGroup, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 import type { DayEntry, DayType } from "@/lib/types/attendance-stats";
 
@@ -50,9 +50,11 @@ export async function GET(req: Request) {
   const baseDays: DayEntry[] = allDates.map((date) => {
     const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0 };
     const dayType: DayType = agg.sessions > 0 ? "session" : isProgrammeDay(date) ? "gap" : "off";
+    const d = new Date(`${date}T12:00:00.000Z`);
     return {
       date,
-      label: fmtDayWithWeekday(new Date(`${date}T12:00:00.000Z`)),
+      label: fmtDayNumber(d),
+      weekday: fmtWeekdayShort(d),
       presentCount: agg.presentCount,
       sessions: agg.sessions,
       dayType,
