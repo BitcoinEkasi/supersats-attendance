@@ -8,10 +8,10 @@ export function fmtDate(date: Date): string {
   return `${day} ${month} '${year}`;
 }
 
-const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"]; // Sun..Sat, matches getUTCDay()
 
-/** Format a Date as "01 (Wed)". Uses UTC to match DB storage/noon-anchor convention. */
+/** Format a Date as "01M" (day + single-letter weekday). Uses UTC to match DB storage/noon-anchor convention. */
 export function fmtDayWithWeekday(date: Date): string {
   const day = date.getUTCDate().toString().padStart(2, "0");
-  return `${day} (${WEEKDAYS_SHORT[date.getUTCDay()]})`;
+  return `${day}${WEEKDAY_LETTERS[date.getUTCDay()]}`;
 }

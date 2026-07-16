@@ -49,8 +49,7 @@ export async function GET(req: Request) {
   const allDates = getDaysInSASTMonth(month);
   const baseDays: DayEntry[] = allDates.map((date) => {
     const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0 };
-    const programmeDay = isProgrammeDay(date);
-    const dayType: DayType = !programmeDay ? "off" : agg.sessions > 0 ? "session" : "gap";
+    const dayType: DayType = agg.sessions > 0 ? "session" : isProgrammeDay(date) ? "gap" : "off";
     return {
       date,
       label: fmtDayWithWeekday(new Date(`${date}T12:00:00.000Z`)),
