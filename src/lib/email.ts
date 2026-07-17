@@ -1,4 +1,21 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
+
+let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT ?? 587),
+      secure: process.env.SMTP_PORT === "465",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+  }
+  return transporter;
+}
 
 export async function sendEmail({
   to,
@@ -13,17 +30,20 @@ export async function sendEmail({
   if (recipients.length === 0) return;
 
   const from = process.env.EMAIL_FROM;
-  const apiKey = process.env.RESEND_API_KEY;
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASSWORD;
 
-  if (!apiKey || !from) {
-    console.log("[email] dry-run (RESEND_API_KEY/EMAIL_FROM not set) —", { to: recipients, subject });
+  if (!host || !user || !pass || !from) {
+    console.log("[email] dry-run (SMTP_HOST/SMTP_USER/SMTP_PASSWORD/EMAIL_FROM not set) —", { to: recipients, subject });
     return;
   }
 
-  const { error } = await new Resend(apiKey).emails.send({ from, to: recipients, subject, html });
-  if (error) {
-    console.error("[email] send failed:", error);
-    throw new Error(`Failed to send email: ${error.message}`);
+  try {
+    await getTransporter().sendMail({ from, to: recipients, subject, html });
+  } catch (err) {
+    console.error("[email] send failed:", err);
+    throw new Error(`Failed to send email: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
