@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { isValidGroup, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
+import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
 import type { DayEntry, DayType } from "@/lib/types/attendance-stats";
 
 export async function GET(req: Request) {
@@ -32,10 +33,10 @@ export async function GET(req: Request) {
     orderBy: { date: "asc" },
   });
 
-  const dayMap = new Map<string, { presentCount: number; sessions: number }>();
+  const dayMap = new Map<string, { presentCount: number; sessions: number; categories: Set<string> }>();
   for (const event of events) {
     const dateStr = event.date.toISOString().split("T")[0];
-    const existing = dayMap.get(dateStr) ?? { presentCount: 0, sessions: 0 };
+    const existing = dayMap.get(dateStr) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
     if (participantId) {
       const rec = (event as typeof event & { attendanceRecords: { present: boolean }[] }).attendanceRecords[0];
       existing.presentCount += rec?.present ? 1 : 0;
@@ -43,18 +44,23 @@ export async function GET(req: Request) {
       existing.presentCount += (event as typeof event & { _count: { attendanceRecords: number } })._count.attendanceRecords;
     }
     existing.sessions += 1;
+    existing.categories.add(event.category);
     dayMap.set(dateStr, existing);
   }
 
   const allDates = getDaysInSASTMonth(month);
   const baseDays: DayEntry[] = allDates.map((date) => {
-    const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0 };
+    const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
     const dayType: DayType = agg.sessions > 0 ? "session" : isProgrammeDay(date) ? "gap" : "off";
     const d = new Date(`${date}T12:00:00.000Z`);
+    const activity = agg.categories.size === 1
+      ? CATEGORY_SHORT_LABELS[[...agg.categories][0]] ?? [...agg.categories][0]
+      : agg.categories.size > 1 ? "Multi" : "";
     return {
       date,
       label: fmtDayNumber(d),
       weekday: fmtWeekdayShort(d),
+      activity,
       presentCount: agg.presentCount,
       sessions: agg.sessions,
       dayType,

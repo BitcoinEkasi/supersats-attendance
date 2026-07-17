@@ -4,6 +4,7 @@ export type DayEntry = {
   date: string;
   label: string;
   weekday: string;
+  activity: string;
   presentCount: number;
   sessions: number;
   dayType: DayType;

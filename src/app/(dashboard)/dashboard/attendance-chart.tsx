@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import {
   ComposedChart,
   Bar,
-  Line,
   ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   Cell,
   ResponsiveContainer,
 } from "recharts";
@@ -20,11 +18,12 @@ import type { DayEntry, StatsData } from "@/lib/types/attendance-stats";
 
 function DayAxisTick(props: { x?: string | number; y?: string | number; payload?: { value: string }; days: DayEntry[] }) {
   const { x = 0, y = 0, payload, days } = props;
-  const weekday = days.find((d) => d.label === payload?.value)?.weekday ?? "";
+  const day = days.find((d) => d.label === payload?.value);
   return (
     <g transform={`translate(${x},${y})`}>
       <text x={0} y={0} dy={11} textAnchor="middle" fontSize={11} fill="#374151">{payload?.value}</text>
-      <text x={0} y={0} dy={23} textAnchor="middle" fontSize={9} fill="#9ca3af">{weekday}</text>
+      <text x={0} y={0} dy={22} textAnchor="middle" fontSize={9} fill="#9ca3af">{day?.weekday ?? ""}</text>
+      <text x={0} y={0} dy={33} textAnchor="middle" fontSize={8} fill="#9ca3af">{day?.activity ?? ""}</text>
     </g>
   );
 }
@@ -190,63 +189,47 @@ export default function AttendanceChart() {
       )}
 
       {!loading && data && data.days.some((d) => d.dayType === "session") && (
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={34} />
-            <YAxis tick={{ fontSize: 12 }} domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
-            <Tooltip
-              formatter={(value, name) => {
-                const v = typeof value === "number" ? value : Number(value);
-                if (name === "trend") return [v.toFixed(1), "Trend"];
-                if (name === "presentCount") return [v, data.isParticipantView ? "Present" : "Attended"];
-                return [v, String(name)];
-              }}
-              labelFormatter={(label) => {
-                const day = data.days.find((d) => d.label === label);
-                return day ? new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }) : label;
-              }}
-            />
-            <Legend
-              formatter={(value) => {
-                if (value === "presentCount") return data.isParticipantView ? "Present" : "Attended";
-                if (value === "trend") return "Trend (regression)";
-                return value;
-              }}
-            />
-
-            <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]} minPointSize={4}>
-              {data.days.map((entry, index) => (
-                <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
-              ))}
-            </Bar>
-
-            <ReferenceLine
-              y={data.totalParticipants}
-              stroke="#3b82f6"
-              strokeWidth={1.5}
-              label={{ value: `Registered: ${data.totalParticipants}`, position: "insideTopRight", fontSize: 11, fill: "#3b82f6" }}
-            />
-
-            <ReferenceLine
-              y={data.average}
-              stroke="#9ca3af"
-              strokeDasharray="5 5"
-              label={{ value: `Avg: ${data.average}`, position: "insideBottomRight", fontSize: 11, fill: "#9ca3af" }}
-            />
-
-            {data.days.some((d) => d.trend !== null) && (
-              <Line
-                dataKey="trend"
-                name="trend"
-                stroke="#f97316"
-                strokeWidth={1.5}
-                dot={false}
-                connectNulls
+        <div style={{ paddingLeft: "15%", paddingRight: "15%" }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
+              <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
+              <Tooltip
+                formatter={(value, name) => {
+                  const v = typeof value === "number" ? value : Number(value);
+                  if (name === "presentCount") return [v, data.isParticipantView ? "Present" : "Attended"];
+                  return [v, String(name)];
+                }}
+                labelFormatter={(label) => {
+                  const day = data.days.find((d) => d.label === label);
+                  return day ? new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }) : label;
+                }}
               />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
+
+              <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]} minPointSize={4} label={{ position: "insideBottom", fontSize: 10, fill: "#ffffff" }}>
+                {data.days.map((entry, index) => (
+                  <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
+                ))}
+              </Bar>
+
+              <ReferenceLine
+                y={data.totalParticipants}
+                stroke="#3b82f6"
+                strokeWidth={1.5}
+                label={{ value: `${data.totalParticipants}`, position: "left", fontSize: 12, fontWeight: 600, fill: "#3b82f6" }}
+              />
+
+              <ReferenceLine
+                y={Math.round(data.totalParticipants * 0.7)}
+                stroke="#16a34a"
+                strokeDasharray="5 5"
+                strokeWidth={1.5}
+                label={{ value: `${Math.round(data.totalParticipants * 0.7)} (70%)`, position: "left", fontSize: 12, fontWeight: 600, fill: "#16a34a" }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );
