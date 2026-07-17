@@ -36,11 +36,11 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
     case "excused":
       return "#e5e7eb"; // same as "off" — the flag icon, not bar color, communicates "deliberate decision"
     case "gap":
-      return "#7c3aed"; // violet-600 — deliberately not red, which already means "marked absent" in participant view
+      return "#ef4444"; // red-500 — sessions missed
     case "session":
       return isParticipantView
         ? entry.presentCount > 0 ? "#22c55e" : "#ef4444"
-        : "#f97316";
+        : "#14b8a6"; // teal-500 — sessions held
   }
 }
 
@@ -77,7 +77,7 @@ function BarLabel(props: {
     );
   }
   return (
-    <text x={x + width / 2} y={y} dy={14} textAnchor="middle" fontSize={11} fill="#ffffff">
+    <text x={x + width / 2} y={y} dy={14} textAnchor="middle" fontSize={11} fill="#000000">
       {value}
     </text>
   );
@@ -205,7 +205,7 @@ export default function AttendanceChart() {
           </span>
           {data.days.filter((d) => d.dayType === "gap").length > 0 && (
             <span>
-              <span className="font-medium" style={{ color: "#7c3aed" }}>
+              <span className="font-medium" style={{ color: "#ef4444" }}>
                 {data.days.filter((d) => d.dayType === "gap").length}
               </span> gaps
             </span>
