@@ -76,11 +76,14 @@ function BarLabel(props: {
       </g>
     );
   }
-  return (
-    <text x={x + width / 2} y={y} dy={14} textAnchor="middle" fontSize={11} fill="#000000">
-      {value}
-    </text>
-  );
+  if (day?.dayType === "session") {
+    return (
+      <text x={x + width / 2} y={y} dy={14} textAnchor="middle" fontSize={11} fill="#000000">
+        {value}
+      </text>
+    );
+  }
+  return null; // off days, and gap/excused days with no group selected — nothing to show
 }
 
 type SlimParticipant = {
