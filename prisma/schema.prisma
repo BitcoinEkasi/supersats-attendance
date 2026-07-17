@@ -167,13 +167,14 @@ model Certification {
 }
 
 model Event {
-  id        String        @id @default(uuid())
-  date      DateTime
-  category  EventCategory
-  group     TskGroup?
-  note      String?
-  createdBy String        @map("created_by")
-  createdAt DateTime      @default(now()) @map("created_at")
+  id          String        @id @default(uuid())
+  date        DateTime
+  category    EventCategory
+  group       TskGroup?
+  note        String?
+  createdBy   String        @map("created_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  submittedAt DateTime?     @map("submitted_at")
 
   attendanceRecords AttendanceRecord[]
 

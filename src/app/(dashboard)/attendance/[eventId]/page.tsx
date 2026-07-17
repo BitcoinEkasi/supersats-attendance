@@ -102,6 +102,7 @@ export default async function EventAttendancePage({
           eventId={event.id}
           participants={participants}
           existing={event.attendanceRecords}
+          submittedAt={event.submittedAt}
           mobile
         />
       </div>

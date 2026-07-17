@@ -18,4 +18,5 @@ export type StatsData = {
   totalParticipants: number;
   average: number;
   isParticipantView: boolean;
+  trendSlope: number | null;
 };

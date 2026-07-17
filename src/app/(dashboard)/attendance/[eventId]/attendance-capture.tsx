@@ -48,11 +48,13 @@ export default function AttendanceCapture({
   participants,
   existing,
   mobile = false,
+  submittedAt = null,
 }: {
   eventId: string;
   participants: Participant[];
   existing: ExistingRecord[];
   mobile?: boolean;
+  submittedAt?: Date | null;
 }) {
   const initialState = new Map<string, Mark>();
   for (const p of participants) initialState.set(p.id, null);
@@ -64,6 +66,8 @@ export default function AttendanceCapture({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [submitted, setSubmitted] = useState<Date | null>(submittedAt);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "submitting" | "error">("idle");
 
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
@@ -106,6 +110,22 @@ export default function AttendanceCapture({
       next.set(id, prev.get(id) === "present" ? null : "present");
       return next;
     });
+  }
+
+  async function handleSubmit() {
+    setSubmitStatus("submitting");
+    const res = await fetch(`/api/events/${eventId}/submit`, { method: "POST" });
+    const result = await res.json();
+    if (result.error) {
+      setSubmitStatus("error");
+    } else {
+      setSubmitted(new Date(result.submittedAt));
+      setSubmitStatus("idle");
+    }
+  }
+
+  function fmtSubmittedTime(d: Date) {
+    return d.toLocaleTimeString("en-ZA", { timeZone: "Africa/Johannesburg", hour: "2-digit", minute: "2-digit" });
   }
 
   const sorted = useMemo(() => {
@@ -190,7 +210,7 @@ export default function AttendanceCapture({
 
   if (mobile) {
     return (
-      <div className="flex flex-col">
+      <div className="flex flex-col pb-20">
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 pt-3 pb-2 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -202,6 +222,23 @@ export default function AttendanceCapture({
         </div>
         {error && <div className="mx-4 mt-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>}
         <div className="divide-y divide-gray-100">{sorted.map((p) => participantRow(p, true))}</div>
+
+        <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-100 bg-white px-4 py-3">
+          <button
+            onClick={handleSubmit}
+            disabled={submitStatus === "submitting"}
+            className="w-full rounded-xl bg-orange-600 py-3 text-center font-semibold text-white active:scale-[0.98] disabled:opacity-60"
+          >
+            {submitStatus === "submitting"
+              ? "Submitting…"
+              : submitted
+                ? `Resubmit (submitted ${fmtSubmittedTime(submitted)})`
+                : "Submit Attendance"}
+          </button>
+          {submitStatus === "error" && (
+            <p className="mt-1 text-center text-xs text-red-500">Submit failed — try again.</p>
+          )}
+        </div>
       </div>
     );
   }
