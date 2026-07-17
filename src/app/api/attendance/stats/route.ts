@@ -105,7 +105,7 @@ export async function GET(req: Request) {
   return Response.json({
     days,
     totalParticipants,
-    average: Math.round(average * 10) / 10,
+    average: Math.floor(average),
     isParticipantView: !!participantId,
   });
 }

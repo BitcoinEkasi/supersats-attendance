@@ -103,7 +103,7 @@ export default function AttendanceChart() {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap justify-center gap-3">
         <select
           value={month}
           onChange={(e) => setMonth(e.target.value)}
@@ -143,7 +143,7 @@ export default function AttendanceChart() {
 
       {/* Summary */}
       {data && !loading && (
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
           <span>
             <span className="font-medium text-gray-900">
               {data.days.filter((d) => d.dayType !== "off").length}
@@ -189,9 +189,9 @@ export default function AttendanceChart() {
       )}
 
       {!loading && data && data.days.some((d) => d.dayType === "session") && (
-        <div style={{ paddingLeft: "15%", paddingRight: "15%" }}>
+        <div style={{ paddingLeft: "7.5%", paddingRight: "7.5%" }}>
           <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
+            <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
               <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
@@ -207,7 +207,7 @@ export default function AttendanceChart() {
                 }}
               />
 
-              <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]} minPointSize={4} label={{ position: "insideBottom", fontSize: 10, fill: "#ffffff" }}>
+              <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]} minPointSize={4} label={{ position: "insideBottom", fontSize: 11, fill: "#ffffff" }}>
                 {data.days.map((entry, index) => (
                   <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
                 ))}
