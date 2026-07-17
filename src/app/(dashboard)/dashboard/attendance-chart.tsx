@@ -12,9 +12,10 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-import { TSK_GROUPS, TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import { getSASTNow } from "@/lib/sast";
 import type { DayEntry, StatsData } from "@/lib/types/attendance-stats";
+import ExcuseSessionModal from "./excuse-session-modal";
 
 function DayAxisTick(props: { x?: string | number; y?: string | number; payload?: { value: string }; days: DayEntry[] }) {
   const { x = 0, y = 0, payload, days } = props;
@@ -32,6 +33,8 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
   switch (entry.dayType) {
     case "off":
       return "#e5e7eb"; // gray-200, muted — not a signal
+    case "excused":
+      return "#e5e7eb"; // same as "off" — the flag icon, not bar color, communicates "deliberate decision"
     case "gap":
       return "#7c3aed"; // violet-600 — deliberately not red, which already means "marked absent" in participant view
     case "session":
@@ -39,6 +42,45 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
         ? entry.presentCount > 0 ? "#22c55e" : "#ef4444"
         : "#f97316";
   }
+}
+
+function BarLabel(props: {
+  x?: string | number; y?: string | number; width?: string | number; value?: React.ReactNode; index?: number;
+  days: DayEntry[]; groupSelected: boolean; onFlagClick: (day: DayEntry) => void;
+}) {
+  const { value, index = 0, days, groupSelected, onFlagClick } = props;
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const day = days[index];
+  const isFlaggable = groupSelected && (day?.dayType === "gap" || day?.dayType === "excused");
+
+  if (isFlaggable) {
+    const cx = x + width / 2;
+    const cy = y - 8; // just above the (minPointSize-pinned) bar top
+    const filled = day.dayType === "excused";
+    return (
+      <g
+        transform={`translate(${cx},${cy})`}
+        onClick={(e) => { e.stopPropagation(); onFlagClick(day); }}
+        style={{ cursor: "pointer" }}
+      >
+        <rect x={-10} y={-12} width={20} height={20} fill="transparent" />
+        <path
+          d="M-3 -8 v14 M-3 -8 h9 l-2 3 2 3 h-9"
+          fill={filled ? "#000000" : "none"}
+          stroke={filled ? "#000000" : "#9ca3af"}
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+        />
+      </g>
+    );
+  }
+  return (
+    <text x={x + width / 2} y={y} dy={14} textAnchor="middle" fontSize={11} fill="#ffffff">
+      {value}
+    </text>
+  );
 }
 
 type SlimParticipant = {
@@ -72,6 +114,8 @@ export default function AttendanceChart() {
   const [participants, setParticipants] = useState<SlimParticipant[]>([]);
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [modalDay, setModalDay] = useState<DayEntry | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     if (!group) {
@@ -96,9 +140,14 @@ export default function AttendanceChart() {
       .then((d: StatsData) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [month, group, participantId]);
+  }, [month, group, participantId, refreshTick]);
 
   const selectedParticipant = participants.find((p) => p.id === participantId);
+
+  function handleFlagClick(day: DayEntry) {
+    if (!group) return;
+    setModalDay(day);
+  }
 
   return (
     <div className="space-y-4">
@@ -146,7 +195,7 @@ export default function AttendanceChart() {
         <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
           <span>
             <span className="font-medium text-gray-900">
-              {data.days.filter((d) => d.dayType !== "off").length}
+              {data.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused").length}
             </span> potential sessions
           </span>
           <span>
@@ -159,6 +208,13 @@ export default function AttendanceChart() {
               <span className="font-medium" style={{ color: "#7c3aed" }}>
                 {data.days.filter((d) => d.dayType === "gap").length}
               </span> gaps
+            </span>
+          )}
+          {data.days.filter((d) => d.dayType === "excused").length > 0 && (
+            <span>
+              <span className="font-medium text-gray-700">
+                {data.days.filter((d) => d.dayType === "excused").length}
+              </span> excused
             </span>
           )}
           <span>
@@ -203,11 +259,26 @@ export default function AttendanceChart() {
                 }}
                 labelFormatter={(label) => {
                   const day = data.days.find((d) => d.label === label);
-                  return day ? new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }) : label;
+                  if (!day) return label;
+                  const dateStr = new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+                  if (day.dayType === "excused") {
+                    const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
+                    return `${dateStr} — Excused (${reasonText})`;
+                  }
+                  if (day.dayType === "gap") return `${dateStr} — Gap (no session held)`;
+                  return dateStr;
                 }}
               />
 
-              <Bar dataKey="presentCount" name="presentCount" radius={[3, 3, 0, 0]} minPointSize={4} label={{ position: "insideBottom", fontSize: 11, fill: "#ffffff" }}>
+              <Bar
+                dataKey="presentCount"
+                name="presentCount"
+                radius={[3, 3, 0, 0]}
+                minPointSize={4}
+                label={(props) => (
+                  <BarLabel {...props} days={data.days} groupSelected={!!group} onFlagClick={handleFlagClick} />
+                )}
+              >
                 {data.days.map((entry, index) => (
                   <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
                 ))}
@@ -230,6 +301,16 @@ export default function AttendanceChart() {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+      )}
+
+      {modalDay && group && (
+        <ExcuseSessionModal
+          day={modalDay}
+          group={group as TskGroupKey}
+          groupLabel={TSK_GROUP_LABELS[group]}
+          onClose={() => setModalDay(null)}
+          onSaved={() => setRefreshTick((t) => t + 1)}
+        />
       )}
     </div>
   );

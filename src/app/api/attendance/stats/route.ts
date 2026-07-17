@@ -33,6 +33,17 @@ export async function GET(req: Request) {
     orderBy: { date: "asc" },
   });
 
+  // Excuse flags are group-specific and only meaningful once a group is selected.
+  const excusedSessions = group
+    ? await prisma.excusedSession.findMany({
+        where: { date: { gte: start, lte: end }, group },
+        select: { date: true, reason: true, reasonOther: true },
+      })
+    : [];
+  const excuseMap = new Map(
+    excusedSessions.map((e) => [e.date.toISOString().split("T")[0], e])
+  );
+
   const dayMap = new Map<string, { presentCount: number; sessions: number; categories: Set<string> }>();
   for (const event of events) {
     const dateStr = event.date.toISOString().split("T")[0];
@@ -51,7 +62,12 @@ export async function GET(req: Request) {
   const allDates = getDaysInSASTMonth(month);
   const baseDays: DayEntry[] = allDates.map((date) => {
     const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
-    const dayType: DayType = agg.sessions > 0 ? "session" : isProgrammeDay(date) ? "gap" : "off";
+    const excuse = excuseMap.get(date);
+    const dayType: DayType = agg.sessions > 0
+      ? "session"
+      : excuse
+      ? "excused"
+      : isProgrammeDay(date) ? "gap" : "off";
     const d = new Date(`${date}T12:00:00.000Z`);
     const activity = agg.categories.size === 1
       ? CATEGORY_SHORT_LABELS[[...agg.categories][0]] ?? [...agg.categories][0]
@@ -65,6 +81,8 @@ export async function GET(req: Request) {
       sessions: agg.sessions,
       dayType,
       trend: null,
+      excuseReason: excuse?.reason ?? null,
+      excuseReasonOther: excuse?.reasonOther ?? null,
     };
   });
 
@@ -82,7 +100,7 @@ export async function GET(req: Request) {
     ? sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / sessionDays.length
     : 0;
 
-  const programmeDays = baseDays.filter((d) => d.dayType !== "off");
+  const programmeDays = baseDays.filter((d) => d.dayType !== "off" && d.dayType !== "excused");
   const n = programmeDays.length;
 
   const days: DayEntry[] = baseDays.map((d) => ({ ...d }));
@@ -96,7 +114,7 @@ export async function GET(req: Request) {
     const intercept = meanY - slope * meanX;
     let i = 0;
     for (const day of days) {
-      if (day.dayType === "off") continue;
+      if (day.dayType === "off" || day.dayType === "excused") continue;
       day.trend = Math.max(0, Math.round((intercept + slope * i) * 10) / 10);
       i++;
     }

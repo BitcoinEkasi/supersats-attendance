@@ -392,3 +392,17 @@ model AbsenceFlag {
   @@map("absence_flags")
 }
 
+model ExcusedSession {
+  id          String   @id @default(uuid())
+  date        DateTime
+  group       TskGroup
+  reason      String
+  reasonOther String?  @map("reason_other")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([date, group])
+  @@map("excused_sessions")
+}
+
