@@ -58,7 +58,10 @@ function BarLabel(props: {
   if (isFlaggable) {
     const cx = x + width / 2;
     const cy = y - 8; // just above the (minPointSize-pinned) bar top
-    const filled = day.dayType === "excused";
+    const isExcused = day.dayType === "excused";
+    const isFlaggedGap = day.dayType === "gap" && !!day.excuseReason; // has a reason but still counts as a gap — controllable failure
+    const flagColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "none";
+    const strokeColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "#9ca3af";
     return (
       <g
         transform={`translate(${cx},${cy})`}
@@ -68,8 +71,8 @@ function BarLabel(props: {
         <rect x={-10} y={-12} width={20} height={20} fill="transparent" />
         <path
           d="M-3 -8 v14 M-3 -8 h9 l-2 3 2 3 h-9"
-          fill={filled ? "#000000" : "none"}
-          stroke={filled ? "#000000" : "#9ca3af"}
+          fill={flagColor}
+          stroke={strokeColor}
           strokeWidth={1.5}
           strokeLinejoin="round"
         />
@@ -268,7 +271,13 @@ export default function AttendanceChart() {
                     const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
                     return `${dateStr} — Excused (${reasonText})`;
                   }
-                  if (day.dayType === "gap") return `${dateStr} — Gap (no session held)`;
+                  if (day.dayType === "gap") {
+                    if (day.excuseReason) {
+                      const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
+                      return `${dateStr} — Gap: ${reasonText}`;
+                    }
+                    return `${dateStr} — Gap (no session held)`;
+                  }
                   return dateStr;
                 }}
               />

@@ -18,7 +18,7 @@ export default function ExcuseSessionModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const isEditing = day.dayType === "excused";
+  const isEditing = day.dayType === "excused" || !!day.excuseReason;
   const [reason, setReason] = useState(day.excuseReason ?? "");
   const [reasonOther, setReasonOther] = useState(day.excuseReasonOther ?? "");
   const [saving, setSaving] = useState(false);
@@ -94,7 +94,7 @@ export default function ExcuseSessionModal({
             >
               <option value="">— select reason —</option>
               {EXCUSED_SESSION_REASONS.map((r) => (
-                <option key={r} value={r}>{r}</option>
+                <option key={r.label} value={r.label}>{r.label}</option>
               ))}
             </select>
             {reason === "Other" && (

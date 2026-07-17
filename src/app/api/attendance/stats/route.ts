@@ -4,6 +4,7 @@ import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgramme
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { isValidGroup, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
+import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import type { DayEntry, DayType } from "@/lib/types/attendance-stats";
 
 export async function GET(req: Request) {
@@ -65,7 +66,7 @@ export async function GET(req: Request) {
     const excuse = excuseMap.get(date);
     const dayType: DayType = agg.sessions > 0
       ? "session"
-      : excuse
+      : excuse && getExcuseCategory(excuse.reason) === "excused"
       ? "excused"
       : isProgrammeDay(date) ? "gap" : "off";
     const d = new Date(`${date}T12:00:00.000Z`);
