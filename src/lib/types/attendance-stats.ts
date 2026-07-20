@@ -34,10 +34,13 @@ export type MonthEntry = {
   gaps: number;
   /** Per-group average contribution to `average` — populated only in the "All Groups" view. */
   groupContributions: Record<TskGroupKey, number> | null;
+  /** Historical roster size as of this month (always 1 for participant scope). */
+  registered: number;
+  /** Per-group historical roster breakdown as of this month — populated only in the "All Groups" view. */
+  groupRegistered: Record<TskGroupKey, number> | null;
 };
 
 export type TrajectoryData = {
   months: MonthEntry[];
-  totalParticipants: number;
   isParticipantView: boolean;
 };

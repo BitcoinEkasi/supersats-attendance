@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/db";
-import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getLastNMonths } from "@/lib/sast";
+import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getLastNMonths, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
+import { computeMonthlyRosterCounts, type MonthlyRoster } from "@/lib/roster-history";
 import type { DayEntry, DayType, StatsData, MonthEntry, TrajectoryData } from "@/lib/types/attendance-stats";
 
 export type ComputeAttendanceStatsParams = {
@@ -188,6 +189,18 @@ export async function computeAttendanceTrajectory({
 
   const includeGroupBreakdown = !group && !participantId;
 
+  // Historical roster reconstruction is meaningless for a single participant (registered
+  // is trivially 1), so skip the query entirely in that case. As-of date per month: end of
+  // that month for the 11 fully-elapsed months, capped at today for the current one —
+  // the same "today caps in-progress data" convention already used for "future" days.
+  let rosterByMonth: MonthlyRoster[] | null = null;
+  if (!participantId) {
+    const asOfDates = months.map((m, i) =>
+      i === months.length - 1 ? getEndOfSASTToday() : getEndOfSASTMonth(m.value)
+    );
+    rosterByMonth = await computeMonthlyRosterCounts(asOfDates);
+  }
+
   const monthEntries: MonthEntry[] = months.map((m, i) => {
     const stats = monthStats[i];
     const sessionDays = stats.days.filter((d) => d.dayType === "session");
@@ -216,17 +229,19 @@ export async function computeAttendanceTrajectory({
       average = n > 0 ? Math.floor(sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / n) : 0;
     }
 
-    return { month: m.value, label: m.label, average, held, potential, gaps, groupContributions };
-  });
+    const roster = rosterByMonth?.[i];
+    const registered = participantId
+      ? 1
+      : group
+      ? (roster?.groupRegistered[group] ?? 0)
+      : (roster?.registered ?? 0);
+    const groupRegistered = includeGroupBreakdown ? (roster?.groupRegistered ?? null) : null;
 
-  // totalParticipants is always today's active count regardless of which month is queried
-  // (computeAttendanceStats has no historical-membership concept) — every call returns the
-  // same value, so the last one is as good as any for the trajectory-wide reference line.
-  const totalParticipants = monthStats[monthStats.length - 1].totalParticipants;
+    return { month: m.value, label: m.label, average, held, potential, gaps, groupContributions, registered, groupRegistered };
+  });
 
   return {
     months: monthEntries,
-    totalParticipants,
     isParticipantView: !!participantId,
   };
 }

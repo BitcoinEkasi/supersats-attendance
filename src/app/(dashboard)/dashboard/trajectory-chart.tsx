@@ -3,7 +3,7 @@
 import {
   ComposedChart,
   Bar,
-  ReferenceLine,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -11,7 +11,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TSK_GROUPS, TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import type { TooltipContentProps } from "recharts";
+import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import type { MonthEntry, TrajectoryData } from "@/lib/types/attendance-stats";
 import { GROUP_COLORS } from "./attendance-chart";
 
@@ -41,6 +42,88 @@ function MonthBarLabel(props: { x?: string | number; y?: string | number; width?
   );
 }
 
+/** Registered/70%-target lines, stepped since a roster count is a discrete monthly
+ * snapshot, not something that smoothly interpolates between two points. Renders
+ * flat at y=1 for participant scope (registered is hardcoded to 1 server-side),
+ * matching the old flat reference-line behavior with no special-case needed. */
+function RosterLines() {
+  return (
+    <>
+      <Line type="stepAfter" dataKey="registered" name="Registered" stroke="#3b82f6" strokeWidth={1.5} dot={false} legendType="none" isAnimationActive={false} />
+      <Line
+        type="stepAfter"
+        dataKey={(m: MonthEntry) => Math.round(m.registered * 0.7)}
+        name="70% Target"
+        stroke="#16a34a"
+        strokeDasharray="5 5"
+        strokeWidth={1.5}
+        dot={false}
+        legendType="none"
+        isAnimationActive={false}
+      />
+    </>
+  );
+}
+
+function ratioText(numerator: number, denominator: number): string {
+  if (denominator <= 0) return "—";
+  return `${numerator}/${denominator} (${Math.round((numerator / denominator) * 100)}%)`;
+}
+
+function TrajectoryTooltipContent({ active, payload, group }: TooltipContentProps & { group: string }) {
+  if (!active || !payload?.length) return null;
+  const m = payload[0]?.payload as MonthEntry | undefined;
+  if (!m) return null;
+
+  const gapText = m.gaps > 0 ? `, ${m.gaps} gap${m.gaps === 1 ? "" : "s"}` : "";
+  const headerText = `${m.label} — ${m.held}/${m.potential} sessions held${gapText}`;
+
+  const rows: { label: string; text: string; color: string; emphasize?: boolean }[] = [];
+  if (!group) {
+    // Top-of-stack-first (Free Surfers → Turtles), matching the itemSorter fix so the
+    // tooltip list reads top-to-bottom the same way the visual stack does.
+    for (let i = TSK_GROUPS.length - 1; i >= 0; i--) {
+      const g = TSK_GROUPS[i];
+      rows.push({
+        label: TSK_GROUP_LABELS[g],
+        text: ratioText(m.groupContributions?.[g] ?? 0, m.groupRegistered?.[g] ?? 0),
+        color: GROUP_COLORS[g],
+      });
+    }
+    rows.push({ label: "Total", text: ratioText(m.average, m.registered), color: "#000000", emphasize: true });
+  } else {
+    rows.push({
+      label: TSK_GROUP_LABELS[group as TskGroupKey] ?? "Average",
+      text: ratioText(m.average, m.registered),
+      color: "#14b8a6", // matches the single Bar's hardcoded teal fill below
+    });
+  }
+
+  return (
+    <div className="recharts-default-tooltip" style={{ margin: 0, padding: 10, backgroundColor: "#fff", border: "1px solid #ccc", whiteSpace: "nowrap" }}>
+      <p style={{ margin: 0 }}>{headerText}</p>
+      <ul style={{ padding: 0, margin: 0, listStyle: "none" }}>
+        {rows.map((r) => (
+          <li
+            key={r.label}
+            style={{
+              display: "block",
+              paddingTop: 4,
+              paddingBottom: r.emphasize ? 0 : 4,
+              color: r.color,
+              fontWeight: r.emphasize ? 600 : 400,
+              borderTop: r.emphasize ? "1px solid #eee" : undefined,
+              marginTop: r.emphasize ? 4 : 0,
+            }}
+          >
+            {r.label} : {r.text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function TrajectoryChart({ data, group }: { data: TrajectoryData; group: string }) {
   if (data.months.every((m) => m.average === 0)) {
     return (
@@ -56,8 +139,9 @@ export default function TrajectoryChart({ data, group }: { data: TrajectoryData;
         <ComposedChart data={data.months} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
           <XAxis dataKey="month" tick={(props) => <MonthAxisTick {...props} />} interval={0} height={28} />
-          <YAxis hide domain={[0, Math.max(data.totalParticipants, ...data.months.map((m) => m.average)) + 2]} />
+          <YAxis hide domain={[0, Math.max(...data.months.map((m) => Math.max(m.average, m.registered))) + 2]} />
           <Tooltip
+            content={data.isParticipantView ? undefined : (props) => <TrajectoryTooltipContent {...props} group={group} />}
             itemSorter={(item) => {
               // Reversed vs. the stack's bottom-to-top construction order (Turtles first),
               // so the hover list reads top-of-stack-first (Free Surfers) to bottom (Turtles) —
@@ -107,20 +191,7 @@ export default function TrajectoryChart({ data, group }: { data: TrajectoryData;
             </>
           )}
 
-          <ReferenceLine
-            y={data.totalParticipants}
-            stroke="#3b82f6"
-            strokeWidth={1.5}
-            label={{ value: `${data.totalParticipants}`, position: "left", fontSize: 12, fontWeight: 600, fill: "#3b82f6" }}
-          />
-
-          <ReferenceLine
-            y={Math.round(data.totalParticipants * 0.7)}
-            stroke="#16a34a"
-            strokeDasharray="5 5"
-            strokeWidth={1.5}
-            label={{ value: `${Math.round(data.totalParticipants * 0.7)} (70%)`, position: "left", fontSize: 12, fontWeight: 600, fill: "#16a34a" }}
-          />
+          <RosterLines />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
