@@ -24,3 +24,20 @@ export type StatsData = {
   isParticipantView: boolean;
   trendSlope: number | null;
 };
+
+export type MonthEntry = {
+  month: string; // "YYYY-MM"
+  label: string;
+  average: number;
+  held: number;
+  potential: number;
+  gaps: number;
+  /** Per-group average contribution to `average` — populated only in the "All Groups" view. */
+  groupContributions: Record<TskGroupKey, number> | null;
+};
+
+export type TrajectoryData = {
+  months: MonthEntry[];
+  totalParticipants: number;
+  isParticipantView: boolean;
+};

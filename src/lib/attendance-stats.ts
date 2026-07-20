@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db";
-import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString } from "@/lib/sast";
+import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getLastNMonths } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
-import type { DayEntry, DayType, StatsData } from "@/lib/types/attendance-stats";
+import type { DayEntry, DayType, StatsData, MonthEntry, TrajectoryData } from "@/lib/types/attendance-stats";
 
 export type ComputeAttendanceStatsParams = {
   month: string; // "YYYY-MM"
@@ -169,5 +169,64 @@ export async function computeAttendanceStats({
     average: Math.floor(average),
     isParticipantView: !!participantId,
     trendSlope,
+  };
+}
+
+export type ComputeAttendanceTrajectoryParams = {
+  group?: TskGroupKey;
+  participantId?: string;
+};
+
+export async function computeAttendanceTrajectory({
+  group,
+  participantId,
+}: ComputeAttendanceTrajectoryParams): Promise<TrajectoryData> {
+  const months = getLastNMonths(12, { order: "oldest-first" });
+  const monthStats = await Promise.all(
+    months.map((m) => computeAttendanceStats({ month: m.value, group, participantId }))
+  );
+
+  const includeGroupBreakdown = !group && !participantId;
+
+  const monthEntries: MonthEntry[] = months.map((m, i) => {
+    const stats = monthStats[i];
+    const sessionDays = stats.days.filter((d) => d.dayType === "session");
+    const n = sessionDays.length;
+    const held = sessionDays.length;
+    const potential = stats.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length;
+    const gaps = stats.days.filter((d) => d.dayType === "gap").length;
+
+    let average: number;
+    let groupContributions: Record<TskGroupKey, number> | null = null;
+    if (includeGroupBreakdown) {
+      // Compute every group's contribution and the total from the same unrounded pass —
+      // averages aren't additive once rounded, so composing separately-rounded per-group
+      // calls would make the stacked segments fail to sum to the displayed total.
+      const raw = Object.fromEntries(
+        TSK_GROUPS.map((g) => [
+          g,
+          n > 0 ? sessionDays.reduce((sum, d) => sum + (d.groupCounts?.[g] ?? 0), 0) / n : 0,
+        ])
+      ) as Record<TskGroupKey, number>;
+      groupContributions = Object.fromEntries(
+        TSK_GROUPS.map((g) => [g, Math.round(raw[g] * 10) / 10])
+      ) as Record<TskGroupKey, number>;
+      average = Math.round(TSK_GROUPS.reduce((sum, g) => sum + raw[g], 0) * 10) / 10;
+    } else {
+      average = n > 0 ? Math.floor(sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / n) : 0;
+    }
+
+    return { month: m.value, label: m.label, average, held, potential, gaps, groupContributions };
+  });
+
+  // totalParticipants is always today's active count regardless of which month is queried
+  // (computeAttendanceStats has no historical-membership concept) — every call returns the
+  // same value, so the last one is as good as any for the trajectory-wide reference line.
+  const totalParticipants = monthStats[monthStats.length - 1].totalParticipants;
+
+  return {
+    months: monthEntries,
+    totalParticipants,
+    isParticipantView: !!participantId,
   };
 }

@@ -15,11 +15,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
-import { getSASTNow } from "@/lib/sast";
-import type { DayEntry, StatsData } from "@/lib/types/attendance-stats";
+import { getLastNMonths } from "@/lib/sast";
+import type { DayEntry, StatsData, TrajectoryData } from "@/lib/types/attendance-stats";
 import ExcuseSessionModal from "./excuse-session-modal";
+import TrajectoryChart from "./trajectory-chart";
 
-const GROUP_COLORS: Record<TskGroupKey, string> = {
+export const GROUP_COLORS: Record<TskGroupKey, string> = {
   TURTLES: "#14b8a6",      // teal-500
   SEALS: "#0ea5e9",        // sky-500
   DOLPHINS: "#8b5cf6",     // violet-500
@@ -166,28 +167,16 @@ type SlimParticipant = {
   knownAs: string | null;
 };
 
-function getLast12Months(): { value: string; label: string }[] {
-  const { year, month } = getSASTNow();
-  const result = [];
-  for (let i = 0; i < 12; i++) {
-    let m = month - i;
-    let y = year;
-    while (m <= 0) { m += 12; y -= 1; }
-    const value = `${y}-${String(m).padStart(2, "0")}`;
-    const label = new Date(`${value}-15T12:00:00Z`).toLocaleString("en-ZA", { month: "long", year: "numeric" });
-    result.push({ value, label });
-  }
-  return result;
-}
-
-const MONTHS = getLast12Months();
+const MONTHS = getLastNMonths(12);
 
 export default function AttendanceChart() {
+  const [viewMode, setViewMode] = useState<"pulse" | "trajectory">("pulse");
   const [month, setMonth] = useState(MONTHS[0].value);
   const [group, setGroup] = useState("");
   const [participantId, setParticipantId] = useState("");
   const [participants, setParticipants] = useState<SlimParticipant[]>([]);
   const [data, setData] = useState<StatsData | null>(null);
+  const [trajectoryData, setTrajectoryData] = useState<TrajectoryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [modalDay, setModalDay] = useState<DayEntry | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -206,6 +195,7 @@ export default function AttendanceChart() {
   }, [group]);
 
   useEffect(() => {
+    if (viewMode !== "pulse") return;
     setLoading(true);
     const params = new URLSearchParams({ month });
     if (group) params.set("group", group);
@@ -215,7 +205,20 @@ export default function AttendanceChart() {
       .then((d: StatsData) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [month, group, participantId, refreshTick]);
+  }, [viewMode, month, group, participantId, refreshTick]);
+
+  useEffect(() => {
+    if (viewMode !== "trajectory") return;
+    setLoading(true);
+    const params = new URLSearchParams();
+    if (group) params.set("group", group);
+    if (participantId) params.set("participantId", participantId);
+    fetch(`/api/attendance/trajectory?${params}`)
+      .then((r) => r.json())
+      .then((d: TrajectoryData) => setTrajectoryData(d))
+      .catch(() => setTrajectoryData(null))
+      .finally(() => setLoading(false));
+  }, [viewMode, group, participantId, refreshTick]);
 
   const selectedParticipant = participants.find((p) => p.id === participantId);
 
@@ -227,15 +230,31 @@ export default function AttendanceChart() {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap justify-center gap-3">
-        <select
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
-        >
-          {MONTHS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
+        <div className="inline-flex rounded-md border border-gray-300 text-sm overflow-hidden">
+          {(["pulse", "trajectory"] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-3 py-1.5 font-medium ${
+                viewMode === mode ? "bg-orange-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {mode === "pulse" ? "Pulse" : "Trajectory"}
+            </button>
           ))}
-        </select>
+        </div>
+
+        {viewMode === "pulse" && (
+          <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+          >
+            {MONTHS.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        )}
 
         <select
           value={group}
@@ -265,7 +284,7 @@ export default function AttendanceChart() {
       </div>
 
       {/* Summary */}
-      {data && !loading && (
+      {viewMode === "pulse" && data && !loading && (
         <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
           <span>
             <span className="font-medium text-gray-900">
@@ -312,13 +331,17 @@ export default function AttendanceChart() {
         <div className="h-64 animate-pulse rounded-lg bg-gray-100" />
       )}
 
-      {!loading && data && data.days.every((d) => d.dayType !== "session") && (
+      {viewMode === "pulse" && !loading && data && data.days.every((d) => d.dayType !== "session") && (
         <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">
           No sessions recorded for this period
         </div>
       )}
 
-      {!loading && data && data.days.some((d) => d.dayType === "session") && (
+      {viewMode === "trajectory" && !loading && trajectoryData && (
+        <TrajectoryChart data={trajectoryData} group={group} />
+      )}
+
+      {viewMode === "pulse" && !loading && data && data.days.some((d) => d.dayType === "session") && (
         <div style={{ paddingLeft: "7.5%", paddingRight: "7.5%" }}>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>

@@ -50,3 +50,18 @@ export function isProgrammeDay(dateStr: string): boolean {
   const day = new Date(`${dateStr}T12:00:00.000Z`).getUTCDay(); // 0=Sun..6=Sat, noon-UTC anchor matches event storage
   return day !== 0 && day !== 1;
 }
+
+/** The last N SAST months (including the current one), as "YYYY-MM" values with display labels. */
+export function getLastNMonths(n: number, opts?: { order?: "newest-first" | "oldest-first" }): { value: string; label: string }[] {
+  const { year, month } = getSASTNow();
+  const result: { value: string; label: string }[] = [];
+  for (let i = 0; i < n; i++) {
+    let m = month - i;
+    let y = year;
+    while (m <= 0) { m += 12; y -= 1; }
+    const value = `${y}-${String(m).padStart(2, "0")}`;
+    const label = new Date(`${value}-15T12:00:00Z`).toLocaleString("en-ZA", { month: "long", year: "numeric" });
+    result.push({ value, label });
+  }
+  return opts?.order === "oldest-first" ? result.reverse() : result;
+}
