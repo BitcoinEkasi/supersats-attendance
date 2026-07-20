@@ -14,7 +14,7 @@ import {
 import type { TooltipContentProps } from "recharts";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import type { MonthEntry, TrajectoryData } from "@/lib/types/attendance-stats";
-import { GROUP_COLORS } from "./attendance-chart";
+import { GROUP_COLORS, TargetDashMarker } from "./attendance-chart";
 
 function MonthAxisTick(props: { x?: string | number; y?: string | number; payload?: { value: string } }) {
   const { x = 0, y = 0, payload } = props;
@@ -42,24 +42,28 @@ function MonthBarLabel(props: { x?: string | number; y?: string | number; width?
   );
 }
 
-/** Registered/70%-target lines, stepped since a roster count is a discrete monthly
- * snapshot, not something that smoothly interpolates between two points. Renders
- * flat at y=1 for participant scope (registered is hardcoded to 1 server-side),
- * matching the old flat reference-line behavior with no special-case needed. */
+/** Registered/70%-target markers: a dash + inline number per month, no connecting
+ * line — a roster count is a discrete monthly snapshot, not something that should
+ * read as continuously trending between points. Renders flat at y=1 for participant
+ * scope (registered is hardcoded to 1 server-side), no special-case needed. */
 function RosterLines() {
   return (
     <>
-      <Line type="stepAfter" dataKey="registered" name="Registered" stroke="#3b82f6" strokeWidth={1.5} dot={false} legendType="none" isAnimationActive={false} />
       <Line
-        type="stepAfter"
+        dataKey="registered"
+        name="Registered"
+        stroke="none"
+        isAnimationActive={false}
+        legendType="none"
+        dot={(props: object) => <TargetDashMarker {...props} color="#3b82f6" formatLabel={(v) => `Total: ${v}`} />}
+      />
+      <Line
         dataKey={(m: MonthEntry) => Math.round(m.registered * 0.7)}
         name="70% Target"
-        stroke="#16a34a"
-        strokeDasharray="5 5"
-        strokeWidth={1.5}
-        dot={false}
-        legendType="none"
+        stroke="none"
         isAnimationActive={false}
+        legendType="none"
+        dot={(props: object) => <TargetDashMarker {...props} color="#16a34a" formatLabel={(v) => `Target: ${v} (70%)`} />}
       />
     </>
   );
@@ -136,7 +140,7 @@ export default function TrajectoryChart({ data, group }: { data: TrajectoryData;
   return (
     <div style={{ paddingLeft: "7.5%", paddingRight: "7.5%" }}>
       <ResponsiveContainer width="100%" height={300}>
-        <ComposedChart data={data.months} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
+        <ComposedChart data={data.months} margin={{ top: 8, right: 24, left: 60, bottom: 0 }} barCategoryGap="50%">
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
           <XAxis dataKey="month" tick={(props) => <MonthAxisTick {...props} />} interval={0} height={28} />
           <YAxis hide domain={[0, Math.max(...data.months.map((m) => Math.max(m.average, m.registered))) + 2]} />
