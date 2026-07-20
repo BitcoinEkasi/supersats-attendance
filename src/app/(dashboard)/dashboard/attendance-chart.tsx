@@ -72,6 +72,13 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
   }
 }
 
+/** Stacked (All Groups) view: off/gap days render as a single solid gray/red bar, same as the per-group view — group color only applies on days sessions actually happened. */
+function stackedCellFill(entry: DayEntry, groupColor: string): string {
+  if (entry.dayType === "off") return "#e5e7eb";
+  if (entry.dayType === "gap") return "#ef4444";
+  return groupColor;
+}
+
 function BarLabel(props: {
   x?: string | number; y?: string | number; width?: string | number; value?: React.ReactNode; index?: number;
   days: DayEntry[]; groupSelected: boolean; onFlagClick: (day: DayEntry) => void;
@@ -340,9 +347,22 @@ export default function AttendanceChart() {
                       minPointSize={2}
                       radius={i === TSK_GROUPS.length - 1 ? [3, 3, 0, 0] : undefined}
                       label={i === TSK_GROUPS.length - 1 ? (props) => <StackTotalLabel {...props} days={data.days} /> : undefined}
-                    />
+                    >
+                      {data.days.map((entry, index) => (
+                        <Cell key={index} fill={stackedCellFill(entry, GROUP_COLORS[g])} />
+                      ))}
+                    </Bar>
                   ))}
-                  <Legend verticalAlign="top" height={28} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                  <Legend
+                    verticalAlign="top"
+                    height={28}
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: 12 }}
+                    itemSorter={(item) => {
+                      const idx = TSK_GROUPS.findIndex((g) => TSK_GROUP_LABELS[g] === item.value);
+                      return idx === -1 ? TSK_GROUPS.length : idx;
+                    }}
+                  />
                 </>
               )}
 
@@ -362,7 +382,7 @@ export default function AttendanceChart() {
               />
 
               {data.days.some((d) => d.trend !== null) && (
-                <Line dataKey="trend" name="trend" stroke="#9ca3af" strokeWidth={1.5} dot={false} connectNulls />
+                <Line dataKey="trend" name="trend" legendType="none" stroke="#9ca3af" strokeWidth={1.5} dot={false} connectNulls />
               )}
             </ComposedChart>
           </ResponsiveContainer>
