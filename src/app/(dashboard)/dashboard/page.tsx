@@ -13,10 +13,7 @@ export default async function DashboardPage() {
       <CollapsibleSection title="Attendance Analytics" defaultOpen>
         <AttendanceChart />
       </CollapsibleSection>
-      <CollapsibleSection
-        title={flagCount > 0 ? `Absence Alerts (${flagCount})` : "Absence Alerts"}
-        defaultOpen={flagCount > 0}
-      >
+      <CollapsibleSection title={flagCount > 0 ? `Absence Alerts (${flagCount})` : "Absence Alerts"}>
         <AbsenceReport />
       </CollapsibleSection>
       <CollapsibleSection title="Pending Level Changes">

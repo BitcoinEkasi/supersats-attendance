@@ -67,7 +67,7 @@ function RosterLines() {
 
 function ratioText(numerator: number, denominator: number): string {
   if (denominator <= 0) return "—";
-  return `${numerator}/${denominator} (${Math.round((numerator / denominator) * 100)}%)`;
+  return `${numerator}/${denominator} (${Math.floor((numerator / denominator) * 100)}%)`;
 }
 
 function TrajectoryTooltipContent({ active, payload, group }: TooltipContentProps & { group: string }) {
