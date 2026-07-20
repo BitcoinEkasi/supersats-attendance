@@ -5,6 +5,7 @@ import {
   ComposedChart,
   Bar,
   Line,
+  ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -121,22 +122,6 @@ function BarLabel(props: {
     );
   }
   return null; // off days, and gap/excused days with no group selected — nothing to show
-}
-
-/** A single dash + inline label per data point — no connecting line — marking that
- * bar's own registered/target value. Used for both the "Total" (registered) and
- * "Target" (70%) markers, on both Pulse and Trajectory. */
-export function TargetDashMarker(props: {
-  cx?: number; cy?: number; value?: number; color: string; formatLabel: (v: number) => string;
-}) {
-  const { cx, cy, value, color, formatLabel } = props;
-  if (cx == null || cy == null || value == null) return null;
-  return (
-    <g>
-      <line x1={cx - 6} x2={cx + 6} y1={cy} y2={cy} stroke={color} strokeWidth={2} />
-      <text x={cx + 9} y={cy} dy={3} fontSize={9} fill={color} textAnchor="start">{formatLabel(value)}</text>
-    </g>
-  );
 }
 
 /** All Groups view: last stacked bar's label slot. Session days show the day's total across all groups; gap/excused days show the cross-group flag (see FlagGlyph). */
@@ -359,10 +344,10 @@ export default function AttendanceChart() {
       {viewMode === "pulse" && !loading && data && data.days.some((d) => d.dayType === "session") && (
         <div style={{ paddingLeft: "7.5%", paddingRight: "7.5%" }}>
           <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }} barCategoryGap="50%">
+            <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
-              <YAxis hide domain={[0, Math.max(...data.days.map((d) => Math.max(d.presentCount, d.registered))) + 2]} />
+              <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
               <Tooltip
                 itemSorter={(item) => {
                   // Reversed vs. the stack's bottom-to-top construction order (Turtles first),
@@ -444,22 +429,19 @@ export default function AttendanceChart() {
                 </>
               )}
 
-              <Line
-                dataKey="registered"
-                name="Registered"
-                stroke="none"
-                isAnimationActive={false}
-                legendType="none"
-                dot={(props: object) => <TargetDashMarker {...props} color="#3b82f6" formatLabel={(v) => `Total: ${v}`} />}
+              <ReferenceLine
+                y={data.totalParticipants}
+                stroke="#3b82f6"
+                strokeWidth={1.5}
+                label={{ value: `${data.totalParticipants}`, position: "left", fontSize: 12, fontWeight: 600, fill: "#3b82f6" }}
               />
 
-              <Line
-                dataKey={(d: DayEntry) => Math.round(d.registered * 0.7)}
-                name="70% Target"
-                stroke="none"
-                isAnimationActive={false}
-                legendType="none"
-                dot={(props: object) => <TargetDashMarker {...props} color="#16a34a" formatLabel={(v) => `Target: ${v} (70%)`} />}
+              <ReferenceLine
+                y={Math.round(data.totalParticipants * 0.7)}
+                stroke="#16a34a"
+                strokeDasharray="5 5"
+                strokeWidth={1.5}
+                label={{ value: `${Math.round(data.totalParticipants * 0.7)} (70%)`, position: "left", fontSize: 12, fontWeight: 600, fill: "#16a34a" }}
               />
 
               {group && data.days.some((d) => d.trend !== null) && (

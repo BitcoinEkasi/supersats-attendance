@@ -15,10 +15,6 @@ export type DayEntry = {
   excuseReasonOther: string | null;
   /** Per-group present counts for this day — populated only in the "All Groups" (no group/participant filter) view. */
   groupCounts: Record<TskGroupKey, number> | null;
-  /** Historical roster size as of this day (always 1 for participant scope). */
-  registered: number;
-  /** Per-group historical roster breakdown as of this day — populated only in the "All Groups" view. */
-  groupRegistered: Record<TskGroupKey, number> | null;
 };
 
 export type StatsData = {
