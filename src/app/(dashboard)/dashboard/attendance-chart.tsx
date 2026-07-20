@@ -27,22 +27,6 @@ const GROUP_COLORS: Record<TskGroupKey, string> = {
   FREE_SURFERS: "#64748b", // slate-500
 };
 
-function StackTotalLabel(props: {
-  x?: string | number; y?: string | number; width?: string | number; index?: number; days: DayEntry[];
-}) {
-  const { index = 0, days } = props;
-  const x = Number(props.x ?? 0);
-  const y = Number(props.y ?? 0);
-  const width = Number(props.width ?? 0);
-  const total = Object.values(days[index]?.groupCounts ?? {}).reduce((a, b) => a + b, 0);
-  if (!total) return null;
-  return (
-    <text x={x + width / 2} y={y} dy={-4} textAnchor="middle" fontSize={11} fill="#000000">
-      {total}
-    </text>
-  );
-}
-
 function DayAxisTick(props: { x?: string | number; y?: string | number; payload?: { value: string }; days: DayEntry[] }) {
   const { x = 0, y = 0, payload, days } = props;
   const day = days.find((d) => d.label === payload?.value);
@@ -72,11 +56,39 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
   }
 }
 
-/** Stacked (All Groups) view: off/gap days render as a single solid gray/red bar, same as the per-group view — group color only applies on days sessions actually happened. */
+/** Stacked (All Groups) view: off/gap/excused days render as a single solid gray/red bar, same as the per-group view — group color only applies on days sessions actually happened. */
 function stackedCellFill(entry: DayEntry, groupColor: string): string {
   if (entry.dayType === "off") return "#e5e7eb";
   if (entry.dayType === "gap") return "#ef4444";
+  if (entry.dayType === "excused") return "#e5e7eb";
   return groupColor;
+}
+
+/** Shared flag glyph: black fill = excused (genuine), red fill+stroke = flagged gap (controllable), gray-400 outline = unflagged gap. Used by both the single-group and All Groups views. */
+function FlagGlyph(props: {
+  cx: number; cy: number; dayType: DayEntry["dayType"]; excuseReason: string | null; onClick: () => void;
+}) {
+  const { cx, cy, dayType, excuseReason, onClick } = props;
+  const isExcused = dayType === "excused";
+  const isFlaggedGap = dayType === "gap" && !!excuseReason; // has a reason but still counts as a gap — controllable failure
+  const flagColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "none";
+  const strokeColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "#9ca3af";
+  return (
+    <g
+      transform={`translate(${cx},${cy})`}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={{ cursor: "pointer" }}
+    >
+      <rect x={-10} y={-12} width={20} height={20} fill="transparent" />
+      <path
+        d="M-3 -8 v14 M-3 -8 h9 l-2 3 2 3 h-9"
+        fill={flagColor}
+        stroke={strokeColor}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+    </g>
+  );
 }
 
 function BarLabel(props: {
@@ -91,27 +103,14 @@ function BarLabel(props: {
   const isFlaggable = groupSelected && (day?.dayType === "gap" || day?.dayType === "excused");
 
   if (isFlaggable) {
-    const cx = x + width / 2;
-    const cy = y - 8; // just above the (minPointSize-pinned) bar top
-    const isExcused = day.dayType === "excused";
-    const isFlaggedGap = day.dayType === "gap" && !!day.excuseReason; // has a reason but still counts as a gap — controllable failure
-    const flagColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "none";
-    const strokeColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "#9ca3af";
     return (
-      <g
-        transform={`translate(${cx},${cy})`}
-        onClick={(e) => { e.stopPropagation(); onFlagClick(day); }}
-        style={{ cursor: "pointer" }}
-      >
-        <rect x={-10} y={-12} width={20} height={20} fill="transparent" />
-        <path
-          d="M-3 -8 v14 M-3 -8 h9 l-2 3 2 3 h-9"
-          fill={flagColor}
-          stroke={strokeColor}
-          strokeWidth={1.5}
-          strokeLinejoin="round"
-        />
-      </g>
+      <FlagGlyph
+        cx={x + width / 2}
+        cy={y - 8} // just above the (minPointSize-pinned) bar top
+        dayType={day.dayType}
+        excuseReason={day.excuseReason}
+        onClick={() => onFlagClick(day)}
+      />
     );
   }
   if (day?.dayType === "session") {
@@ -122,6 +121,41 @@ function BarLabel(props: {
     );
   }
   return null; // off days, and gap/excused days with no group selected — nothing to show
+}
+
+/** All Groups view: last stacked bar's label slot. Session days show the day's total across all groups; gap/excused days show the cross-group flag (see FlagGlyph). */
+function AllGroupsBarLabel(props: {
+  x?: string | number; y?: string | number; width?: string | number; index?: number;
+  days: DayEntry[]; onFlagClick: (day: DayEntry) => void;
+}) {
+  const { index = 0, days, onFlagClick } = props;
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const day = days[index];
+  if (!day) return null;
+
+  if (day.dayType === "gap" || day.dayType === "excused") {
+    return (
+      <FlagGlyph
+        cx={x + width / 2}
+        cy={y - 8}
+        dayType={day.dayType}
+        excuseReason={day.excuseReason}
+        onClick={() => onFlagClick(day)}
+      />
+    );
+  }
+  if (day.dayType === "session") {
+    const total = Object.values(day.groupCounts ?? {}).reduce((a, b) => a + b, 0);
+    if (!total) return null;
+    return (
+      <text x={x + width / 2} y={y} dy={-4} textAnchor="middle" fontSize={11} fill="#000000">
+        {total}
+      </text>
+    );
+  }
+  return null; // off, future
 }
 
 type SlimParticipant = {
@@ -186,7 +220,6 @@ export default function AttendanceChart() {
   const selectedParticipant = participants.find((p) => p.id === participantId);
 
   function handleFlagClick(day: DayEntry) {
-    if (!group) return;
     setModalDay(day);
   }
 
@@ -346,7 +379,7 @@ export default function AttendanceChart() {
                       fill={GROUP_COLORS[g]}
                       minPointSize={2}
                       radius={i === TSK_GROUPS.length - 1 ? [3, 3, 0, 0] : undefined}
-                      label={i === TSK_GROUPS.length - 1 ? (props) => <StackTotalLabel {...props} days={data.days} /> : undefined}
+                      label={i === TSK_GROUPS.length - 1 ? (props) => <AllGroupsBarLabel {...props} days={data.days} onFlagClick={handleFlagClick} /> : undefined}
                     >
                       {data.days.map((entry, index) => (
                         <Cell key={index} fill={stackedCellFill(entry, GROUP_COLORS[g])} />
@@ -381,7 +414,7 @@ export default function AttendanceChart() {
                 label={{ value: `${Math.round(data.totalParticipants * 0.7)} (70%)`, position: "left", fontSize: 12, fontWeight: 600, fill: "#16a34a" }}
               />
 
-              {data.days.some((d) => d.trend !== null) && (
+              {group && data.days.some((d) => d.trend !== null) && (
                 <Line dataKey="trend" name="trend" legendType="none" stroke="#9ca3af" strokeWidth={1.5} dot={false} connectNulls />
               )}
             </ComposedChart>
@@ -389,11 +422,12 @@ export default function AttendanceChart() {
         </div>
       )}
 
-      {modalDay && group && (
+      {modalDay && (
         <ExcuseSessionModal
           day={modalDay}
-          group={group as TskGroupKey}
-          groupLabel={TSK_GROUP_LABELS[group]}
+          scope={group ? "group" : "all-groups"}
+          group={(group || undefined) as TskGroupKey | undefined}
+          groupLabel={group ? TSK_GROUP_LABELS[group] : "All Groups"}
           onClose={() => setModalDay(null)}
           onSaved={() => setRefreshTick((t) => t + 1)}
         />

@@ -1,29 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { EXCUSED_SESSION_REASONS } from "@/lib/excused-session-reasons";
+import { getReasonsForScope, type ExcuseScope } from "@/lib/excused-session-reasons";
 import type { TskGroupKey } from "@/lib/tsk-groups";
 import type { DayEntry } from "@/lib/types/attendance-stats";
 
 export default function ExcuseSessionModal({
   day,
+  scope,
   group,
   groupLabel,
   onClose,
   onSaved,
 }: {
   day: DayEntry;
-  group: TskGroupKey;
+  scope: ExcuseScope;
+  group?: TskGroupKey;
   groupLabel: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const isEditing = day.dayType === "excused" || !!day.excuseReason;
   const [reason, setReason] = useState(day.excuseReason ?? "");
-  const [reasonOther, setReasonOther] = useState(day.excuseReasonOther ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const reasons = getReasonsForScope(scope);
   const dateLabel = new Date(`${day.date}T12:00:00Z`).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
 
   async function handleSave() {
@@ -36,7 +38,9 @@ export default function ExcuseSessionModal({
     const res = await fetch("/api/attendance/excused-sessions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: day.date, group, reason, reasonOther }),
+      body: JSON.stringify(
+        scope === "all-groups" ? { date: day.date, allGroups: true, reason } : { date: day.date, group, reason }
+      ),
     });
     setSaving(false);
     if (!res.ok) {
@@ -54,7 +58,7 @@ export default function ExcuseSessionModal({
     const res = await fetch("/api/attendance/excused-sessions", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: day.date, group }),
+      body: JSON.stringify(scope === "all-groups" ? { date: day.date, allGroups: true } : { date: day.date, group }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -93,18 +97,10 @@ export default function ExcuseSessionModal({
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
             >
               <option value="">— select reason —</option>
-              {EXCUSED_SESSION_REASONS.map((r) => (
+              {reasons.map((r) => (
                 <option key={r.label} value={r.label}>{r.label}</option>
               ))}
             </select>
-            {reason === "Other" && (
-              <input
-                value={reasonOther}
-                onChange={(e) => setReasonOther(e.target.value)}
-                placeholder="Please describe…"
-                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
-              />
-            )}
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

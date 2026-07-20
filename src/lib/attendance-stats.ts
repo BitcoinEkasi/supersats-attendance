@@ -32,6 +32,9 @@ export async function computeAttendanceStats({
     orderBy: { date: "asc" },
   });
 
+  // Per-group breakdown only makes sense in the unfiltered "All Groups" view.
+  const includeGroupBreakdown = !group && !participantId;
+
   // Excuse flags are group-specific and only meaningful once a group is selected.
   const excusedSessions = group
     ? await prisma.excusedSession.findMany({
@@ -43,8 +46,31 @@ export async function computeAttendanceStats({
     excusedSessions.map((e) => [e.date.toISOString().split("T")[0], e])
   );
 
-  // Per-group breakdown only makes sense in the unfiltered "All Groups" view.
-  const includeGroupBreakdown = !group && !participantId;
+  // All Groups view: a date only counts as excused/flagged at the aggregate level if
+  // all 5 groups share the same reason for it (full replication — matching how the
+  // all-groups write path always writes all 5 rows at once). Partial replication (some
+  // but not all 5 groups, or mismatched reasons) is intentionally left unset here and
+  // falls through to a plain unflagged "gap" below — the same fallback that handles a
+  // write failing partway through, and an admin editing one group's flag individually
+  // after an all-groups excuse was set. No extra code needed for either case.
+  const aggregateExcuseMap = new Map<string, { reason: string; reasonOther: string | null }>();
+  if (includeGroupBreakdown) {
+    const allGroupExcuses = await prisma.excusedSession.findMany({
+      where: { date: { gte: start, lte: end } },
+      select: { date: true, group: true, reason: true, reasonOther: true },
+    });
+    const byDate = new Map<string, typeof allGroupExcuses>();
+    for (const e of allGroupExcuses) {
+      const d = e.date.toISOString().split("T")[0];
+      byDate.set(d, [...(byDate.get(d) ?? []), e]);
+    }
+    for (const [date, rows] of byDate) {
+      if (rows.length === TSK_GROUPS.length && rows.every((r) => r.reason === rows[0].reason)) {
+        aggregateExcuseMap.set(date, { reason: rows[0].reason, reasonOther: rows[0].reasonOther });
+      }
+    }
+  }
+
   const dayMap = new Map<string, { presentCount: number; sessions: number; categories: Set<string> }>();
   const groupDayMap = new Map<string, Map<string, number>>();
   for (const event of events) {
@@ -73,7 +99,7 @@ export async function computeAttendanceStats({
   const allDates = getDaysInSASTMonth(month);
   const baseDays: DayEntry[] = allDates.map((date) => {
     const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
-    const excuse = excuseMap.get(date);
+    const excuse = includeGroupBreakdown ? aggregateExcuseMap.get(date) : excuseMap.get(date);
     const dayType: DayType = agg.sessions > 0
       ? "session"
       : date > todayStr
