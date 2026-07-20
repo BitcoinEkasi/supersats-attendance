@@ -1,4 +1,4 @@
-export type DayType = "off" | "gap" | "session" | "excused";
+export type DayType = "off" | "gap" | "session" | "excused" | "future";
 
 export type DayEntry = {
   date: string;

@@ -10,14 +10,14 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+      <CollapsibleSection title="Attendance Analytics">
+        <AttendanceChart />
+      </CollapsibleSection>
       <CollapsibleSection
         title={flagCount > 0 ? `Absence Alerts (${flagCount})` : "Absence Alerts"}
         defaultOpen={flagCount > 0}
       >
         <AbsenceReport />
-      </CollapsibleSection>
-      <CollapsibleSection title="Attendance Analytics">
-        <AttendanceChart />
       </CollapsibleSection>
       <CollapsibleSection title="Pending Level Changes">
         <PendingMovesTable />

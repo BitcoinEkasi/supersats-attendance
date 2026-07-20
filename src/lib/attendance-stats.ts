@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay } from "@/lib/sast";
+import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
@@ -58,12 +58,15 @@ export async function computeAttendanceStats({
     dayMap.set(dateStr, existing);
   }
 
+  const todayStr = getSASTDateString();
   const allDates = getDaysInSASTMonth(month);
   const baseDays: DayEntry[] = allDates.map((date) => {
     const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
     const excuse = excuseMap.get(date);
     const dayType: DayType = agg.sessions > 0
       ? "session"
+      : date > todayStr
+      ? "future"
       : excuse && getExcuseCategory(excuse.reason) === "excused"
       ? "excused"
       : isProgrammeDay(date) ? "gap" : "off";
@@ -99,7 +102,7 @@ export async function computeAttendanceStats({
     ? sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / sessionDays.length
     : 0;
 
-  const programmeDays = baseDays.filter((d) => d.dayType !== "off" && d.dayType !== "excused");
+  const programmeDays = baseDays.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future");
   const n = programmeDays.length;
 
   const days: DayEntry[] = baseDays.map((d) => ({ ...d }));
@@ -115,7 +118,7 @@ export async function computeAttendanceStats({
     trendSlope = slope;
     let i = 0;
     for (const day of days) {
-      if (day.dayType === "off" || day.dayType === "excused") continue;
+      if (day.dayType === "off" || day.dayType === "excused" || day.dayType === "future") continue;
       day.trend = Math.max(0, Math.round((intercept + slope * i) * 10) / 10);
       i++;
     }

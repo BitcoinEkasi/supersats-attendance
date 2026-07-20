@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 function renderGroupSection(group: string, stats: StatsData, flags: FlagRow[]): string {
   const label = TSK_GROUP_LABELS[group];
   const held = stats.days.filter((d) => d.dayType === "session").length;
-  const potential = stats.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused").length;
+  const potential = stats.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length;
   const gaps = stats.days.filter((d) => d.dayType === "gap");
 
   const trendLabel =

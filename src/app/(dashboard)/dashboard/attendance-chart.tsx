@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ComposedChart,
   Bar,
+  Line,
   ReferenceLine,
   XAxis,
   YAxis,
@@ -37,6 +38,8 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
       return "#e5e7eb"; // same as "off" — the flag icon, not bar color, communicates "deliberate decision"
     case "gap":
       return "#ef4444"; // red-500 — sessions missed
+    case "future":
+      return "#e5e7eb"; // gray-200, same as off/excused — hasn't happened yet
     case "session":
       return isParticipantView
         ? entry.presentCount > 0 ? "#22c55e" : "#ef4444"
@@ -201,7 +204,7 @@ export default function AttendanceChart() {
         <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
           <span>
             <span className="font-medium text-gray-900">
-              {data.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused").length}
+              {data.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length}
             </span> potential sessions
           </span>
           <span>
@@ -267,6 +270,9 @@ export default function AttendanceChart() {
                   const day = data.days.find((d) => d.label === label);
                   if (!day) return label;
                   const dateStr = new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+                  if (day.dayType === "future") {
+                    return `${dateStr} — Upcoming`;
+                  }
                   if (day.dayType === "excused") {
                     const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
                     return `${dateStr} — Excused (${reasonText})`;
@@ -310,6 +316,10 @@ export default function AttendanceChart() {
                 strokeWidth={1.5}
                 label={{ value: `${Math.round(data.totalParticipants * 0.7)} (70%)`, position: "left", fontSize: 12, fontWeight: 600, fill: "#16a34a" }}
               />
+
+              {data.days.some((d) => d.trend !== null) && (
+                <Line dataKey="trend" name="trend" stroke="#9ca3af" strokeWidth={1.5} dot={false} connectNulls />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
