@@ -65,3 +65,20 @@ export function getLastNMonths(n: number, opts?: { order?: "newest-first" | "old
   }
   return opts?.order === "oldest-first" ? result.reverse() : result;
 }
+
+/** Every SAST month from `startMonth` ("YYYY-MM") through the current month, inclusive. */
+export function getMonthsFrom(startMonth: string, opts?: { order?: "newest-first" | "oldest-first" }): { value: string; label: string }[] {
+  const { year: curYear, month: curMonth } = getSASTNow();
+  const [startYear, startMon] = startMonth.split("-").map(Number);
+  const result: { value: string; label: string }[] = [];
+  let y = startYear;
+  let m = startMon;
+  while (y < curYear || (y === curYear && m <= curMonth)) {
+    const value = `${y}-${String(m).padStart(2, "0")}`;
+    const label = new Date(`${value}-15T12:00:00Z`).toLocaleString("en-ZA", { month: "long", year: "numeric" });
+    result.push({ value, label });
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return opts?.order === "newest-first" ? result.reverse() : result;
+}

@@ -5,7 +5,6 @@ import {
   ComposedChart,
   Bar,
   Line,
-  ReferenceLine,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,6 +13,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
+import type { TooltipContentProps } from "recharts";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import { getLastNMonths } from "@/lib/sast";
 import type { DayEntry, StatsData, TrajectoryData } from "@/lib/types/attendance-stats";
@@ -157,6 +157,99 @@ function AllGroupsBarLabel(props: {
     );
   }
   return null; // off, future
+}
+
+/** Registered/70%-target lines, stepped since a roster count is a discrete daily
+ * snapshot, not something that smoothly interpolates between two points — mirrors
+ * TrajectoryChart's identical RosterLines. Flat at y=1 for participant scope. */
+function PulseRosterLines() {
+  return (
+    <>
+      <Line type="stepAfter" dataKey="registered" name="Registered" stroke="#3b82f6" strokeWidth={1.5} dot={false} legendType="none" isAnimationActive={false} />
+      <Line
+        type="stepAfter"
+        dataKey={(d: DayEntry) => Math.round(d.registered * 0.7)}
+        name="70% Target"
+        stroke="#16a34a"
+        strokeDasharray="5 5"
+        strokeWidth={1.5}
+        dot={false}
+        legendType="none"
+        isAnimationActive={false}
+      />
+    </>
+  );
+}
+
+function ratioText(numerator: number, denominator: number): string {
+  if (denominator <= 0) return "—";
+  return `${numerator}/${denominator} (${Math.round((numerator / denominator) * 100)}%)`;
+}
+
+/** Mirrors TrajectoryChart's TrajectoryTooltipContent — per-group "X/Y (Z%)" rows plus
+ * a synthesized Total row for All Groups, a single ratio row for a selected group.
+ * Preserves the existing date/dayType header text (Upcoming, Excused, Gap, ...). */
+function PulseTooltipContent({ active, payload, group }: TooltipContentProps & { group: string }) {
+  if (!active || !payload?.length) return null;
+  const day = payload[0]?.payload as DayEntry | undefined;
+  if (!day) return null;
+
+  const dateStr = new Date(day.date + "T12:00:00Z").toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+  let headerText = dateStr;
+  if (day.dayType === "future") {
+    headerText = `${dateStr} — Upcoming`;
+  } else if (day.dayType === "excused") {
+    const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
+    headerText = `${dateStr} — Excused (${reasonText})`;
+  } else if (day.dayType === "gap") {
+    const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
+    headerText = day.excuseReason ? `${dateStr} — Gap: ${reasonText}` : `${dateStr} — Gap (no session held)`;
+  }
+
+  const rows: { label: string; text: string; color: string; emphasize?: boolean }[] = [];
+  if (!group) {
+    // Top-of-stack-first (Free Surfers → Turtles), matching the itemSorter fix so the
+    // tooltip list reads top-to-bottom the same way the visual stack does.
+    for (let i = TSK_GROUPS.length - 1; i >= 0; i--) {
+      const g = TSK_GROUPS[i];
+      rows.push({
+        label: TSK_GROUP_LABELS[g],
+        text: ratioText(day.groupCounts?.[g] ?? 0, day.groupRegistered?.[g] ?? 0),
+        color: GROUP_COLORS[g],
+      });
+    }
+    rows.push({ label: "Total", text: ratioText(day.presentCount, day.registered), color: "#000000", emphasize: true });
+  } else {
+    rows.push({
+      label: TSK_GROUP_LABELS[group as TskGroupKey] ?? "Attended",
+      text: ratioText(day.presentCount, day.registered),
+      color: "#14b8a6",
+    });
+  }
+
+  return (
+    <div className="recharts-default-tooltip" style={{ margin: 0, padding: 10, backgroundColor: "#fff", border: "1px solid #ccc", whiteSpace: "nowrap" }}>
+      <p style={{ margin: 0 }}>{headerText}</p>
+      <ul style={{ padding: 0, margin: 0, listStyle: "none" }}>
+        {rows.map((r) => (
+          <li
+            key={r.label}
+            style={{
+              display: "block",
+              paddingTop: 4,
+              paddingBottom: r.emphasize ? 0 : 4,
+              color: r.color,
+              fontWeight: r.emphasize ? 600 : 400,
+              borderTop: r.emphasize ? "1px solid #eee" : undefined,
+              marginTop: r.emphasize ? 4 : 0,
+            }}
+          >
+            {r.label} : {r.text}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 type SlimParticipant = {
@@ -347,8 +440,9 @@ export default function AttendanceChart() {
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
-              <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
+              <YAxis hide domain={[0, Math.max(...data.days.map((d) => Math.max(d.presentCount, d.registered))) + 2]} />
               <Tooltip
+                content={data.isParticipantView ? undefined : (props) => <PulseTooltipContent {...props} group={group} />}
                 itemSorter={(item) => {
                   // Reversed vs. the stack's bottom-to-top construction order (Turtles first),
                   // so the hover list reads top-of-stack-first (Free Surfers) to bottom (Turtles) —
@@ -429,20 +523,7 @@ export default function AttendanceChart() {
                 </>
               )}
 
-              <ReferenceLine
-                y={data.totalParticipants}
-                stroke="#3b82f6"
-                strokeWidth={1.5}
-                label={{ value: `${data.totalParticipants}`, position: "left", fontSize: 12, fontWeight: 600, fill: "#3b82f6" }}
-              />
-
-              <ReferenceLine
-                y={Math.round(data.totalParticipants * 0.7)}
-                stroke="#16a34a"
-                strokeDasharray="5 5"
-                strokeWidth={1.5}
-                label={{ value: `${Math.round(data.totalParticipants * 0.7)} (70%)`, position: "left", fontSize: 12, fontWeight: 600, fill: "#16a34a" }}
-              />
+              <PulseRosterLines />
 
               {group && data.days.some((d) => d.trend !== null) && (
                 <Line dataKey="trend" name="trend" legendType="none" stroke="#9ca3af" strokeWidth={1.5} dot={false} connectNulls />

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getLastNMonths, getEndOfSASTToday } from "@/lib/sast";
+import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getMonthsFrom, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
@@ -98,9 +98,28 @@ export async function computeAttendanceStats({
 
   const todayStr = getSASTDateString();
   const allDates = getDaysInSASTMonth(month);
-  const baseDays: DayEntry[] = allDates.map((date) => {
+
+  // Per-day historical roster, mirroring computeAttendanceTrajectory's per-month version:
+  // skipped for participant scope (registered is trivially 1 there). As-of date is that
+  // day's own end-of-day, capped at today for not-yet-happened days.
+  let rosterByDay: MonthlyRoster[] | null = null;
+  if (!participantId) {
+    const asOfDates = allDates.map((date) =>
+      date > todayStr ? getEndOfSASTToday() : new Date(`${date}T23:59:59.999Z`)
+    );
+    rosterByDay = await computeMonthlyRosterCounts(asOfDates);
+  }
+
+  const baseDays: DayEntry[] = allDates.map((date, i) => {
     const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
     const excuse = includeGroupBreakdown ? aggregateExcuseMap.get(date) : excuseMap.get(date);
+    const roster = rosterByDay?.[i];
+    const registered = participantId
+      ? 1
+      : group
+      ? (roster?.groupRegistered[group] ?? 0)
+      : (roster?.registered ?? 0);
+    const groupRegistered = includeGroupBreakdown ? (roster?.groupRegistered ?? null) : null;
     const dayType: DayType = agg.sessions > 0
       ? "session"
       : date > todayStr
@@ -126,6 +145,8 @@ export async function computeAttendanceStats({
       groupCounts: includeGroupBreakdown
         ? (Object.fromEntries(TSK_GROUPS.map((g) => [g, groupDayMap.get(date)?.get(g) ?? 0])) as Record<TskGroupKey, number>)
         : null,
+      registered,
+      groupRegistered,
     };
   });
 
@@ -178,11 +199,15 @@ export type ComputeAttendanceTrajectoryParams = {
   participantId?: string;
 };
 
+// Trajectory starts here rather than a rolling window — the leveling/group system was
+// only introduced ~May 2026, so historical data before that is less meaningful anyway.
+const TRAJECTORY_START_MONTH = "2026-05";
+
 export async function computeAttendanceTrajectory({
   group,
   participantId,
 }: ComputeAttendanceTrajectoryParams): Promise<TrajectoryData> {
-  const months = getLastNMonths(12, { order: "oldest-first" });
+  const months = getMonthsFrom(TRAJECTORY_START_MONTH, { order: "oldest-first" });
   const monthStats = await Promise.all(
     months.map((m) => computeAttendanceStats({ month: m.value, group, participantId }))
   );
