@@ -350,8 +350,11 @@ export default function AttendanceChart() {
               <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
               <Tooltip
                 itemSorter={(item) => {
+                  // Reversed vs. the stack's bottom-to-top construction order (Turtles first),
+                  // so the hover list reads top-of-stack-first (Free Surfers) to bottom (Turtles) —
+                  // matching how the stack visually reads from top to bottom.
                   const idx = TSK_GROUPS.findIndex((g) => TSK_GROUP_LABELS[g] === item.name);
-                  return idx === -1 ? TSK_GROUPS.length : idx;
+                  return idx === -1 ? TSK_GROUPS.length : TSK_GROUPS.length - 1 - idx;
                 }}
                 formatter={(value, name) => {
                   if (name === "trend") return null;
