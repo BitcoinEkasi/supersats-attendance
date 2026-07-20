@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { fmtPct } from "@/lib/rewards";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 function fmtMonth(yearMonth: string) {
@@ -173,7 +174,7 @@ export function ReportPdfDocument({
           {/* Avg Attendance */}
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Avg Attendance</Text>
-            <Text style={styles.cardValue}>{Math.floor(avgPercentage / 5) * 5}%</Text>
+            <Text style={styles.cardValue}>{fmtPct(avgPercentage)}</Text>
           </View>
 
           {/* Total Rewards */}
@@ -214,7 +215,7 @@ export function ReportPdfDocument({
             <Text style={[styles.tableCellBold, { width: COL.name }]}>{e.name}</Text>
             <Text style={[styles.tableCell, { width: COL.sessions, textAlign: "right" }]}>{e.totalEvents}</Text>
             <Text style={[styles.tableCell, { width: COL.attended, textAlign: "right" }]}>{e.attended}</Text>
-            <Text style={[styles.tableCell, { width: COL.pct, textAlign: "right" }]}>{Math.floor(e.percentage / 5) * 5}%</Text>
+            <Text style={[styles.tableCell, { width: COL.pct, textAlign: "right" }]}>{fmtPct(e.percentage)}</Text>
             <Text style={[styles.tableCell, { width: COL.sats, textAlign: "right" }]}>{e.rewardSats.toLocaleString()}</Text>
             {showZar && (
               <Text style={[styles.tableCell, { width: COL.zar, textAlign: "right" }]}>

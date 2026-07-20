@@ -42,6 +42,8 @@ export function getRewardTierLabel(sats: number): string {
   return REWARD_TIERS.find((t) => t.sats === sats)?.label ?? "<70%";
 }
 
+// Display precision only — the reward bracket itself (buildCalculateRewardSats above)
+// always operates on the raw, unrounded percentage and is unaffected by this.
 export function fmtPct(pct: number): string {
-  return `${Math.floor(pct / 5) * 5}%`;
+  return `${Math.floor(pct)}%`;
 }

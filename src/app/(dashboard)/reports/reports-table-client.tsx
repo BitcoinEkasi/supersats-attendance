@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
+import { fmtPct } from "@/lib/rewards";
 import { DeleteReportButton } from "./delete-report-button";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -150,7 +151,7 @@ export function ReportsTableClient({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">{`${Math.floor(avgPct / 5) * 5}%`}</td>
+                    <td className="px-4 py-3">{fmtPct(avgPct)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Link href={`/reports/${report.id}`} className="text-orange-600 hover:text-orange-800">View</Link>

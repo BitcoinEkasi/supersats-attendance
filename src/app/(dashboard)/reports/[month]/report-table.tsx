@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { REWARD_TIERS, type buildTiers } from "@/lib/rewards";
+import { REWARD_TIERS, fmtPct, type buildTiers } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getAcMultiplier } from "@/lib/tsk-levels";
 
@@ -82,7 +82,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
             <th className="px-4 py-3 text-left font-medium text-gray-500">Attended</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">
               Attendance %
-              <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 5%)</span>
+              <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 1%)</span>
             </th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Reward (sats)</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Card</th>
@@ -113,7 +113,7 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                   <td className="px-4 py-3">{entry.totalEvents}</td>
                   <td className="px-4 py-3">{entry.attended}</td>
                   <td className="px-4 py-3">
-                    <span className={tier?.color || ""}>{`${Math.floor(pct / 5) * 5}%`}</span>
+                    <span className={tier?.color || ""}>{fmtPct(pct)}</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
                     {p.isAssistantCoach && p.assistantCoachSince && (

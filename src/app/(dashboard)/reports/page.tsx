@@ -76,7 +76,7 @@ export default async function ReportsPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Total Rewards</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">
                   Avg Attendance
-                  <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 5%)</span>
+                  <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 1%)</span>
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Actions</th>
               </tr>

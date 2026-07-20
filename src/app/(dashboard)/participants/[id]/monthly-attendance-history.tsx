@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getAcMultiplier } from "@/lib/tsk-levels";
+import { fmtPct } from "@/lib/rewards";
 
 type Entry = {
   id: string;
@@ -53,7 +54,7 @@ export default function MonthlyAttendanceHistory({
             <th className="pb-2">Month</th>
             <th className="pb-2">
               Attendance
-              <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 5%)</span>
+              <span className="block text-xs font-normal text-gray-400">(rounded down to nearest 1%)</span>
             </th>
             <th className="pb-2">Reward</th>
             <th className="pb-2">Payout</th>
@@ -68,7 +69,7 @@ export default function MonthlyAttendanceHistory({
               <>
                 <tr key={entry.id} className="border-b">
                   <td className="py-2 font-medium">{entry.reportMonth}</td>
-                  <td className="py-2">{entry.attended}/{entry.totalEvents} ({`${Math.floor(entry.percentage / 5) * 5}%`})</td>
+                  <td className="py-2">{entry.attended}/{entry.totalEvents} ({fmtPct(entry.percentage)})</td>
                   <td className="py-2">
                     {isAssistantCoach && assistantCoachSince && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">

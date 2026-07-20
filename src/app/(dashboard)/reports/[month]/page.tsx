@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { buildTiers } from "@/lib/rewards";
+import { buildTiers, fmtPct } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
@@ -290,8 +290,8 @@ export default async function ReportDetailPage({
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Average Attendance</p>
-          <p className="mt-1 text-2xl font-bold">{Math.floor(avgPercentage / 5) * 5}%</p>
-          <span className="text-xs text-gray-400">(rounded down to nearest 5%)</span>
+          <p className="mt-1 text-2xl font-bold">{fmtPct(avgPercentage)}</p>
+          <span className="text-xs text-gray-400">(rounded down to nearest 1%)</span>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Rewards</p>
