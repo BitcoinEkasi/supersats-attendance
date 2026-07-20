@@ -251,7 +251,10 @@ export async function computeAttendanceTrajectory({
       ) as Record<TskGroupKey, number>;
       average = Math.round(TSK_GROUPS.reduce((sum, g) => sum + raw[g], 0) * 10) / 10;
     } else {
-      average = n > 0 ? Math.floor(sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / n) : 0;
+      // Same 1-decimal precision as the All Groups total — a floored integer here made
+      // the ratio tooltip's percentage less accurate than it needed to be, and read
+      // inconsistently next to All Groups' decimal average.
+      average = n > 0 ? Math.round((sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / n) * 10) / 10 : 0;
     }
 
     const roster = rosterByMonth?.[i];
