@@ -58,6 +58,10 @@ export default function TrajectoryChart({ data, group }: { data: TrajectoryData;
           <XAxis dataKey="month" tick={(props) => <MonthAxisTick {...props} />} interval={0} height={28} />
           <YAxis hide domain={[0, Math.max(data.totalParticipants, ...data.months.map((m) => m.average)) + 2]} />
           <Tooltip
+            itemSorter={(item) => {
+              const idx = TSK_GROUPS.findIndex((g) => TSK_GROUP_LABELS[g] === item.name);
+              return idx === -1 ? TSK_GROUPS.length : idx;
+            }}
             formatter={(value, name) => {
               const v = typeof value === "number" ? value : Number(value);
               if (name === "average") return [v, data.isParticipantView ? "Avg attendance" : "Avg attendees"];

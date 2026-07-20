@@ -349,6 +349,10 @@ export default function AttendanceChart() {
               <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
               <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
               <Tooltip
+                itemSorter={(item) => {
+                  const idx = TSK_GROUPS.findIndex((g) => TSK_GROUP_LABELS[g] === item.name);
+                  return idx === -1 ? TSK_GROUPS.length : idx;
+                }}
                 formatter={(value, name) => {
                   if (name === "trend") return null;
                   const v = typeof value === "number" ? value : Number(value);
