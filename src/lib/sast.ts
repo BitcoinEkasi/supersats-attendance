@@ -82,3 +82,20 @@ export function getMonthsFrom(startMonth: string, opts?: { order?: "newest-first
   }
   return opts?.order === "newest-first" ? result.reverse() : result;
 }
+
+/** Exactly N SAST months starting from `startMonth` ("YYYY-MM"), regardless of today —
+ * unlike getMonthsFrom, this can extend past the current month into the future. */
+export function getNMonthsFrom(startMonth: string, n: number, opts?: { order?: "newest-first" | "oldest-first" }): { value: string; label: string }[] {
+  const [startYear, startMon] = startMonth.split("-").map(Number);
+  const result: { value: string; label: string }[] = [];
+  let y = startYear;
+  let m = startMon;
+  for (let i = 0; i < n; i++) {
+    const value = `${y}-${String(m).padStart(2, "0")}`;
+    const label = new Date(`${value}-15T12:00:00Z`).toLocaleString("en-ZA", { month: "long", year: "numeric" });
+    result.push({ value, label });
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return opts?.order === "newest-first" ? result.reverse() : result;
+}

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getMonthsFrom, getEndOfSASTToday } from "@/lib/sast";
+import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getNMonthsFrom, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
@@ -207,7 +207,7 @@ export async function computeAttendanceTrajectory({
   group,
   participantId,
 }: ComputeAttendanceTrajectoryParams): Promise<TrajectoryData> {
-  const months = getMonthsFrom(TRAJECTORY_START_MONTH, { order: "oldest-first" });
+  const months = getNMonthsFrom(TRAJECTORY_START_MONTH, 12, { order: "oldest-first" });
   const monthStats = await Promise.all(
     months.map((m) => computeAttendanceStats({ month: m.value, group, participantId }))
   );
