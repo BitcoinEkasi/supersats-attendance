@@ -10,6 +10,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   Cell,
   ResponsiveContainer,
 } from "recharts";
@@ -17,6 +18,30 @@ import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups
 import { getSASTNow } from "@/lib/sast";
 import type { DayEntry, StatsData } from "@/lib/types/attendance-stats";
 import ExcuseSessionModal from "./excuse-session-modal";
+
+const GROUP_COLORS: Record<TskGroupKey, string> = {
+  TURTLES: "#14b8a6",      // teal-500
+  SEALS: "#0ea5e9",        // sky-500
+  DOLPHINS: "#8b5cf6",     // violet-500
+  SHARKS: "#f59e0b",       // amber-500
+  FREE_SURFERS: "#64748b", // slate-500
+};
+
+function StackTotalLabel(props: {
+  x?: string | number; y?: string | number; width?: string | number; index?: number; days: DayEntry[];
+}) {
+  const { index = 0, days } = props;
+  const x = Number(props.x ?? 0);
+  const y = Number(props.y ?? 0);
+  const width = Number(props.width ?? 0);
+  const total = Object.values(days[index]?.groupCounts ?? {}).reduce((a, b) => a + b, 0);
+  if (!total) return null;
+  return (
+    <text x={x + width / 2} y={y} dy={-4} textAnchor="middle" fontSize={11} fill="#000000">
+      {total}
+    </text>
+  );
+}
 
 function DayAxisTick(props: { x?: string | number; y?: string | number; payload?: { value: string }; days: DayEntry[] }) {
   const { x = 0, y = 0, payload, days } = props;
@@ -288,19 +313,36 @@ export default function AttendanceChart() {
                 }}
               />
 
-              <Bar
-                dataKey="presentCount"
-                name="presentCount"
-                radius={[3, 3, 0, 0]}
-                minPointSize={4}
-                label={(props) => (
-                  <BarLabel {...props} days={data.days} groupSelected={!!group} onFlagClick={handleFlagClick} />
-                )}
-              >
-                {data.days.map((entry, index) => (
-                  <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
-                ))}
-              </Bar>
+              {group ? (
+                <Bar
+                  dataKey="presentCount"
+                  name="presentCount"
+                  radius={[3, 3, 0, 0]}
+                  minPointSize={4}
+                  label={(props) => (
+                    <BarLabel {...props} days={data.days} groupSelected={!!group} onFlagClick={handleFlagClick} />
+                  )}
+                >
+                  {data.days.map((entry, index) => (
+                    <Cell key={index} fill={cellFill(entry, data.isParticipantView)} />
+                  ))}
+                </Bar>
+              ) : (
+                <>
+                  {TSK_GROUPS.map((g, i) => (
+                    <Bar
+                      key={g}
+                      dataKey={(d: DayEntry) => d.groupCounts?.[g] ?? 0}
+                      name={TSK_GROUP_LABELS[g]}
+                      stackId="groups"
+                      fill={GROUP_COLORS[g]}
+                      radius={i === TSK_GROUPS.length - 1 ? [3, 3, 0, 0] : undefined}
+                      label={i === TSK_GROUPS.length - 1 ? (props) => <StackTotalLabel {...props} days={data.days} /> : undefined}
+                    />
+                  ))}
+                  <Legend verticalAlign="top" height={28} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                </>
+              )}
 
               <ReferenceLine
                 y={data.totalParticipants}

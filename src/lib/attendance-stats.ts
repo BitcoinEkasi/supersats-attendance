@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
-import { participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
+import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import type { DayEntry, DayType, StatsData } from "@/lib/types/attendance-stats";
@@ -43,19 +43,30 @@ export async function computeAttendanceStats({
     excusedSessions.map((e) => [e.date.toISOString().split("T")[0], e])
   );
 
+  // Per-group breakdown only makes sense in the unfiltered "All Groups" view.
+  const includeGroupBreakdown = !group && !participantId;
   const dayMap = new Map<string, { presentCount: number; sessions: number; categories: Set<string> }>();
+  const groupDayMap = new Map<string, Map<string, number>>();
   for (const event of events) {
     const dateStr = event.date.toISOString().split("T")[0];
     const existing = dayMap.get(dateStr) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
+    let presentDelta: number;
     if (participantId) {
       const rec = (event as typeof event & { attendanceRecords: { present: boolean }[] }).attendanceRecords[0];
-      existing.presentCount += rec?.present ? 1 : 0;
+      presentDelta = rec?.present ? 1 : 0;
     } else {
-      existing.presentCount += (event as typeof event & { _count: { attendanceRecords: number } })._count.attendanceRecords;
+      presentDelta = (event as typeof event & { _count: { attendanceRecords: number } })._count.attendanceRecords;
     }
+    existing.presentCount += presentDelta;
     existing.sessions += 1;
     existing.categories.add(event.category);
     dayMap.set(dateStr, existing);
+
+    if (includeGroupBreakdown && event.group) {
+      const inner = groupDayMap.get(dateStr) ?? new Map<string, number>();
+      inner.set(event.group, (inner.get(event.group) ?? 0) + presentDelta);
+      groupDayMap.set(dateStr, inner);
+    }
   }
 
   const todayStr = getSASTDateString();
@@ -85,6 +96,9 @@ export async function computeAttendanceStats({
       trend: null,
       excuseReason: excuse?.reason ?? null,
       excuseReasonOther: excuse?.reasonOther ?? null,
+      groupCounts: includeGroupBreakdown
+        ? (Object.fromEntries(TSK_GROUPS.map((g) => [g, groupDayMap.get(date)?.get(g) ?? 0])) as Record<TskGroupKey, number>)
+        : null,
     };
   });
 
@@ -102,23 +116,22 @@ export async function computeAttendanceStats({
     ? sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / sessionDays.length
     : 0;
 
-  const programmeDays = baseDays.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future");
-  const n = programmeDays.length;
+  const n = sessionDays.length;
 
   const days: DayEntry[] = baseDays.map((d) => ({ ...d }));
   let trendSlope: number | null = null;
 
   if (n >= 2) {
-    const ys = programmeDays.map((d) => d.presentCount);
+    const ys = sessionDays.map((d) => d.presentCount);
     const meanX = (n - 1) / 2;
     const meanY = ys.reduce((a, b) => a + b, 0) / n;
-    const denom = programmeDays.reduce((acc, _, i) => acc + (i - meanX) ** 2, 0);
-    const slope = denom === 0 ? 0 : programmeDays.reduce((acc, d, i) => acc + (i - meanX) * (d.presentCount - meanY), 0) / denom;
+    const denom = sessionDays.reduce((acc, _, i) => acc + (i - meanX) ** 2, 0);
+    const slope = denom === 0 ? 0 : sessionDays.reduce((acc, d, i) => acc + (i - meanX) * (d.presentCount - meanY), 0) / denom;
     const intercept = meanY - slope * meanX;
     trendSlope = slope;
     let i = 0;
     for (const day of days) {
-      if (day.dayType === "off" || day.dayType === "excused" || day.dayType === "future") continue;
+      if (day.dayType !== "session") continue;
       day.trend = Math.max(0, Math.round((intercept + slope * i) * 10) / 10);
       i++;
     }
