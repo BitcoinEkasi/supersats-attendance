@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-      <CollapsibleSection title="Attendance Analytics">
+      <CollapsibleSection title="Attendance Analytics" defaultOpen>
         <AttendanceChart />
       </CollapsibleSection>
       <CollapsibleSection
