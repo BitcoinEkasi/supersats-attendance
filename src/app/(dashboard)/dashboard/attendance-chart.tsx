@@ -287,6 +287,7 @@ export default function AttendanceChart() {
               <YAxis hide domain={[0, Math.max(data.totalParticipants, ...(data.days.map(d => d.presentCount))) + 2]} />
               <Tooltip
                 formatter={(value, name) => {
+                  if (name === "trend") return null;
                   const v = typeof value === "number" ? value : Number(value);
                   if (name === "presentCount") return [v, data.isParticipantView ? "Present" : "Attended"];
                   return [v, String(name)];
@@ -336,6 +337,7 @@ export default function AttendanceChart() {
                       name={TSK_GROUP_LABELS[g]}
                       stackId="groups"
                       fill={GROUP_COLORS[g]}
+                      minPointSize={2}
                       radius={i === TSK_GROUPS.length - 1 ? [3, 3, 0, 0] : undefined}
                       label={i === TSK_GROUPS.length - 1 ? (props) => <StackTotalLabel {...props} days={data.days} /> : undefined}
                     />
