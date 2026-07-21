@@ -4,6 +4,7 @@ import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, participantWhereForGroup } from "@/lib/tsk-groups";
 import { getAcMultiplier } from "@/lib/tsk-levels";
+import { isParticipantActiveOn } from "@/lib/roster-history";
 
 export async function upsertMonthlyReport(
   month: string,
@@ -36,11 +37,11 @@ export async function upsertMonthlyReport(
         registrationDate: { lte: monthEnd },
         OR: [
           { status: "ACTIVE" },
-          { status: "RETIRED", retiredAt: { gte: monthStart } },
+          { status: "RETIRED", retiredAt: { gt: monthStart } },
         ],
         ...(group ? participantWhereForGroup(group) : {}),
       },
-      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true },
+      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true, status: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -85,11 +86,7 @@ export async function upsertMonthlyReport(
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      const attendableEvents = events.filter(
-        (e) =>
-          e.date >= participant.registrationDate &&
-          (!participant.retiredAt || e.date <= participant.retiredAt)
-      );
+      const attendableEvents = events.filter((e) => isParticipantActiveOn(participant, e.date));
 
       const totalEvents = attendableEvents.length;
       const attended = attendableEvents.filter((e) =>

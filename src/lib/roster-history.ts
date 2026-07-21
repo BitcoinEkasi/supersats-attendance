@@ -7,17 +7,27 @@ export type MonthlyRoster = {
 };
 
 /**
+ * True if a participant was part of the active roster on `date` — registered by then, and
+ * not yet retired as of that date. Retirement excludes starting ON the retirement date
+ * itself, not strictly after it, per the "removed from the total from the date they're
+ * retired" rule. Retirement is permanent (enforced at the API layer), so a participant can
+ * never carry a stale retiredAt from a prior retirement while status is ACTIVE.
+ */
+export function isParticipantActiveOn(
+  participant: { registrationDate: Date; status: string; retiredAt: Date | null },
+  date: Date
+): boolean {
+  if (participant.registrationDate > date) return false;
+  if (participant.status === "RETIRED" && participant.retiredAt != null && participant.retiredAt <= date) return false;
+  return true;
+}
+
+/**
  * Reconstructs, for each given as-of date, how many participants were part of the
  * active roster (and which group they were in) as of that moment — from Participant
  * and TskLevelHistory only. Two bulk queries total, computed in-memory across every
  * as-of date: this is a small programme (a few dozen participants), not worth
  * per-month or per-participant queries.
- *
- * Known limitation: there's no history table for status/retirement transitions
- * (unlike TskLevelHistory for level/group changes). A participant who was retired
- * and later reactivated has their retiredAt wiped back to null by the API, so any
- * earlier retired window is lost — this can OVER-count them for past months during
- * that gap. Never under-counts, never throws.
  */
 export async function computeMonthlyRosterCounts(asOfDates: Date[]): Promise<MonthlyRoster[]> {
   const [participants, levelHistory] = await Promise.all([
@@ -42,9 +52,7 @@ export async function computeMonthlyRosterCounts(asOfDates: Date[]): Promise<Mon
     let registered = 0;
 
     for (const p of participants) {
-      if (p.registrationDate > asOf) continue;
-      const wasActive = p.status === "ACTIVE" || (p.retiredAt != null && p.retiredAt > asOf);
-      if (!wasActive) continue;
+      if (!isParticipantActiveOn(p, asOf)) continue;
 
       registered++;
 

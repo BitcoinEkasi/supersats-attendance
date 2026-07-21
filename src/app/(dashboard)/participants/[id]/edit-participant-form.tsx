@@ -585,15 +585,22 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select
-                    name="status"
-                    value={participantStatus}
-                    onChange={(e) => { setParticipantStatus(e.target.value as ParticipantStatus); setSaved(false); setIsDirty(true); }}
-                    className={inputCls}
-                  >
-                    <option value="ACTIVE">Active</option>
-                    <option value="RETIRED">Retired</option>
-                  </select>
+                  {participant.status === "RETIRED" ? (
+                    <>
+                      <input type="hidden" name="status" value="RETIRED" />
+                      <div className={`${inputCls} bg-gray-50 text-gray-500`}>Retired</div>
+                    </>
+                  ) : (
+                    <select
+                      name="status"
+                      value={participantStatus}
+                      onChange={(e) => { setParticipantStatus(e.target.value as ParticipantStatus); setSaved(false); setIsDirty(true); }}
+                      className={inputCls}
+                    >
+                      <option value="ACTIVE">Active</option>
+                      <option value="RETIRED">Retired</option>
+                    </select>
+                  )}
                   {participantStatus === "ACTIVE" && (
                     <p className="mt-1 text-xs text-gray-500">Active from {fmtDate(participant.registrationDate)}</p>
                   )}
@@ -603,12 +610,18 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                 </div>
                 {participantStatus === "RETIRED" && (
                   <div>
+                    {participant.status !== "RETIRED" && (
+                      <p className="mb-2 text-xs font-medium text-red-600">
+                        Retirement is permanent and cannot be undone. To rejoin later, add them as a new participant.
+                      </p>
+                    )}
                     <label className="block text-sm font-medium text-gray-700">Reason for retirement</label>
                     <select
                       name="retiredReason"
                       value={retiredReason}
                       onChange={(e) => { setRetiredReason(e.target.value); setSaved(false); setIsDirty(true); }}
                       className={inputCls}
+                      disabled={participant.status === "RETIRED"}
                     >
                       <option value="">— select reason —</option>
                       {RETIRED_REASONS.map((r) => (
@@ -622,6 +635,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                         onChange={(e) => { setRetiredReasonOther(e.target.value); setSaved(false); setIsDirty(true); }}
                         placeholder="Please describe…"
                         className={`${inputCls} mt-2`}
+                        disabled={participant.status === "RETIRED"}
                       />
                     )}
                   </div>

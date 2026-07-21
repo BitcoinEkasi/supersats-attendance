@@ -62,7 +62,7 @@ model Participant {
   fullNames        String            @map("full_names")
   knownAs          String?           @map("known_as")
   gender           Gender
-  idNumber         String            @unique @map("id_number")
+  idNumber         String            @map("id_number")
   dateOfBirth      DateTime          @map("date_of_birth")
   boltUserId       String?           @map("bolt_user_id")
   isAssistantCoach    Boolean   @default(false) @map("is_assistant_coach")
@@ -121,6 +121,7 @@ model Participant {
   pendingChanges        PendingParticipantChange[]
   absenceFlag           AbsenceFlag?
 
+  @@index([idNumber])
   @@map("participants")
 }
 

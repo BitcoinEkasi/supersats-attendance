@@ -67,6 +67,14 @@ export async function POST(req: Request) {
     return Response.json({ error: parsed.error }, { status: 400 });
   }
 
+  const activeDuplicate = await prisma.participant.findFirst({
+    where: { idNumber, status: "ACTIVE" },
+    select: { id: true },
+  });
+  if (activeDuplicate) {
+    return Response.json({ error: "A participant with this ID number already exists" }, { status: 409 });
+  }
+
   const registrationDate = new Date();
 
   try {

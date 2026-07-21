@@ -65,7 +65,7 @@ export default async function EventAttendancePage({
       registrationDate: { lte: eventDate },
       OR: [
         { status: "ACTIVE" },
-        { status: "RETIRED", retiredAt: { gte: eventDate } },
+        { status: "RETIRED", retiredAt: { gt: eventDate } },
       ],
       ...groupFilter,
     },

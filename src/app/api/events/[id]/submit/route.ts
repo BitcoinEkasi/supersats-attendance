@@ -30,7 +30,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     prisma.participant.count({
       where: {
         registrationDate: { lte: event.date },
-        OR: [{ status: "ACTIVE" }, { status: "RETIRED", retiredAt: { gte: event.date } }],
+        OR: [{ status: "ACTIVE" }, { status: "RETIRED", retiredAt: { gt: event.date } }],
         ...groupFilter,
       },
     }),

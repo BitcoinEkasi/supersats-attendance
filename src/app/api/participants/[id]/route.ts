@@ -67,8 +67,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Status-only update (legacy path — full form update now handles status too)
   if (body.status && Object.keys(body).filter((k) => !["status", "retiredReason", "retiredReasonOther"].includes(k)).length === 0) {
     try {
+      const current = await prisma.participant.findUnique({ where: { id }, select: { status: true } });
+      if (!current) return Response.json({ error: "Not found" }, { status: 404 });
+      if (current.status === "RETIRED" && body.status === "ACTIVE") {
+        return Response.json({ error: "Retirement is permanent — add a new participant record instead." }, { status: 400 });
+      }
       const data: Record<string, unknown> = { status: body.status as ParticipantStatus };
-      if (body.status === "RETIRED") {
+      if (body.status === "RETIRED" && current.status !== "RETIRED") {
         data.retiredAt = new Date();
         data.retiredReason = body.retiredReason?.trim() || null;
         data.retiredReasonOther = body.retiredReason === "Other" ? (body.retiredReasonOther?.trim() || null) : null;
@@ -107,8 +112,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const existing = await prisma.participant.findUnique({
     where: { id },
-    select: { tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
+    select: { status: true, tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
   });
+
+  if (existing?.status === "RETIRED" && body.status === "ACTIVE") {
+    return Response.json({ error: "Retirement is permanent — add a new participant record instead." }, { status: 400 });
+  }
+
+  const activeDuplicate = await prisma.participant.findFirst({
+    where: { idNumber, status: "ACTIVE", id: { not: id } },
+    select: { id: true },
+  });
+  if (activeDuplicate) {
+    return Response.json({ error: "A participant with this ID number already exists" }, { status: 409 });
+  }
+
   const tskStatusChanged = existing && existing.tskStatus !== newTskStatus;
 
   const now = new Date();
@@ -151,7 +169,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         gender: parsed.gender,
         dateOfBirth: parsed.dob,
         status: body.status as ParticipantStatus,
-        ...(body.status === "RETIRED" ? {
+        ...(body.status === "RETIRED" && existing?.status !== "RETIRED" ? {
           retiredAt: new Date(),
           retiredReason: body.retiredReason?.trim() || null,
           retiredReasonOther: body.retiredReason === "Other" ? (body.retiredReasonOther?.trim() || null) : null,
