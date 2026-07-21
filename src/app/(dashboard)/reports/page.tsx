@@ -26,7 +26,7 @@ export default async function ReportsPage() {
     prisma.monthlyReport.findMany({
     orderBy: { month: "desc" },
     include: {
-      entries: { select: { rewardSats: true, percentage: true, totalEvents: true, participant: { select: { registrationDate: true, retiredAt: true, status: true } } } },
+      entries: { select: { rewardSats: true, percentage: true, totalEvents: true, attended: true, participant: { select: { registrationDate: true, retiredAt: true, status: true } } } },
     },
   }),
     getZarPerSat().catch(() => null),
@@ -34,7 +34,7 @@ export default async function ReportsPage() {
 
   // Serialize (convert Prisma Decimal → number) and group by month, sorting groups by canonical order
   const monthKeys: string[] = [];
-  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number }[] }[]> = {};
+  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number; attended: number }[] }[]> = {};
   for (const r of reports) {
     if (!byMonth[r.month]) {
       monthKeys.push(r.month);
@@ -54,7 +54,7 @@ export default async function ReportsPage() {
       recruited,
       retired,
       activeParticipants,
-      entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage), totalEvents: e.totalEvents })),
+      entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage), totalEvents: e.totalEvents, attended: e.attended })),
     });
   }
   for (const month of monthKeys) {

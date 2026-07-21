@@ -7,6 +7,7 @@ import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 import { ReportPdfDocument, type ReportPdfEntry } from "@/lib/report-pdf";
+import { weightedAvgPercentage } from "@/lib/rewards";
 import { isParticipantActiveOn } from "@/lib/roster-history";
 import React from "react";
 
@@ -69,9 +70,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const totalSats = report.entries.reduce((s, e) => s + e.rewardSats, 0);
   const qualifyingParticipants = report.entries.filter((e) => e.rewardSats > 0).length;
-  const avgPercentage = report.entries.length > 0
-    ? report.entries.reduce((s, e) => s + Number(e.percentage), 0) / report.entries.length
-    : 0;
+  const avgPercentage = weightedAvgPercentage(report.entries);
 
   const entries: ReportPdfEntry[] = report.entries.map((e) => {
     const p = e.participant;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
-import { fmtPct } from "@/lib/rewards";
+import { fmtPct, weightedAvgPercentage } from "@/lib/rewards";
 import { DeleteReportButton } from "./delete-report-button";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -12,7 +12,7 @@ function fmtMonth(key: string) {
   return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`;
 }
 
-type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number };
+type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number; attended: number };
 type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
@@ -117,10 +117,7 @@ export function ReportsTableClient({
               monthReports.map((report) => {
                 const totalSatsRow = report.entries.reduce((s, e) => s + e.rewardSats, 0);
                 const totalSessions = report.entries.length > 0 ? Math.max(...report.entries.map((e) => e.totalEvents)) : 0;
-                const avgPct =
-                  report.entries.length > 0
-                    ? report.entries.reduce((s, e) => s + e.percentage, 0) / report.entries.length
-                    : 0;
+                const avgPct = weightedAvgPercentage(report.entries);
                 const groupLabel = report.group ? (TSK_GROUP_LABELS[report.group] ?? report.group) : "All";
 
                 return (

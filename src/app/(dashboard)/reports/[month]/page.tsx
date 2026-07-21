@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { buildTiers, fmtPct } from "@/lib/rewards";
+import { buildTiers, fmtPct, weightedAvgPercentage } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
@@ -83,13 +83,9 @@ export default async function ReportDetailPage({
   const monthComplete = report.month < currentYM;
 
   const totalSats = report.entries.reduce((sum, e) => sum + e.rewardSats, 0);
-  const totalEntries = report.entries.length;
   const totalParticipants = report.entries.filter((e) => isParticipantActiveOn(e.participant, monthEnd)).length;
   const totalSessions = monthEvents.length;
-  const avgPercentage =
-    totalEntries > 0
-      ? report.entries.reduce((sum, e) => sum + Number(e.percentage), 0) / totalEntries
-      : 0;
+  const avgPercentage = weightedAvgPercentage(report.entries);
   const qualifyingParticipants = report.entries.filter((e) => e.rewardSats > 0).length;
 
   const categoryLabels: Record<string, string> = {

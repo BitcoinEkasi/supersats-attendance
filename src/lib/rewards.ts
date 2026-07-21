@@ -47,3 +47,12 @@ export function getRewardTierLabel(sats: number): string {
 export function fmtPct(pct: number): string {
   return `${Math.floor(pct)}%`;
 }
+
+// Weighted by session count (sum of attended / sum of attendable sessions), not a mean
+// of each participant's own percentage — a participant with fewer eligible sessions
+// (e.g. retired mid-month) shouldn't count as heavily as one with a full month.
+export function weightedAvgPercentage(entries: { attended: number; totalEvents: number }[]): number {
+  const totalAttended = entries.reduce((sum, e) => sum + e.attended, 0);
+  const totalAttendable = entries.reduce((sum, e) => sum + e.totalEvents, 0);
+  return totalAttendable > 0 ? (totalAttended / totalAttendable) * 100 : 0;
+}
