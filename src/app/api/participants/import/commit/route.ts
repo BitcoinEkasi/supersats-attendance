@@ -25,8 +25,12 @@ export async function POST(req: Request) {
     let updated = 0;
     for (const row of rows) {
       const regDate = row.registrationDate ? parseFlexDate(row.registrationDate) : null;
+      const target = await prisma.participant.findFirstOrThrow({
+        where: { idNumber: row.idNumber, status: "ACTIVE" },
+        select: { id: true },
+      });
       await prisma.participant.update({
-        where: { idNumber: row.idNumber },
+        where: { id: target.id },
         data: {
           ...(regDate ? { registrationDate: regDate } : {}),
           ...(row.knownAs ? { knownAs: row.knownAs } : {}),
