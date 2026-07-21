@@ -70,7 +70,7 @@ function ratioText(numerator: number, denominator: number): string {
   return `${numerator}/${denominator} (${Math.floor((numerator / denominator) * 100)}%)`;
 }
 
-function TrajectoryTooltipContent({ active, payload, group }: TooltipContentProps & { group: string }) {
+function TrajectoryTooltipContent({ active, payload, group, isParticipantView }: TooltipContentProps & { group: string; isParticipantView: boolean }) {
   if (!active || !payload?.length) return null;
   const m = payload[0]?.payload as MonthEntry | undefined;
   if (!m) return null;
@@ -84,17 +84,18 @@ function TrajectoryTooltipContent({ active, payload, group }: TooltipContentProp
     // tooltip list reads top-to-bottom the same way the visual stack does.
     for (let i = TSK_GROUPS.length - 1; i >= 0; i--) {
       const g = TSK_GROUPS[i];
+      const gw = m.groupWeightedAverages?.[g];
       rows.push({
         label: TSK_GROUP_LABELS[g],
-        text: ratioText(m.groupContributions?.[g] ?? 0, m.groupRegistered?.[g] ?? 0),
+        text: ratioText(gw?.attended ?? 0, gw?.totalEvents ?? 0),
         color: GROUP_COLORS[g],
       });
     }
-    rows.push({ label: "Total", text: ratioText(m.average, m.registered), color: "#000000", emphasize: true });
+    rows.push({ label: "Total", text: ratioText(m.weightedAverage.attended, m.weightedAverage.totalEvents), color: "#000000", emphasize: true });
   } else {
     rows.push({
-      label: TSK_GROUP_LABELS[group as TskGroupKey] ?? "Average",
-      text: ratioText(m.average, m.registered),
+      label: isParticipantView ? "Attendance" : (TSK_GROUP_LABELS[group as TskGroupKey] ?? "Average"),
+      text: ratioText(m.weightedAverage.attended, m.weightedAverage.totalEvents),
       color: "#14b8a6", // matches the single Bar's hardcoded teal fill below
     });
   }
@@ -141,24 +142,13 @@ export default function TrajectoryChart({ data, group }: { data: TrajectoryData;
           <XAxis dataKey="month" tick={(props) => <MonthAxisTick {...props} />} interval={0} height={28} />
           <YAxis hide domain={[0, Math.max(...data.months.map((m) => Math.max(m.average, m.registered))) + 2]} />
           <Tooltip
-            content={data.isParticipantView ? undefined : (props) => <TrajectoryTooltipContent {...props} group={group} />}
+            content={(props) => <TrajectoryTooltipContent {...props} group={group} isParticipantView={data.isParticipantView} />}
             itemSorter={(item) => {
               // Reversed vs. the stack's bottom-to-top construction order (Turtles first),
               // so the hover list reads top-of-stack-first (Free Surfers) to bottom (Turtles) —
               // matching how the stack visually reads from top to bottom.
               const idx = TSK_GROUPS.findIndex((g) => TSK_GROUP_LABELS[g] === item.name);
               return idx === -1 ? TSK_GROUPS.length : TSK_GROUPS.length - 1 - idx;
-            }}
-            formatter={(value, name) => {
-              const v = typeof value === "number" ? value : Number(value);
-              if (name === "average") return [v, data.isParticipantView ? "Avg attendance" : "Avg attendees"];
-              return [v, String(name)];
-            }}
-            labelFormatter={(label) => {
-              const m = data.months.find((entry) => entry.month === label);
-              if (!m) return label;
-              const gapText = m.gaps > 0 ? `, ${m.gaps} gap${m.gaps === 1 ? "" : "s"}` : "";
-              return `${m.label} — ${m.held}/${m.potential} sessions held${gapText}`;
             }}
           />
 

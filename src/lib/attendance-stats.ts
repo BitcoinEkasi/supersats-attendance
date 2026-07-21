@@ -5,7 +5,8 @@ import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/ts
 import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import { computeMonthlyRosterCounts, type MonthlyRoster } from "@/lib/roster-history";
-import type { DayEntry, DayType, StatsData, MonthEntry, TrajectoryData } from "@/lib/types/attendance-stats";
+import { computeParticipantMonthAttendance, sumAttendance } from "@/lib/participant-attendance";
+import type { DayEntry, DayType, StatsData, MonthEntry, TrajectoryData, WeightedAttendance } from "@/lib/types/attendance-stats";
 
 export type ComputeAttendanceStatsParams = {
   month: string; // "YYYY-MM"
@@ -74,6 +75,7 @@ export async function computeAttendanceStats({
 
   const dayMap = new Map<string, { presentCount: number; sessions: number; categories: Set<string> }>();
   const groupDayMap = new Map<string, Map<string, number>>();
+  const groupSessionMap = new Map<string, Map<string, number>>();
   for (const event of events) {
     const dateStr = event.date.toISOString().split("T")[0];
     const existing = dayMap.get(dateStr) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
@@ -93,6 +95,10 @@ export async function computeAttendanceStats({
       const inner = groupDayMap.get(dateStr) ?? new Map<string, number>();
       inner.set(event.group, (inner.get(event.group) ?? 0) + presentDelta);
       groupDayMap.set(dateStr, inner);
+
+      const sessionInner = groupSessionMap.get(dateStr) ?? new Map<string, number>();
+      sessionInner.set(event.group, (sessionInner.get(event.group) ?? 0) + 1);
+      groupSessionMap.set(dateStr, sessionInner);
     }
   }
 
@@ -144,6 +150,9 @@ export async function computeAttendanceStats({
       excuseReasonOther: excuse?.reasonOther ?? null,
       groupCounts: includeGroupBreakdown
         ? (Object.fromEntries(TSK_GROUPS.map((g) => [g, groupDayMap.get(date)?.get(g) ?? 0])) as Record<TskGroupKey, number>)
+        : null,
+      groupSessions: includeGroupBreakdown
+        ? (Object.fromEntries(TSK_GROUPS.map((g) => [g, groupSessionMap.get(date)?.get(g) ?? 0])) as Record<TskGroupKey, number>)
         : null,
       registered,
       groupRegistered,
@@ -226,6 +235,29 @@ export async function computeAttendanceTrajectory({
     rosterByMonth = await computeMonthlyRosterCounts(asOfDates);
   }
 
+  // Weighted attendance (sum attended / sum eligible sessions across participants) — the
+  // same methodology as Monthly Report's Average Attendance, computed independently of the
+  // day-level headcount stats below. This drives the tooltip's percentage; `average`/
+  // `groupContributions` below remain a separate headcount metric driving the bar heights.
+  const weightedByMonth = await Promise.all(
+    months.map(async (m) => {
+      if (includeGroupBreakdown) {
+        const [allScope, ...perGroup] = await Promise.all([
+          computeParticipantMonthAttendance(m.value, {}),
+          ...TSK_GROUPS.map((g) => computeParticipantMonthAttendance(m.value, { group: g })),
+        ]);
+        return {
+          total: sumAttendance(allScope),
+          byGroup: Object.fromEntries(
+            TSK_GROUPS.map((g, gi) => [g, sumAttendance(perGroup[gi])])
+          ) as Record<TskGroupKey, WeightedAttendance>,
+        };
+      }
+      const scope = await computeParticipantMonthAttendance(m.value, { group, participantId });
+      return { total: sumAttendance(scope), byGroup: null as Record<TskGroupKey, WeightedAttendance> | null };
+    })
+  );
+
   const monthEntries: MonthEntry[] = months.map((m, i) => {
     const stats = monthStats[i];
     const sessionDays = stats.days.filter((d) => d.dayType === "session");
@@ -237,19 +269,29 @@ export async function computeAttendanceTrajectory({
     let average: number;
     let groupContributions: Record<TskGroupKey, number> | null = null;
     if (includeGroupBreakdown) {
-      // Compute every group's contribution and the total from the same unrounded pass —
-      // averages aren't additive once rounded, so composing separately-rounded per-group
-      // calls would make the stacked segments fail to sum to the displayed total.
+      // Each group's own session-day count, not the combined all-groups count — previously a
+      // group that met less often than others had its average diluted by days it didn't meet
+      // (divided by every group's combined session-day count instead of its own).
+      const groupN = Object.fromEntries(
+        TSK_GROUPS.map((g) => [g, sessionDays.filter((d) => (d.groupSessions?.[g] ?? 0) > 0).length])
+      ) as Record<TskGroupKey, number>;
       const raw = Object.fromEntries(
         TSK_GROUPS.map((g) => [
           g,
-          n > 0 ? sessionDays.reduce((sum, d) => sum + (d.groupCounts?.[g] ?? 0), 0) / n : 0,
+          groupN[g] > 0 ? sessionDays.reduce((sum, d) => sum + (d.groupCounts?.[g] ?? 0), 0) / groupN[g] : 0,
         ])
       ) as Record<TskGroupKey, number>;
       groupContributions = Object.fromEntries(
         TSK_GROUPS.map((g) => [g, Math.round(raw[g] * 10) / 10])
       ) as Record<TskGroupKey, number>;
-      average = Math.round(TSK_GROUPS.reduce((sum, g) => sum + raw[g], 0) * 10) / 10;
+      // Ungrouped events (event.group: null) aren't attributable to any group's own segment,
+      // but their attendance still belongs in the true month total — previously it vanished
+      // entirely since the total was built purely by summing the per-group breakdowns.
+      const ungroupedPresent = sessionDays.reduce((sum, d) => {
+        const groupedPresentThatDay = TSK_GROUPS.reduce((s, g) => s + (d.groupCounts?.[g] ?? 0), 0);
+        return sum + (d.presentCount - groupedPresentThatDay);
+      }, 0);
+      average = Math.round((TSK_GROUPS.reduce((sum, g) => sum + raw[g], 0) + (n > 0 ? ungroupedPresent / n : 0)) * 10) / 10;
     } else {
       // Same 1-decimal precision as the All Groups total — a floored integer here made
       // the ratio tooltip's percentage less accurate than it needed to be, and read
@@ -265,7 +307,13 @@ export async function computeAttendanceTrajectory({
       : (roster?.registered ?? 0);
     const groupRegistered = includeGroupBreakdown ? (roster?.groupRegistered ?? null) : null;
 
-    return { month: m.value, label: m.label, average, held, potential, gaps, groupContributions, registered, groupRegistered };
+    const weighted = weightedByMonth[i];
+
+    return {
+      month: m.value, label: m.label, average, held, potential, gaps, groupContributions, registered, groupRegistered,
+      weightedAverage: weighted.total,
+      groupWeightedAverages: weighted.byGroup,
+    };
   });
 
   return {
