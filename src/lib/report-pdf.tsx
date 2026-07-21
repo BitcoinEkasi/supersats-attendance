@@ -80,6 +80,7 @@ export type ReportPdfEntry = {
   attended: number;
   percentage: number;
   rewardSats: number;
+  retiredAt: string | null;
 };
 
 export type ReportPdfProps = {
@@ -93,6 +94,7 @@ export type ReportPdfProps = {
   zarPerSat: number | null;
   recruited: number;
   retired: number;
+  activeParticipants: number;
   totalSessions: number;
   qualifyingParticipants: number;
   avgPercentage: number;
@@ -107,7 +109,7 @@ function satsToZar(sats: number, zarPerSat: number): string {
 
 export function ReportPdfDocument({
   month, group, groupLabel, status, generatedBy, approvedBy, approvedAt,
-  zarPerSat, recruited, retired,
+  zarPerSat, recruited, retired, activeParticipants,
   totalSessions, qualifyingParticipants, avgPercentage, totalSats,
   entries,
 }: ReportPdfProps) {
@@ -149,7 +151,7 @@ export function ReportPdfDocument({
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Participants</Text>
             <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
-              <Text style={styles.cardValue}>{entries.length}</Text>
+              <Text style={styles.cardValue}>{activeParticipants}</Text>
               {hasDelta && (
                 <View style={{ flexDirection: "row", gap: 2 }}>
                   {recruited > 0 && <Text style={styles.cardDeltaGreen}>+{recruited}</Text>}
@@ -212,7 +214,10 @@ export function ReportPdfDocument({
         {entries.map((e, i) => (
           <View key={e.tskId} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]} wrap={false}>
             <Text style={[styles.tableCell, { width: COL.tskId }]}>{e.tskId}</Text>
-            <Text style={[styles.tableCellBold, { width: COL.name }]}>{e.name}</Text>
+            <View style={{ width: COL.name }}>
+              <Text style={styles.tableCellBold}>{e.name}</Text>
+              {e.retiredAt && <Text style={{ fontSize: 6, color: RED }}>Retired on {e.retiredAt}</Text>}
+            </View>
             <Text style={[styles.tableCell, { width: COL.sessions, textAlign: "right" }]}>{e.totalEvents}</Text>
             <Text style={[styles.tableCell, { width: COL.attended, textAlign: "right" }]}>{e.attended}</Text>
             <Text style={[styles.tableCell, { width: COL.pct, textAlign: "right" }]}>{fmtPct(e.percentage)}</Text>

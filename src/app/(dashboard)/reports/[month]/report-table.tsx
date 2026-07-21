@@ -5,6 +5,7 @@ import Link from "next/link";
 import { REWARD_TIERS, fmtPct, type buildTiers } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
 import { getAcMultiplier } from "@/lib/tsk-levels";
+import { fmtDate } from "@/lib/format-date";
 
 type Entry = {
   id: string;
@@ -24,6 +25,7 @@ type Entry = {
     gender: "MALE" | "FEMALE" | null;
     isAssistantCoach: boolean;
     assistantCoachSince: Date | string | null;
+    retiredAt: Date | null;
   };
 };
 
@@ -107,7 +109,12 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
               return (
                 <tr key={entry.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.tskId}</td>
-                  <td className="px-4 py-3 font-medium">{name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {name}
+                    {p.retiredAt && (
+                      <div className="mt-0.5 text-xs font-normal text-red-500">Retired on {fmtDate(p.retiredAt)}</div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-gray-600">{p.dateOfBirth ? calculateAge(p.dateOfBirth) : "—"}</td>
                   <td className="px-4 py-3 text-gray-600">{p.dateOfBirth && p.gender ? getDivisionLabel(p.dateOfBirth, p.gender) : "—"}</td>
                   <td className="px-4 py-3">{entry.totalEvents}</td>

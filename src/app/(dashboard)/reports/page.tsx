@@ -5,6 +5,7 @@ import { getZarPerSat } from "@/lib/bolt";
 import { ReportsTableClient } from "./reports-table-client";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
+import { isParticipantActiveOn } from "@/lib/roster-history";
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -25,7 +26,7 @@ export default async function ReportsPage() {
     prisma.monthlyReport.findMany({
     orderBy: { month: "desc" },
     include: {
-      entries: { select: { rewardSats: true, percentage: true, totalEvents: true, participant: { select: { registrationDate: true, retiredAt: true } } } },
+      entries: { select: { rewardSats: true, percentage: true, totalEvents: true, participant: { select: { registrationDate: true, retiredAt: true, status: true } } } },
     },
   }),
     getZarPerSat().catch(() => null),
@@ -33,7 +34,7 @@ export default async function ReportsPage() {
 
   // Serialize (convert Prisma Decimal → number) and group by month, sorting groups by canonical order
   const monthKeys: string[] = [];
-  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; entries: { rewardSats: number; percentage: number; totalEvents: number }[] }[]> = {};
+  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number }[] }[]> = {};
   for (const r of reports) {
     if (!byMonth[r.month]) {
       monthKeys.push(r.month);
@@ -43,6 +44,7 @@ export default async function ReportsPage() {
     const monthEnd   = getEndOfSASTMonth(r.month);
     const recruited = r.entries.filter((e) => e.participant.registrationDate >= monthStart && e.participant.registrationDate <= monthEnd).length;
     const retired   = r.entries.filter((e) => e.participant.retiredAt !== null && e.participant.retiredAt >= monthStart && e.participant.retiredAt <= monthEnd).length;
+    const activeParticipants = r.entries.filter((e) => isParticipantActiveOn(e.participant, monthEnd)).length;
     byMonth[r.month].push({
       id: r.id,
       month: r.month,
@@ -51,6 +53,7 @@ export default async function ReportsPage() {
       zarPerSat: r.zarPerSat ?? null,
       recruited,
       retired,
+      activeParticipants,
       entries: r.entries.map((e) => ({ rewardSats: e.rewardSats, percentage: Number(e.percentage), totalEvents: e.totalEvents })),
     });
   }

@@ -13,7 +13,7 @@ function fmtMonth(key: string) {
 }
 
 type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number };
-type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; entries: ReportEntry[] };
+type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
   if (!zarPerSat) return null;
@@ -66,7 +66,7 @@ export function ReportsTableClient({
         const monthReports = byMonth[month];
         const isOpen = !collapsed.has(month);
         const totalSats = monthReports.reduce((s, r) => s + r.entries.reduce((a, e) => a + e.rewardSats, 0), 0);
-        const totalParticipants = monthReports.reduce((s, r) => s + r.entries.length, 0);
+        const totalParticipants = monthReports.reduce((s, r) => s + r.activeParticipants, 0);
         const totalRecruited = monthReports.reduce((s, r) => s + r.recruited, 0);
         const totalRetired = monthReports.reduce((s, r) => s + r.retired, 0);
 
@@ -133,7 +133,7 @@ export function ReportsTableClient({
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={report.status} /></td>
                     <td className="px-4 py-3">
-                      {report.entries.length}
+                      {report.activeParticipants}
                       {(report.recruited > 0 || report.retired > 0) && (
                         <span className="ml-1 text-xs font-medium">
                           ({report.recruited > 0 && <span className="text-green-600">+{report.recruited}</span>}

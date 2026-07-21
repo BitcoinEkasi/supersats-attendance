@@ -13,6 +13,7 @@ import CreatePayoutButton from "../create-payout-button";
 import { TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
+import { isParticipantActiveOn } from "@/lib/roster-history";
 
 export default async function ReportDetailPage({
   params,
@@ -49,7 +50,7 @@ export default async function ReportDetailPage({
                 tskId: true, surname: true, fullNames: true, knownAs: true,
                 dateOfBirth: true, gender: true, isAssistantCoach: true, assistantCoachSince: true,
                 boltUserId: true, paymentMethod: true,
-                registrationDate: true, retiredAt: true,
+                registrationDate: true, retiredAt: true, status: true,
               },
             },
           },
@@ -82,11 +83,12 @@ export default async function ReportDetailPage({
   const monthComplete = report.month < currentYM;
 
   const totalSats = report.entries.reduce((sum, e) => sum + e.rewardSats, 0);
-  const totalParticipants = report.entries.length;
+  const totalEntries = report.entries.length;
+  const totalParticipants = report.entries.filter((e) => isParticipantActiveOn(e.participant, monthEnd)).length;
   const totalSessions = monthEvents.length;
   const avgPercentage =
-    totalParticipants > 0
-      ? report.entries.reduce((sum, e) => sum + Number(e.percentage), 0) / totalParticipants
+    totalEntries > 0
+      ? report.entries.reduce((sum, e) => sum + Number(e.percentage), 0) / totalEntries
       : 0;
   const qualifyingParticipants = report.entries.filter((e) => e.rewardSats > 0).length;
 
@@ -368,6 +370,7 @@ export default async function ReportDetailPage({
             gender: e.participant.gender,
             isAssistantCoach: e.participant.isAssistantCoach,
             assistantCoachSince: e.participant.assistantCoachSince,
+            retiredAt: e.participant.retiredAt,
           },
         }))}
       />

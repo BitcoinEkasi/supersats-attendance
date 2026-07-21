@@ -7,6 +7,7 @@ import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 import { ReportPdfDocument, type ReportPdfEntry } from "@/lib/report-pdf";
+import { isParticipantActiveOn } from "@/lib/roster-history";
 import React from "react";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -30,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             participant: {
               select: {
                 tskId: true, surname: true, fullNames: true, knownAs: true,
-                registrationDate: true, retiredAt: true,
+                registrationDate: true, retiredAt: true, status: true,
               },
             },
           },
@@ -59,6 +60,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return ra !== null && ra >= monthStart && ra <= monthEnd;
   }).length;
 
+  const activeParticipants = report.entries.filter((e) => isParticipantActiveOn(e.participant, monthEnd)).length;
+
   // Count events in the month for this group (approximate via totalEvents from entries)
   const totalSessions = report.entries.length > 0
     ? Math.max(...report.entries.map((e) => e.totalEvents))
@@ -80,6 +83,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       attended: e.attended,
       percentage: Number(e.percentage),
       rewardSats: e.rewardSats,
+      retiredAt: p.retiredAt ? fmtDate(p.retiredAt) : null,
     };
   });
 
@@ -99,6 +103,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     zarPerSat,
     recruited,
     retired,
+    activeParticipants,
     totalSessions,
     qualifyingParticipants,
     avgPercentage,
