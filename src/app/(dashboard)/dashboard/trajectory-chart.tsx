@@ -37,7 +37,7 @@ function MonthBarLabel(props: { x?: string | number; y?: string | number; width?
   if (!v) return null;
   return (
     <text x={x + width / 2} y={y} dy={-4} textAnchor="middle" fontSize={11} fill="#000000">
-      {v}
+      {v.toFixed(2)}
     </text>
   );
 }
@@ -67,7 +67,7 @@ function RosterLines() {
 
 function ratioText(numerator: number, denominator: number): string {
   if (denominator <= 0) return "—";
-  return `${numerator}/${denominator} (${Math.floor((numerator / denominator) * 100)}%)`;
+  return `${numerator}/${denominator} (${((numerator / denominator) * 100).toFixed(2)}%)`;
 }
 
 function TrajectoryTooltipContent({ active, payload, group, isParticipantView }: TooltipContentProps & { group: string; isParticipantView: boolean }) {

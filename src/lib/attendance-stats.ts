@@ -198,6 +198,7 @@ export async function computeAttendanceStats({
     days,
     totalParticipants,
     average: Math.floor(average),
+    averagePrecise: Math.round(average * 100) / 100,
     isParticipantView: !!participantId,
     trendSlope,
   };
@@ -282,7 +283,7 @@ export async function computeAttendanceTrajectory({
         ])
       ) as Record<TskGroupKey, number>;
       groupContributions = Object.fromEntries(
-        TSK_GROUPS.map((g) => [g, Math.round(raw[g] * 10) / 10])
+        TSK_GROUPS.map((g) => [g, Math.round(raw[g] * 100) / 100])
       ) as Record<TskGroupKey, number>;
       // Ungrouped events (event.group: null) aren't attributable to any group's own segment,
       // but their attendance still belongs in the true month total — previously it vanished
@@ -291,12 +292,12 @@ export async function computeAttendanceTrajectory({
         const groupedPresentThatDay = TSK_GROUPS.reduce((s, g) => s + (d.groupCounts?.[g] ?? 0), 0);
         return sum + (d.presentCount - groupedPresentThatDay);
       }, 0);
-      average = Math.round((TSK_GROUPS.reduce((sum, g) => sum + raw[g], 0) + (n > 0 ? ungroupedPresent / n : 0)) * 10) / 10;
+      average = Math.round((TSK_GROUPS.reduce((sum, g) => sum + raw[g], 0) + (n > 0 ? ungroupedPresent / n : 0)) * 100) / 100;
     } else {
-      // Same 1-decimal precision as the All Groups total — a floored integer here made
+      // Same 2-decimal precision as the All Groups total — a floored integer here made
       // the ratio tooltip's percentage less accurate than it needed to be, and read
       // inconsistently next to All Groups' decimal average.
-      average = n > 0 ? Math.round((sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / n) * 10) / 10 : 0;
+      average = n > 0 ? Math.round((sessionDays.reduce((sum, d) => sum + d.presentCount, 0) / n) * 100) / 100 : 0;
     }
 
     const roster = rosterByMonth?.[i];

@@ -404,8 +404,11 @@ export default function AttendanceChart() {
             </span>
           )}
           <span>
-            <span className="font-medium text-gray-900">{data.average}</span> avg{" "}
-            {data.isParticipantView ? "attendance (0/1)" : "attendees"}
+            <span className="font-medium text-gray-900">
+              {data.averagePrecise.toFixed(2)}
+              {data.totalParticipants > 0 && ` (${Math.floor((data.averagePrecise / data.totalParticipants) * 100)}%)`}
+            </span>{" "}
+            avg {data.isParticipantView ? "attendance" : "attendees"}
           </span>
           <span>
             <span className="font-medium text-blue-600">{data.totalParticipants}</span>{" "}

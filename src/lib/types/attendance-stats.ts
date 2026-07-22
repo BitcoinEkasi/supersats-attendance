@@ -28,7 +28,10 @@ export type WeightedAttendance = { attended: number; totalEvents: number };
 export type StatsData = {
   days: DayEntry[];
   totalParticipants: number;
+  /** Floored to a whole number — used by the daily digest email. */
   average: number;
+  /** Same average, rounded to 2 decimal places — used by the Pulse header. */
+  averagePrecise: number;
   isParticipantView: boolean;
   trendSlope: number | null;
 };
