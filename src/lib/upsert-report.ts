@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { buildCalculateRewardSats } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
-import { type TskGroupKey, participantWhereForGroup } from "@/lib/tsk-groups";
+import { type TskGroupKey, participantWhereForGroup, getGroupForStatus } from "@/lib/tsk-groups";
 import { getAcMultiplier } from "@/lib/tsk-levels";
 import { isParticipantActiveOn } from "@/lib/roster-history";
 
@@ -19,12 +19,19 @@ export async function upsertMonthlyReport(
   const monthStart = getStartOfSASTMonth(month);
   const monthEnd = getEndOfSASTMonth(month);
 
+  // "All Groups" (group: null): each participant is only eligible for their own current
+  // group's events plus any ungrouped event — isParticipantActiveOn alone doesn't know about
+  // groups, so without this every participant's totalEvents would include every other
+  // group's events too, hugely inflating the denominator (and tanking their percentage) for
+  // anyone who correctly never attends another group's sessions.
+  const scopeToOwnGroup = group === null;
+
   const events = await prisma.event.findMany({
     where: {
       date: { gte: monthStart, lte: monthEnd },
       ...(group ? { group } : {}),
     },
-    select: { id: true, date: true },
+    select: { id: true, date: true, group: true },
   });
 
   if (events.length === 0) return;
@@ -41,7 +48,7 @@ export async function upsertMonthlyReport(
         ],
         ...(group ? participantWhereForGroup(group) : {}),
       },
-      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true, status: true },
+      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true, status: true, tskStatus: true },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -86,7 +93,12 @@ export async function upsertMonthlyReport(
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      const attendableEvents = events.filter((e) => isParticipantActiveOn(participant, e.date));
+      const ownGroup = scopeToOwnGroup ? getGroupForStatus(participant.tskStatus) : null;
+      const attendableEvents = events.filter((e) => {
+        if (!isParticipantActiveOn(participant, e.date)) return false;
+        if (!scopeToOwnGroup) return true; // already event-filtered by the query itself
+        return e.group === null || e.group === ownGroup;
+      });
 
       const totalEvents = attendableEvents.length;
       const attended = attendableEvents.filter((e) =>
