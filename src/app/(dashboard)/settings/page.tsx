@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import BackupRestore from "./backup-restore";
 import RewardSettingsForm from "./reward-settings-form";
+import EmailRecipientsForm from "./email-recipients-form";
+import EmailScheduleForm from "./email-schedule-form";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getZarPerSat } from "@/lib/bolt";
 
@@ -10,10 +12,12 @@ export default async function SettingsPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMINISTRATOR") redirect("/dashboard");
 
-  const [current, history, zarPerSat] = await Promise.all([
+  const [current, history, zarPerSat, recipients, schedules] = await Promise.all([
     getActiveRewardSettings(),
     prisma.rewardSettings.findMany({ orderBy: { effectiveFrom: "desc" }, take: 10 }),
     getZarPerSat(),
+    prisma.emailRecipient.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.emailSchedule.findMany(),
   ]);
 
   return (
@@ -38,6 +42,22 @@ export default async function SettingsPage() {
             zarPerSat: h.zarPerSat ?? null,
           }))}
         />
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">Email Recipients</h3>
+        <p className="mb-4 text-sm text-gray-500">
+          Addresses that receive Zero Attendance, TSK Pulse, and TSK Attendance emails.
+        </p>
+        <EmailRecipientsForm recipients={recipients.map((r) => ({ id: r.id, email: r.email }))} />
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <h3 className="mb-1 text-lg font-semibold text-gray-900">Email Schedule</h3>
+        <p className="mb-4 text-sm text-gray-500">
+          Times are SAST. Zero Attendance and TSK Pulse each send Tue-Fri and Saturday, at the times below.
+        </p>
+        <EmailScheduleForm schedules={schedules.map((s) => ({ slot: s.slot, hour: s.hour, minute: s.minute }))} />
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white p-6">

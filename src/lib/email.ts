@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { prisma } from "@/lib/db";
 
 export async function sendEmail({
   to,
@@ -27,8 +28,13 @@ export async function sendEmail({
   }
 }
 
-/** Comma-separated recipient list shared by all attendance notification features. */
-export function getAlertRecipients(): string[] {
+/** Recipient list shared by all attendance notification features. Admin-managed via the
+ *  EmailRecipient table; falls back to the ATTENDANCE_ALERT_RECIPIENTS env var only when
+ *  the table is empty (i.e. before an admin has added anyone through the settings UI). */
+export async function getAlertRecipients(): Promise<string[]> {
+  const rows = await prisma.emailRecipient.findMany({ select: { email: true } });
+  if (rows.length > 0) return rows.map((r) => r.email);
+
   return (process.env.ATTENDANCE_ALERT_RECIPIENTS ?? "")
     .split(",")
     .map((s) => s.trim())

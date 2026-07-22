@@ -49,8 +49,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   try {
     await sendEmail({
-      to: getAlertRecipients(),
-      subject: `${groupLabel} ${presentCount}/${total} present — ${fmtDate(event.date)}`,
+      to: await getAlertRecipients(),
+      subject: `TSK Attendance ${groupLabel}`,
       html: `<p><strong>${groupLabel}</strong>: ${presentCount}/${total} present for the session on ${fmtDate(event.date)}.</p>
              <p>Submitted by ${user.name ?? "a marshal"} at ${timeStr} SAST.</p>`,
     });

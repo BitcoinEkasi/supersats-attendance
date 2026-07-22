@@ -51,6 +51,27 @@ export function isProgrammeDay(dateStr: string): boolean {
   return day !== 0 && day !== 1;
 }
 
+/** True if the date falls on a Saturday. */
+export function isSaturdaySAST(dateStr: string): boolean {
+  return new Date(`${dateStr}T12:00:00.000Z`).getUTCDay() === 6;
+}
+
+/** Current time-of-day in SAST, as hour (0-23) and minute (0-59). */
+export function getSASTTimeOfDay(): { hour: number; minute: number } {
+  const sast = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  return { hour: sast.getUTCHours(), minute: sast.getUTCMinutes() };
+}
+
+/** Formats a SAST date string as "Wed, 22 Jul, '26" — used in the TSK Pulse email subject. */
+export function formatPulseDate(dateStr: string): string {
+  const d = new Date(`${dateStr}T12:00:00.000Z`);
+  const weekday = d.toLocaleDateString("en-ZA", { weekday: "short", timeZone: "UTC" });
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const month = d.toLocaleDateString("en-ZA", { month: "short", timeZone: "UTC" });
+  const year = String(d.getUTCFullYear()).slice(-2);
+  return `${weekday}, ${day} ${month}, '${year}`;
+}
+
 /** The last N SAST months (including the current one), as "YYYY-MM" values with display labels. */
 export function getLastNMonths(n: number, opts?: { order?: "newest-first" | "oldest-first" }): { value: string; label: string }[] {
   const { year, month } = getSASTNow();

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { sendEmail, getAlertRecipients } from "@/lib/email";
-import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString, isProgrammeDay } from "@/lib/sast";
+import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString } from "@/lib/sast";
+import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 
 export async function POST(req: Request) {
@@ -14,11 +15,12 @@ export async function POST(req: Request) {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const todayStr = getSASTDateString();
-  if (!isProgrammeDay(todayStr)) {
-    return Response.json({ checked: 0, zeroGroups: [], skipped: "not a programme day" });
+  const { due, slot } = await shouldSendNow("ZERO_ATTENDANCE");
+  if (!due || !slot) {
+    return Response.json({ checked: 0, zeroGroups: [], skipped: "not due yet" });
   }
 
+  const todayStr = getSASTDateString();
   const todayStart = getStartOfSASTToday();
   const todayEnd = getEndOfSASTToday();
   const todayDate = new Date(`${todayStr}T12:00:00.000Z`); // matches Event/ExcusedSession noon-anchor convention
@@ -46,14 +48,19 @@ export async function POST(req: Request) {
     if (presentCount === 0) zeroGroups.push(group);
   }
 
+  const claimed = await markSent(slot);
+  if (!claimed) {
+    return Response.json({ checked: TSK_GROUPS.length, zeroGroups, skipped: "already handled today" });
+  }
+
   if (zeroGroups.length > 0) {
     const html = `<h2>Zero-attendance alert — ${todayStr}</h2><ul>${zeroGroups
       .map((g) => `<li><strong>${TSK_GROUP_LABELS[g]}</strong> — no participants marked present yet today.</li>`)
       .join("")}</ul>`;
     try {
       await sendEmail({
-        to: getAlertRecipients(),
-        subject: `Zero attendance: ${zeroGroups.map((g) => TSK_GROUP_LABELS[g]).join(", ")}`,
+        to: await getAlertRecipients(),
+        subject: `Zero Attendance: ${zeroGroups.map((g) => TSK_GROUP_LABELS[g]).join(", ")}`,
         html,
       });
     } catch (err) {

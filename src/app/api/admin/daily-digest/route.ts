@@ -2,7 +2,8 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { sendEmail, getAlertRecipients } from "@/lib/email";
 import { computeAttendanceStats } from "@/lib/attendance-stats";
-import { getSASTNow } from "@/lib/sast";
+import { getSASTNow, getSASTDateString, formatPulseDate } from "@/lib/sast";
+import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 import type { StatsData } from "@/lib/types/attendance-stats";
 
@@ -16,6 +17,11 @@ export async function POST(req: Request) {
   if (!isCron) {
     const user = await requireAuth(["ADMINISTRATOR"]);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { due, slot } = await shouldSendNow("TSK_PULSE");
+  if (!due || !slot) {
+    return Response.json({ sent: false, skipped: "not due yet" });
   }
 
   const { year, month } = getSASTNow();
@@ -41,11 +47,14 @@ export async function POST(req: Request) {
 
   const html = `<h1>TSK Attendance Digest — ${monthStr}</h1>${sections.join("<hr/>")}`;
 
-  const recipients = getAlertRecipients();
+  const claimed = await markSent(slot);
+  if (!claimed) return Response.json({ sent: false, skipped: "already handled today" });
+
+  const recipients = await getAlertRecipients();
   if (recipients.length === 0) return Response.json({ sent: false, reason: "no recipients configured" });
 
   try {
-    await sendEmail({ to: recipients, subject: `TSK Daily Digest — ${monthStr}`, html });
+    await sendEmail({ to: recipients, subject: `TSK Pulse ${formatPulseDate(getSASTDateString())}`, html });
   } catch (err) {
     console.error("[daily-digest] email failed:", err);
     return Response.json({ sent: false }, { status: 500 });

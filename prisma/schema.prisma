@@ -366,6 +366,34 @@ model RewardSettings {
   @@map("reward_settings")
 }
 
+model EmailRecipient {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String   @map("created_by")
+
+  @@map("email_recipients")
+}
+
+enum EmailScheduleSlot {
+  ZERO_ATTENDANCE_WEEKDAY
+  ZERO_ATTENDANCE_SATURDAY
+  TSK_PULSE_WEEKDAY
+  TSK_PULSE_SATURDAY
+}
+
+model EmailSchedule {
+  id           String            @id @default(uuid())
+  slot         EmailScheduleSlot @unique
+  hour         Int
+  minute       Int
+  lastSentDate String?           @map("last_sent_date")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  updatedBy    String?           @map("updated_by")
+
+  @@map("email_schedules")
+}
+
 model PendingParticipantChange {
   id            String    @id @default(uuid())
   participantId String    @map("participant_id")
