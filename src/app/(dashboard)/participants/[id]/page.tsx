@@ -325,7 +325,7 @@ export default async function ParticipantDetailPage({
               )}
               {participant.profileLinkUrl && (
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Profile Link</dt>
+                  <dt className="text-gray-500">Portfolio Link</dt>
                   <dd className="truncate max-w-48">
                     <a href={participant.profileLinkUrl} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
                       View

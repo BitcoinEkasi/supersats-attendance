@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   const iKnownAs      = col("known as");
   const iIdNumber     = col("sa id number");
   const iDateFrom     = col("date from");
-  const iProfileLink  = col("profile link");
+  const iProfileLink  = col("portfolio link") !== -1 ? col("portfolio link") : col("profile link");
   const iEthnicity    = col("ethnicity");
   const iLanguage     = col("language");
   const iSchool       = col("school");

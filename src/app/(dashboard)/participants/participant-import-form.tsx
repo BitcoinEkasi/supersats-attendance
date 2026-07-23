@@ -123,7 +123,7 @@ export default function ParticipantImportForm() {
           "Card number", "Full Names", "Surname", "Known as", "SA ID Number",
           "Gender", "Ethnicity", "Language", "Date from", "School", "Grade",
           "Guardian", "Guardian ID", "Relationship", "Address",
-          "1st Contact", "2nd Contact", "Housing Type", "Profile Link",
+          "1st Contact", "2nd Contact", "Housing Type", "Portfolio Link",
         ].map((col) => (
           <span key={col} className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-600">{col}</span>
         ))}

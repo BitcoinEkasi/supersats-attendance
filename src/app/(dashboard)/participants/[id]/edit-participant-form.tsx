@@ -739,8 +739,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
               <input type="hidden" name="tskStatus" value={tskStatus} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Profile Link</label>
-              <p className="text-xs text-gray-400 mb-1">Link to additional info (e.g. a shared folder) — not the profile photo above.</p>
+              <label className="block text-sm font-medium text-gray-700">Portfolio Link</label>
               <div className="flex gap-2">
                 <input
                   type="url"
