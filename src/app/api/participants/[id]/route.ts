@@ -211,7 +211,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         notes: body.notes?.trim() || null,
         paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
         lightningAddress: body.lightningAddress?.trim() || null,
-        ...(body.profilePicture !== undefined ? { profilePicture: body.profilePicture || null } : {}),
+        ...(body.profileLinkUrl !== undefined ? { profileLinkUrl: body.profileLinkUrl || null } : {}),
       },
     });
 

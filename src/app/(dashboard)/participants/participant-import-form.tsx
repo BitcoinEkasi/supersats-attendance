@@ -9,7 +9,7 @@ interface CsvParticipantRow {
   knownAs: string | null;
   idNumber: string;
   registrationDate: string | null;
-  profilePicture: string | null;
+  profileLinkUrl: string | null;
   ethnicity: string | null;
   language: string | null;
   school: string | null;

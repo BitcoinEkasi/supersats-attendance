@@ -85,7 +85,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
   const [isAssistantCoach, setIsAssistantCoach] = useState<boolean>((participant as any).isAssistantCoach ?? false);
   const [pending, setPending] = useState<PendingChange[]>(pendingChanges);
   const [pendingQueued, setPendingQueued] = useState(false);
-  const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profilePicture || "");
+  const [profileLinkUrl, setProfileLinkUrl] = useState<string>(participant.profileLinkUrl || "");
   const [paymentMethod, setPaymentMethod] = useState<string>((participant as any).paymentMethod || "BOLT_CARD");
   const [lightningAddress, setLightningAddress] = useState<string>((participant as any).lightningAddress || "");
   const [selectedGrade, setSelectedGrade] = useState<string>(participant.grade || "");
@@ -740,13 +740,26 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Profile Link</label>
-              <input
-                type="url"
-                value={profileLinkUrl}
-                onChange={(e) => { setProfileLinkUrl(e.target.value); setSaved(false); }}
-                placeholder="https://..."
-                className={inputCls}
-              />
+              <p className="text-xs text-gray-400 mb-1">Link to additional info (e.g. a shared folder) — not the profile photo above.</p>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={profileLinkUrl}
+                  onChange={(e) => { setProfileLinkUrl(e.target.value); setSaved(false); }}
+                  placeholder="https://..."
+                  className={inputCls}
+                />
+                {profileLinkUrl && (
+                  <a
+                    href={profileLinkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50"
+                  >
+                    Open
+                  </a>
+                )}
+              </div>
             </div>
           </div>
           <div className="mt-4">
@@ -758,7 +771,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
           </div>
         </div>
 
-        <input type="hidden" name="profilePicture" value={profileLinkUrl} />
+        <input type="hidden" name="profileLinkUrl" value={profileLinkUrl} />
         <input type="hidden" name="notes" value={participant.notes || ""} />
 
             <div className="border-t pt-4">

@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         data: {
           ...(regDate ? { registrationDate: regDate } : {}),
           ...(row.knownAs ? { knownAs: row.knownAs } : {}),
-          ...(row.profilePicture ? { profilePicture: row.profilePicture } : {}),
+          ...(row.profileLinkUrl ? { profileLinkUrl: row.profileLinkUrl } : {}),
           ...(row.ethnicity ? { ethnicity: row.ethnicity } : {}),
           ...(row.language ? { language: row.language } : {}),
           ...(row.school ? { school: row.school } : {}),
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
           idNumber:             row.idNumber,
           gender:               parsed.gender,
           dateOfBirth:          parsed.dob,
-          profilePicture:       row.profilePicture || null,
+          profileLinkUrl:       row.profileLinkUrl || null,
           registrationDate:     regDate || new Date(),
           status:               "ACTIVE",
           ethnicity:            row.ethnicity || null,

@@ -8,7 +8,7 @@ export interface CsvParticipantRow {
   knownAs: string | null;
   idNumber: string;
   registrationDate: string | null;
-  profilePicture: string | null;
+  profileLinkUrl: string | null;
   ethnicity: string | null;
   language: string | null;
   school: string | null;
@@ -97,7 +97,7 @@ export async function POST(req: Request) {
       knownAs:              get(iKnownAs) || null,
       idNumber,
       registrationDate:     get(iDateFrom) || null,
-      profilePicture:       get(iProfileLink) || null,
+      profileLinkUrl:       get(iProfileLink) || null,
       ethnicity:            get(iEthnicity) || null,
       language:             get(iLanguage) || null,
       school:               get(iSchool) || null,

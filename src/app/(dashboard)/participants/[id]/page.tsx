@@ -323,11 +323,11 @@ export default async function ParticipantDetailPage({
                   <dd><span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">Issued</span></dd>
                 </div>
               )}
-              {participant.profilePicture && (
+              {participant.profileLinkUrl && (
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Profile Link</dt>
                   <dd className="truncate max-w-48">
-                    <a href={participant.profilePicture} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+                    <a href={participant.profileLinkUrl} target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
                       View
                     </a>
                   </dd>

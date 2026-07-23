@@ -58,6 +58,7 @@ model Participant {
   tskId            String            @unique @map("tsk_id")
   registrationDate DateTime          @default(now()) @map("registration_date")
   profilePicture   String?           @map("profile_picture")
+  profileLinkUrl   String?           @map("profile_link_url")
   surname          String
   fullNames        String            @map("full_names")
   knownAs          String?           @map("known_as")
