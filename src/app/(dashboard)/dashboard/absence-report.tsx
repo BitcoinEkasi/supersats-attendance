@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { TSK_GROUP_LABELS, TSK_GROUPS, groupSortIndex } from "@/lib/tsk-groups";
+import AbsenceBadgesExportButton from "./absence-badges-export-button";
 
 export default async function AbsenceReport() {
   const flags = await prisma.absenceFlag.findMany({
@@ -33,7 +34,9 @@ export default async function AbsenceReport() {
   const sortedGroups = [...byGroup.keys()].sort((a, b) => groupSortIndex(a) - groupSortIndex(b));
 
   return (
-    <div className="overflow-hidden rounded-md border border-gray-100">
+    <div>
+      <AbsenceBadgesExportButton />
+      <div className="overflow-hidden rounded-md border border-gray-100">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-100">
           <tr>
@@ -94,6 +97,7 @@ export default async function AbsenceReport() {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

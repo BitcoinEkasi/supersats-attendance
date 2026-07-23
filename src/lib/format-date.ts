@@ -1,4 +1,4 @@
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+export const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 /** Format a Date as "DD MMM 'YY", e.g. "05 Apr '26". Uses UTC to match DB storage. */
 export function fmtDate(date: Date): string {

@@ -1,13 +1,15 @@
-import { prisma } from "@/lib/db";
+import { renderToBuffer } from "@react-pdf/renderer";
+import React from "react";
 import { requireAuth } from "@/lib/api-auth";
 import { sendEmail, getAlertRecipients } from "@/lib/email";
 import { computeAttendanceStats } from "@/lib/attendance-stats";
 import { getSASTNow, getSASTDateString, formatPulseDate } from "@/lib/sast";
+import { fmtDate } from "@/lib/format-date";
 import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
+import { getAbsenceBadgeGroups, type AbsenceBadgeEntry } from "@/lib/absence-badges";
+import { AbsenceBadgeDocument } from "@/lib/absence-badge-pdf";
 import type { StatsData } from "@/lib/types/attendance-stats";
-
-type FlagRow = { consecutiveMissed: number; participant: { surname: string; fullNames: string; knownAs: string | null } };
 
 export async function POST(req: Request) {
   const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
@@ -27,15 +29,11 @@ export async function POST(req: Request) {
   const { year, month } = getSASTNow();
   const monthStr = `${year}-${String(month).padStart(2, "0")}`;
 
-  const flags = await prisma.absenceFlag.findMany({
-    include: { participant: { select: { surname: true, fullNames: true, knownAs: true } } },
-  });
-  const flagsByGroup = new Map<string, FlagRow[]>();
-  for (const f of flags) {
-    if (!f.group) continue;
-    const list = flagsByGroup.get(f.group) ?? [];
-    list.push(f);
-    flagsByGroup.set(f.group, list);
+  const badgeGroups = await getAbsenceBadgeGroups();
+  const flagsByGroup = new Map<string, AbsenceBadgeEntry[]>();
+  for (const g of badgeGroups) {
+    if (!g.group) continue;
+    flagsByGroup.set(g.group, g.entries);
   }
 
   const sections = await Promise.all(
@@ -53,8 +51,16 @@ export async function POST(req: Request) {
   const recipients = await getAlertRecipients();
   if (recipients.length === 0) return Response.json({ sent: false, reason: "no recipients configured" });
 
+  let attachments: { filename: string; content: Buffer }[] | undefined;
+  if (badgeGroups.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const el = React.createElement(AbsenceBadgeDocument, { generatedAt: fmtDate(new Date()), groups: badgeGroups }) as any;
+    const pdfBuffer = await renderToBuffer(el);
+    attachments = [{ filename: `absence-badges-${getSASTDateString()}.pdf`, content: pdfBuffer }];
+  }
+
   try {
-    await sendEmail({ to: recipients, subject: `TSK Pulse ${formatPulseDate(getSASTDateString())}`, html });
+    await sendEmail({ to: recipients, subject: `TSK Pulse ${formatPulseDate(getSASTDateString())}`, html, attachments });
   } catch (err) {
     console.error("[daily-digest] email failed:", err);
     return Response.json({ sent: false }, { status: 500 });
@@ -62,7 +68,7 @@ export async function POST(req: Request) {
   return Response.json({ sent: true, groups: TSK_GROUPS.length });
 }
 
-function renderGroupSection(group: string, stats: StatsData, flags: FlagRow[]): string {
+function renderGroupSection(group: string, stats: StatsData, flags: AbsenceBadgeEntry[]): string {
   const label = TSK_GROUP_LABELS[group];
   const held = stats.days.filter((d) => d.dayType === "session").length;
   const potential = stats.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length;
@@ -83,7 +89,7 @@ function renderGroupSection(group: string, stats: StatsData, flags: FlagRow[]): 
       : `<p>No gap days this month.</p>`}
     ${flags.length
       ? `<p><strong>Absence alerts:</strong> ${flags
-          .map((f) => `${f.participant.knownAs ?? f.participant.fullNames} ${f.participant.surname} (${f.consecutiveMissed} missed)`)
+          .map((f) => `${f.knownAs ?? f.fullNames} ${f.surname} (${f.consecutiveMissed} missed)`)
           .join(", ")}</p>`
       : ""}
   `;
