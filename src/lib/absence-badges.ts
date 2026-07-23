@@ -54,7 +54,7 @@ export async function getAbsenceBadgeGroups(): Promise<AbsenceBadgeGroup[]> {
           profilePicture: true, tskStatus: true, isAssistantCoach: true, assistantCoachSince: true,
           dateOfBirth: true, gender: true, stance: true,
           registrationDate: true, status: true, retiredAt: true, retiredReason: true, retiredReasonOther: true,
-          contact1: true, contact2: true, address: true,
+          guardian: true, guardianRelationship: true, contact1: true, contact2: true, address: true,
         },
       },
     },
@@ -106,10 +106,11 @@ export async function getAbsenceBadgeGroups(): Promise<AbsenceBadgeGroup[]> {
         tenureLine = `Joined ${fmtDate(p.registrationDate)}`;
       }
 
-      const contactParts = [p.contact1, p.contact2].filter(Boolean).join(" / ");
-      const contactLine = contactParts || p.address
-        ? [contactParts || null, p.address || null].filter(Boolean).join(" · ")
+      const guardianPart = p.guardian
+        ? `${p.guardian}${p.guardianRelationship ? ` (${p.guardianRelationship})` : ""}`
         : null;
+      const contactParts = [p.contact1, p.contact2].filter(Boolean).join(" / ");
+      const contactLine = [guardianPart, contactParts || null, p.address || null].filter(Boolean).join(" · ") || null;
 
       const trend = (entriesByParticipant.get(p.id) ?? []).slice().reverse();
       const trendLine = [
