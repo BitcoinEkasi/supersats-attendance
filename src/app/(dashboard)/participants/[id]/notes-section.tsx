@@ -18,6 +18,11 @@ export default function NotesSection({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+
   async function handleAdd() {
     if (!text.trim()) {
       setError("Note text is required.");
@@ -41,9 +46,32 @@ export default function NotesSection({
     setSaving(false);
   }
 
-  async function handleDelete(noteId: string) {
-    await fetch(`/api/participants/${participantId}/notes/${noteId}`, { method: "DELETE" });
-    router.refresh();
+  function startEdit(n: ParticipantNote) {
+    setEditingId(n.id);
+    setEditText(n.text);
+    setEditError("");
+  }
+
+  async function handleSaveEdit(noteId: string) {
+    if (!editText.trim()) {
+      setEditError("Note text is required.");
+      return;
+    }
+    setEditSaving(true);
+    setEditError("");
+    const res = await fetch(`/api/participants/${participantId}/notes/${noteId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: editText.trim() }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      setEditError(data.error);
+    } else {
+      setEditingId(null);
+      router.refresh();
+    }
+    setEditSaving(false);
   }
 
   return (
@@ -54,24 +82,55 @@ export default function NotesSection({
           <p className="text-sm text-gray-400">No notes yet.</p>
         )}
 
-        {notes.map((n) => (
-          <div key={n.id} className="flex items-start justify-between rounded-md border border-gray-200 px-3 py-2">
-            <div className="space-y-0.5">
-              <p className="whitespace-pre-wrap text-sm text-gray-700">{n.text}</p>
-              <p className="text-xs text-gray-400">{fmtDate(new Date(n.createdAt))}</p>
+        {notes.map((n) => {
+          const isEditing = editingId === n.id;
+          return (
+            <div key={n.id} className="rounded-md border border-gray-200 px-3 py-2">
+              {isEditing ? (
+                <div className="space-y-2">
+                  {editError && <p className="text-xs text-red-500">{editError}</p>}
+                  <textarea
+                    rows={4}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEdit(n.id)}
+                      disabled={editSaving}
+                      className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+                    >
+                      {editSaving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between">
+                  <div className="space-y-0.5">
+                    <p className="whitespace-pre-wrap text-sm text-gray-700">{n.text}</p>
+                    <p className="text-xs text-gray-400">{fmtDate(new Date(n.createdAt))}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(n)}
+                    className="ml-4 shrink-0 text-xs text-orange-600 hover:underline"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => handleDelete(n.id)}
-              className="ml-4 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
-              aria-label="Delete note"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        ))}
+          );
+        })}
 
         {adding && (
           <div className="space-y-2 rounded-md border border-orange-200 bg-orange-50 p-3">
