@@ -51,6 +51,9 @@ export default async function ParticipantsPage({
   const levelFilter = getLevelFilter(tab);
   const acFilter = tab === "ac" ? { isAssistantCoach: true } : {};
   const where = { status: statusFilter as "ACTIVE" | "RETIRED", ...levelFilter, ...acFilter, ...searchWhere };
+  const orderBy = tab === "retired"
+    ? [{ retiredAt: "desc" as const }]
+    : [{ registrationDate: "desc" as const }];
 
   const [
     participants,
@@ -63,7 +66,7 @@ export default async function ParticipantsPage({
     acCount,
     retiredCount,
   ] = await Promise.all([
-    prisma.participant.findMany({ where, orderBy: [{ registrationDate: "desc" }] }),
+    prisma.participant.findMany({ where, orderBy }),
     prisma.participant.count({ where: { status: "ACTIVE" } }),
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.turtles] } } }),
     prisma.participant.count({ where: { status: "ACTIVE", tskStatus: { in: [...LEVEL_GROUPS.seals] } } }),
