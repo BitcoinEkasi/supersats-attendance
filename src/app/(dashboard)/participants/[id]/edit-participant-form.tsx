@@ -771,7 +771,6 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
         </div>
 
         <input type="hidden" name="profileLinkUrl" value={profileLinkUrl} />
-        <input type="hidden" name="notes" value={participant.notes || ""} />
 
             <div className="border-t pt-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Certifications</p>

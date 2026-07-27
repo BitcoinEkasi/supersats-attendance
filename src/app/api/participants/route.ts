@@ -115,7 +115,6 @@ export async function POST(req: Request) {
           tshirtSize: body.tshirtSize?.trim() || null,
           shoeSize: body.shoeSize?.trim() || null,
           wetsuiteSize: body.wetsuiteSize?.trim() || null,
-          notes: body.notes?.trim() || null,
         },
       });
       // Seed the level timeline with the registration-level entry so the

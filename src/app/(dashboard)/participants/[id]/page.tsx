@@ -35,6 +35,7 @@ export default async function ParticipantDetailPage({
       },
       certifications: { orderBy: { uploadedAt: "desc" } },
       performanceEvents: { orderBy: { eventDate: "desc" } },
+      notes: { orderBy: { createdAt: "desc" } },
       schoolReports: { orderBy: { year: "desc" } },
       tskReviews: { orderBy: { reviewDate: "desc" } },
       tskLevelHistory: { orderBy: { changedAt: "asc" } },
@@ -334,10 +335,17 @@ export default async function ParticipantDetailPage({
                 </div>
               )}
             </dl>
-            {participant.notes && (
+            {participant.notes.length > 0 && (
               <div className="mt-4 border-t pt-4">
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Notes</p>
-                <p className="whitespace-pre-wrap text-sm text-gray-700">{participant.notes}</p>
+                <div className="space-y-2">
+                  {participant.notes.map((n) => (
+                    <div key={n.id}>
+                      <p className="whitespace-pre-wrap text-sm text-gray-700">{n.text}</p>
+                      <p className="mt-0.5 text-xs text-gray-400">{fmtDate(new Date(n.createdAt))}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             <div className="mt-4 border-t pt-4">
@@ -388,7 +396,7 @@ export default async function ParticipantDetailPage({
           {role === "ADMINISTRATOR" && (
             <NotesSection
               participantId={participant.id}
-              initialNotes={participant.notes}
+              notes={participant.notes}
             />
           )}
 

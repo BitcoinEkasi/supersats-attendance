@@ -58,12 +58,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const body = await req.json();
 
-  // Notes-only update
-  if ("notes" in body && Object.keys(body).length === 1) {
-    await prisma.participant.update({ where: { id }, data: { notes: body.notes?.trim() || null } });
-    return Response.json({ success: true });
-  }
-
   // Status-only update (legacy path — full form update now handles status too)
   if (body.status && Object.keys(body).filter((k) => !["status", "retiredReason", "retiredReasonOther"].includes(k)).length === 0) {
     try {
@@ -209,7 +203,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         ...(wetsuiteChanged ? { wetsuiteUpdatedAt: now }  : {}),
         ...(measurementsChanged ? { measurementsUpdatedAt: now } : {}),
         stance: body.stance?.trim() || null,
-        notes: body.notes?.trim() || null,
         paymentMethod: (body.paymentMethod as PaymentMethod) ?? "BOLT_CARD",
         lightningAddress: body.lightningAddress?.trim() || null,
         ...(body.profileLinkUrl !== undefined ? { profileLinkUrl: body.profileLinkUrl || null } : {}),

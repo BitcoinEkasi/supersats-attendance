@@ -98,7 +98,6 @@ model Participant {
   wetsuiteSize        String?   @map("wetsuit_size")
   wetsuiteUpdatedAt   DateTime? @map("wetsuit_updated_at")
   stance           String?
-  notes            String?
   paymentMethod    PaymentMethod     @default(BOLT_CARD) @map("payment_method")
   lightningAddress String?           @map("lightning_address")
   measurementsUpdatedAt DateTime?     @map("measurements_updated_at")
@@ -114,6 +113,7 @@ model Participant {
   changeRequests        ParticipantChangeRequest[]
   certifications        Certification[]
   performanceEvents     PerformanceEvent[]
+  notes                 ParticipantNote[]
   schoolReports         SchoolReport[]
   tskReviews            TskReview[]
   tskLevelHistory       TskLevelHistory[]
@@ -154,6 +154,17 @@ model PerformanceEvent {
   participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@map("performance_events")
+}
+
+model ParticipantNote {
+  id            String   @id @default(uuid())
+  participantId String   @map("participant_id")
+  text          String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@map("participant_notes")
 }
 
 model Certification {
