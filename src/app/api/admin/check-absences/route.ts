@@ -67,9 +67,11 @@ export async function POST(req: Request) {
     flagged++;
   }
 
-  // Remove flags for participants who are no longer absent
+  // Remove flags for participants who are no longer absent, plus any flag left over
+  // for a participant who has since retired (retirement already clears its own flag
+  // immediately, but this covers any that slipped through some other path).
   const cleared = await prisma.absenceFlag.deleteMany({
-    where: { participantId: { in: toUnflag } },
+    where: { OR: [{ participantId: { in: toUnflag } }, { participant: { status: { not: "ACTIVE" } } }] },
   });
 
   return Response.json({ flagged, cleared: cleared.count });

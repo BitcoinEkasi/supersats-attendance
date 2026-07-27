@@ -6,7 +6,7 @@ import AbsenceReport from "./absence-report";
 import AttendanceChart from "./attendance-chart";
 
 export default async function DashboardPage() {
-  const flagCount = await prisma.absenceFlag.count();
+  const flagCount = await prisma.absenceFlag.count({ where: { participant: { status: "ACTIVE" } } });
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>

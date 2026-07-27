@@ -47,6 +47,7 @@ async function resolvePhotoDataUri(profilePicture: string | null): Promise<strin
  *  render from exactly the same data. */
 export async function getAbsenceBadgeGroups(): Promise<AbsenceBadgeGroup[]> {
   const flags = await prisma.absenceFlag.findMany({
+    where: { participant: { status: "ACTIVE" } },
     include: {
       participant: {
         select: {

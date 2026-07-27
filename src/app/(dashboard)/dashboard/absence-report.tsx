@@ -5,6 +5,7 @@ import AbsenceBadgesExportButton from "./absence-badges-export-button";
 
 export default async function AbsenceReport() {
   const flags = await prisma.absenceFlag.findMany({
+    where: { participant: { status: "ACTIVE" } },
     include: {
       participant: {
         select: { id: true, surname: true, fullNames: true, knownAs: true },
