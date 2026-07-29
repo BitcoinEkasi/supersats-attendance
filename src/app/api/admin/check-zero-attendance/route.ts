@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { sendEmail, getAlertRecipients } from "@/lib/email";
+import { sendEmail, getRecipients } from "@/lib/email";
 import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString } from "@/lib/sast";
+import { fmtDate, fmtWeekdayShort } from "@/lib/format-date";
 import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 
@@ -54,13 +55,14 @@ export async function POST(req: Request) {
   }
 
   if (zeroGroups.length > 0) {
-    const html = `<h2>Zero-attendance alert — ${todayStr}</h2><ul>${zeroGroups
-      .map((g) => `<li><strong>${TSK_GROUP_LABELS[g]}</strong> — no participants marked present yet today.</li>`)
+    const groupLabels = zeroGroups.map((g) => TSK_GROUP_LABELS[g]);
+    const html = `<h2>⚠️TSK Zero Attendance Alert for ${fmtWeekdayShort(todayDate)}, ${fmtDate(todayDate)}</h2><ul>${groupLabels
+      .map((label) => `<li>${label}</li>`)
       .join("")}</ul>`;
     try {
       await sendEmail({
-        to: await getAlertRecipients(),
-        subject: `Zero Attendance: ${zeroGroups.map((g) => TSK_GROUP_LABELS[g]).join(", ")}`,
+        to: await getRecipients("ZERO_ATTENDANCE"),
+        subject: `⚠️TSK Zero Attendance Alert for the ${groupLabels.join(", ")}`,
         html,
       });
     } catch (err) {

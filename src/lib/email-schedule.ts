@@ -2,15 +2,13 @@ import { prisma } from "@/lib/db";
 import { getSASTDateString, getSASTTimeOfDay, isProgrammeDay, isSaturdaySAST } from "@/lib/sast";
 import type { EmailScheduleSlot } from "@prisma/client";
 
-export type EmailType = "ZERO_ATTENDANCE" | "TSK_PULSE";
+export type EmailType = "ZERO_ATTENDANCE";
 
 // Matches the current hardcoded cron times — used only as a fallback if the seeded
 // EmailSchedule row is somehow missing, so a missing row can never silently stop emails.
 const DEFAULTS: Record<EmailScheduleSlot, { hour: number; minute: number }> = {
   ZERO_ATTENDANCE_WEEKDAY: { hour: 15, minute: 0 },
   ZERO_ATTENDANCE_SATURDAY: { hour: 10, minute: 0 },
-  TSK_PULSE_WEEKDAY: { hour: 19, minute: 0 },
-  TSK_PULSE_SATURDAY: { hour: 19, minute: 0 },
 };
 
 function slotFor(emailType: EmailType, todayStr: string): EmailScheduleSlot {

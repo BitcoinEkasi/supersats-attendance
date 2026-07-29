@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { getStartOfSASTToday } from "@/lib/sast";
 import { getGroupForStatus } from "@/lib/tsk-groups";
+import { countConsecutiveMissed } from "@/lib/consecutive-missed";
 
 export async function POST(req: Request) {
   const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
@@ -43,11 +44,7 @@ export async function POST(req: Request) {
   const toUnflag: string[] = [];
 
   for (const [participantId, recs] of byParticipant) {
-    let count = 0;
-    for (const r of recs) {
-      if (!r.present) count++;
-      else break;
-    }
+    const count = countConsecutiveMissed(recs.map((r) => r.present));
     const group = getGroupForStatus(recs[0]?.tskStatus ?? null);
     if (count >= 3) {
       toFlag.push({ participantId, consecutiveMissed: count, group });

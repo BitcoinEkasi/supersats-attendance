@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { EmailRecipientCategory } from "@prisma/client";
 
 type Recipient = { id: string; email: string };
 
-export default function EmailRecipientsForm({ recipients }: { recipients: Recipient[] }) {
+export default function EmailRecipientsForm({
+  category,
+  recipients,
+}: {
+  category: EmailRecipientCategory;
+  recipients: Recipient[];
+}) {
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [email, setEmail] = useState("");
@@ -22,7 +29,7 @@ export default function EmailRecipientsForm({ recipients }: { recipients: Recipi
     const res = await fetch("/api/admin/email-recipients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
+      body: JSON.stringify({ email: email.trim(), category }),
     });
     const data = await res.json();
     if (data.error) {
@@ -45,7 +52,7 @@ export default function EmailRecipientsForm({ recipients }: { recipients: Recipi
   return (
     <div className="space-y-3">
       {recipients.length === 0 && !adding && (
-        <p className="text-sm text-gray-400">No recipients configured — falling back to the ATTENDANCE_ALERT_RECIPIENTS env var, if set.</p>
+        <p className="text-sm text-gray-400">No recipients configured yet.</p>
       )}
 
       {recipients.map((r) => (
