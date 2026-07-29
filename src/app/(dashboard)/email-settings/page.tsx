@@ -15,7 +15,7 @@ const RECIPIENT_CATEGORIES: { category: EmailRecipientCategory; title: string; d
   ...TSK_GROUPS.map((group) => ({
     category: group as EmailRecipientCategory,
     title: `TSK Attendance — ${TSK_GROUP_LABELS[group]}`,
-    description: `Sent to this list whenever a Marshal submits attendance for a ${TSK_GROUP_LABELS[group]} session.`,
+    description: `Sent to this list when TSK Attendance runs (see Email Scheduler above) if a ${TSK_GROUP_LABELS[group]} session was captured that day.`,
   })),
 ];
 
@@ -35,9 +35,9 @@ export default async function EmailSettingsPage() {
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h3 className="mb-1 text-lg font-semibold text-gray-900">Email Scheduler</h3>
         <p className="mb-4 text-sm text-gray-500">
-          Times are SAST. Zero Attendance Alert checks Tue-Fri and Saturday, at the times below. TSK Attendance sends immediately when a Marshal submits attendance, so it has no schedule.
+          Times are SAST. Zero Attendance Alert and TSK Attendance each check Tue-Fri and Saturday, at the times below. TSK Attendance sends at the same time for every group.
         </p>
-        <EmailScheduleForm schedules={schedules.map((s) => ({ slot: s.slot as "ZERO_ATTENDANCE_WEEKDAY" | "ZERO_ATTENDANCE_SATURDAY", hour: s.hour, minute: s.minute }))} />
+        <EmailScheduleForm schedules={schedules.map((s) => ({ slot: s.slot as "ZERO_ATTENDANCE_WEEKDAY" | "ZERO_ATTENDANCE_SATURDAY" | "TSK_ATTENDANCE_WEEKDAY" | "TSK_ATTENDANCE_SATURDAY", hour: s.hour, minute: s.minute }))} />
       </div>
 
       {RECIPIENT_CATEGORIES.map(({ category, title, description }) => (

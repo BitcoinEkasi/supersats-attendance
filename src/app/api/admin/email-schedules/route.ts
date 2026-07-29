@@ -5,6 +5,8 @@ import type { EmailScheduleSlot } from "@prisma/client";
 const VALID_SLOTS: EmailScheduleSlot[] = [
   "ZERO_ATTENDANCE_WEEKDAY",
   "ZERO_ATTENDANCE_SATURDAY",
+  "TSK_ATTENDANCE_WEEKDAY",
+  "TSK_ATTENDANCE_SATURDAY",
 ];
 
 export async function GET() {

@@ -187,7 +187,6 @@ model Event {
   note        String?
   createdBy   String        @map("created_by")
   createdAt   DateTime      @default(now()) @map("created_at")
-  submittedAt DateTime?     @map("submitted_at")
 
   attendanceRecords AttendanceRecord[]
 
@@ -401,6 +400,8 @@ model EmailRecipient {
 enum EmailScheduleSlot {
   ZERO_ATTENDANCE_WEEKDAY
   ZERO_ATTENDANCE_SATURDAY
+  TSK_ATTENDANCE_WEEKDAY
+  TSK_ATTENDANCE_SATURDAY
 }
 
 model EmailSchedule {

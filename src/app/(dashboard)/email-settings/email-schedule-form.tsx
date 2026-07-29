@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Slot = "ZERO_ATTENDANCE_WEEKDAY" | "ZERO_ATTENDANCE_SATURDAY";
+type Slot = "ZERO_ATTENDANCE_WEEKDAY" | "ZERO_ATTENDANCE_SATURDAY" | "TSK_ATTENDANCE_WEEKDAY" | "TSK_ATTENDANCE_SATURDAY";
 type Schedule = { slot: Slot; hour: number; minute: number };
 
 function toTimeStr(hour: number, minute: number): string {
@@ -12,6 +12,7 @@ function toTimeStr(hour: number, minute: number): string {
 
 const SLOT_GROUPS: { title: string; weekday: Slot; saturday: Slot }[] = [
   { title: "Zero Attendance", weekday: "ZERO_ATTENDANCE_WEEKDAY", saturday: "ZERO_ATTENDANCE_SATURDAY" },
+  { title: "TSK Attendance", weekday: "TSK_ATTENDANCE_WEEKDAY", saturday: "TSK_ATTENDANCE_SATURDAY" },
 ];
 
 export default function EmailScheduleForm({ schedules }: { schedules: Schedule[] }) {
