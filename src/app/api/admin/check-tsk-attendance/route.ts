@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { sendEmail, getRecipients } from "@/lib/email";
 import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString, getSASTNow } from "@/lib/sast";
-import { fmtDate, fmtWeekdayShort } from "@/lib/format-date";
+import { fmtDate, fmtWeekdayShort, MONTHS } from "@/lib/format-date";
 import { fmtPct } from "@/lib/rewards";
 import { getDivisionLabel } from "@/lib/sa-id";
 import { shouldSendNow, markSent } from "@/lib/email-schedule";
@@ -112,8 +112,9 @@ export async function POST(req: Request) {
 
     const historicalCounts = await getConsecutiveMissedCounts(absent.map((p) => p.id), todayStart);
     const missedCounts = new Map(absent.map((p) => [p.id, 1 + (historicalCounts.get(p.id) ?? 0)]));
-    const absentUpTo3 = absent.filter((p) => missedCounts.get(p.id)! <= 3);
-    const alertOver3 = absent.filter((p) => missedCounts.get(p.id)! > 3);
+    const byMissedDesc = (a: RosterRow, b: RosterRow) => missedCounts.get(b.id)! - missedCounts.get(a.id)!;
+    const absentUpTo3 = absent.filter((p) => missedCounts.get(p.id)! <= 3).sort(byMissedDesc);
+    const alertOver3 = absent.filter((p) => missedCounts.get(p.id)! > 3).sort(byMissedDesc);
 
     const groupLabel = TSK_GROUP_LABELS[group];
     const pct = total > 0 ? (present.length / total) * 100 : 0;
@@ -124,14 +125,18 @@ export async function POST(req: Request) {
     const sessionDays = stats.days.filter((d) => d.dayType === "session").length;
     const chartPng = sessionDays >= 2 ? await renderGroupChartPng(group as TskGroupKey, monthStr) : null;
 
+    const monthLabel = `${MONTHS[monthNum - 1]} '${String(year).slice(-2)}`;
     const html = `
       <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
       <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
       <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt)} and ${fmtTime(window._max.updatedAt)}</p>
-      ${chartPng ? `<img src="cid:trend-chart" alt="${groupLabel} attendance trend" width="480" style="display:block;margin:10px 0;" />` : ""}
       ${renderSection("Present", present.length, null, present)}
       ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive days", absentUpTo3, missedCounts)}
       ${renderSection("Alert", alertOver3.length, "> 3 consecutive days", alertOver3, missedCounts)}
+      ${chartPng ? `
+        <h3 style="margin:16px 0 6px;">${groupLabel} Attendance for ${monthLabel} (Month to Date)</h3>
+        <img src="cid:trend-chart" alt="${groupLabel} attendance trend" width="480" style="display:block;" />
+      ` : ""}
     `;
 
     try {

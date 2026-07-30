@@ -398,69 +398,67 @@ export default function AttendanceChart({
         )}
       </div>
 
-      {/* Summary */}
-      {viewMode === "pulse" && data && !loading && (
-        <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
-          <span>
-            <span className="font-medium text-gray-900">
-              {data.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length}
-            </span> potential sessions
-          </span>
-          <span>
-            <span className="font-medium text-green-600">
-              {data.days.filter((d) => d.dayType === "session").length}
-            </span> held
-          </span>
-          {data.days.filter((d) => d.dayType === "gap").length > 0 && (
-            <span>
-              <span className="font-medium" style={{ color: "#ef4444" }}>
-                {data.days.filter((d) => d.dayType === "gap").length}
-              </span> gaps
-            </span>
-          )}
-          {data.days.filter((d) => d.dayType === "excused").length > 0 && (
-            <span>
-              <span className="font-medium text-gray-700">
-                {data.days.filter((d) => d.dayType === "excused").length}
-              </span> excused
-            </span>
-          )}
-          <span>
-            <span className="font-medium text-gray-900">
-              {data.averagePrecise.toFixed(2)}
-              {data.totalParticipants > 0 && ` (${Math.floor((data.averagePrecise / data.totalParticipants) * 100)}%)`}
-            </span>{" "}
-            avg {data.isParticipantView ? "attendance" : "attendees"}
-          </span>
-          <span>
-            <span className="font-medium text-blue-600">{data.totalParticipants}</span>{" "}
-            {data.isParticipantView ? "participant" : "registered"}
-          </span>
-          {selectedParticipant && (
-            <span className="font-medium text-orange-600">
-              {selectedParticipant.knownAs ?? selectedParticipant.fullNames} {selectedParticipant.surname}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Chart */}
       {loading && (
         <div className="h-64 animate-pulse rounded-lg bg-gray-100" />
-      )}
-
-      {viewMode === "pulse" && !loading && data && data.days.every((d) => d.dayType !== "session") && (
-        <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">
-          No sessions recorded for this period
-        </div>
       )}
 
       {viewMode === "trajectory" && !loading && trajectoryData && (
         <TrajectoryChart data={trajectoryData} group={group} />
       )}
 
-      {viewMode === "pulse" && !loading && data && data.days.some((d) => d.dayType === "session") && (
-        <div id="pulse-chart-capture" style={{ paddingLeft: "7.5%", paddingRight: "7.5%", background: "#ffffff" }}>
+      {/* Chart snapshot region — summary + chart wrapped together in one element (id="pulse-chart-capture")
+          so the TSK Attendance email's headless-browser screenshot captures both, not just the chart. */}
+      {viewMode === "pulse" && !loading && data && (
+        <div id="pulse-chart-capture" style={{ background: "#ffffff" }}>
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
+            <span>
+              <span className="font-medium text-gray-900">
+                {data.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length}
+              </span> potential sessions
+            </span>
+            <span>
+              <span className="font-medium text-green-600">
+                {data.days.filter((d) => d.dayType === "session").length}
+              </span> held
+            </span>
+            {data.days.filter((d) => d.dayType === "gap").length > 0 && (
+              <span>
+                <span className="font-medium" style={{ color: "#ef4444" }}>
+                  {data.days.filter((d) => d.dayType === "gap").length}
+                </span> gaps
+              </span>
+            )}
+            {data.days.filter((d) => d.dayType === "excused").length > 0 && (
+              <span>
+                <span className="font-medium text-gray-700">
+                  {data.days.filter((d) => d.dayType === "excused").length}
+                </span> excused
+              </span>
+            )}
+            <span>
+              <span className="font-medium text-gray-900">
+                {data.averagePrecise.toFixed(2)}
+                {data.totalParticipants > 0 && ` (${Math.floor((data.averagePrecise / data.totalParticipants) * 100)}%)`}
+              </span>{" "}
+              avg {data.isParticipantView ? "attendance" : "attendees"}
+            </span>
+            <span>
+              <span className="font-medium text-blue-600">{data.totalParticipants}</span>{" "}
+              {data.isParticipantView ? "participant" : "registered"}
+            </span>
+            {selectedParticipant && (
+              <span className="font-medium text-orange-600">
+                {selectedParticipant.knownAs ?? selectedParticipant.fullNames} {selectedParticipant.surname}
+              </span>
+            )}
+          </div>
+
+          {data.days.every((d) => d.dayType !== "session") ? (
+            <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">
+              No sessions recorded for this period
+            </div>
+          ) : (
+          <div style={{ paddingLeft: "7.5%", paddingRight: "7.5%" }}>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -555,6 +553,8 @@ export default function AttendanceChart({
               )}
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
+          )}
         </div>
       )}
 
