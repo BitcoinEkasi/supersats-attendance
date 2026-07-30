@@ -11,6 +11,7 @@ import { getConsecutiveMissedCounts } from "@/lib/consecutive-missed";
 import type { EmailRecipientCategory } from "@prisma/client";
 
 type RosterRow = {
+  id: string;
   surname: string;
   fullNames: string;
   knownAs: string | null;
@@ -19,18 +20,18 @@ type RosterRow = {
   tskStatus: string | null;
 };
 
-function formatRow(p: RosterRow): string {
+function formatRow(p: RosterRow, missedCount?: number): string {
   const name = p.knownAs ? `${p.surname}, ${p.fullNames} (${p.knownAs})` : `${p.surname}, ${p.fullNames}`;
   const division = getDivisionLabel(p.dateOfBirth, p.gender);
-  const gender = p.gender === "MALE" ? "Male" : "Female";
-  return `${name}, ${division}, ${gender}, ${p.tskStatus ?? "—"}`;
+  const prefix = missedCount !== undefined ? `(${missedCount}) ` : "";
+  return `${prefix}${name}, ${division}`;
 }
 
-function renderSection(title: string, subtext: string | null, rows: RosterRow[]): string {
+function renderSection(title: string, count: number, subtext: string | null, rows: RosterRow[], missedCounts?: Map<string, number>): string {
   const items = rows.length > 0
-    ? `<ul>${rows.map((p) => `<li>${formatRow(p)}</li>`).join("")}</ul>`
+    ? `<ul>${rows.map((p) => `<li>${formatRow(p, missedCounts?.get(p.id))}</li>`).join("")}</ul>`
     : "<p>None.</p>";
-  return `<h3>${title}</h3>${subtext ? `<p>${subtext}</p>` : ""}${items}`;
+  return `<h3 style="margin-bottom:0;">${title} (${count})</h3>${subtext ? `<p style="margin:0 0 6px;">${subtext}</p>` : ""}${items}`;
 }
 
 function fmtTime(d: Date): string {
@@ -106,24 +107,25 @@ export async function POST(req: Request) {
     const absent = roster.filter((p) => !presentIds.has(p.id));
 
     const historicalCounts = await getConsecutiveMissedCounts(absent.map((p) => p.id), todayStart);
-    const absentUpTo3 = absent.filter((p) => 1 + (historicalCounts.get(p.id) ?? 0) <= 3);
-    const alertOver3 = absent.filter((p) => 1 + (historicalCounts.get(p.id) ?? 0) > 3);
+    const missedCounts = new Map(absent.map((p) => [p.id, 1 + (historicalCounts.get(p.id) ?? 0)]));
+    const absentUpTo3 = absent.filter((p) => missedCounts.get(p.id)! <= 3);
+    const alertOver3 = absent.filter((p) => missedCounts.get(p.id)! > 3);
 
     const groupLabel = TSK_GROUP_LABELS[group];
     const pct = total > 0 ? (present.length / total) * 100 : 0;
     const html = `
-      <p><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
-      <p>Submitted by: ${groupLabel} Marshal</p>
-      <p>Attendance captured between ${fmtTime(window._min.createdAt)} to ${fmtTime(window._max.updatedAt)}</p>
-      ${renderSection("Present", null, present)}
-      ${renderSection("Absent", "≤ 3 consecutive days", absentUpTo3)}
-      ${renderSection("Alert", "> 3 consecutive days", alertOver3)}
+      <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
+      <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
+      <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt)} and ${fmtTime(window._max.updatedAt)}</p>
+      ${renderSection("Present", present.length, null, present)}
+      ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive days", absentUpTo3, missedCounts)}
+      ${renderSection("Alert", alertOver3.length, "> 3 consecutive days", alertOver3, missedCounts)}
     `;
 
     try {
       await sendEmail({
         to: await getRecipients(group as EmailRecipientCategory),
-        subject: `✅TSK Attendance for the ${groupLabel}`,
+        subject: `✅ TSK Attendance for the ${groupLabel}`,
         html,
       });
       sent.push(group);
