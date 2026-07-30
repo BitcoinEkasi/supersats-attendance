@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { sendEmail, getRecipients } from "@/lib/email";
-import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString } from "@/lib/sast";
+import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString, getSASTNow } from "@/lib/sast";
 import { fmtDate, fmtWeekdayShort } from "@/lib/format-date";
 import { fmtPct } from "@/lib/rewards";
 import { getDivisionLabel } from "@/lib/sa-id";
 import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 import { getConsecutiveMissedCounts } from "@/lib/consecutive-missed";
+import { computeAttendanceStats } from "@/lib/attendance-stats";
+import { renderGroupChartPng } from "@/lib/render-chart-screenshot";
 import type { EmailRecipientCategory } from "@prisma/client";
 
 type RosterRow = {
@@ -68,6 +70,8 @@ export async function POST(req: Request) {
 
   const excusedGroups = new Set(excusedToday.map((e) => e.group));
   const eventByGroup = new Map(events.map((e) => [e.group as string, e]));
+  const { year, month: monthNum } = getSASTNow();
+  const monthStr = `${year}-${String(monthNum).padStart(2, "0")}`;
 
   const claimed = await markSent(slot);
   if (!claimed) {
@@ -113,10 +117,18 @@ export async function POST(req: Request) {
 
     const groupLabel = TSK_GROUP_LABELS[group];
     const pct = total > 0 ? (present.length / total) * 100 : 0;
+
+    // A one-point "trend" chart is meaningless — only attempt a screenshot once the
+    // group has at least 2 session days logged this month.
+    const stats = await computeAttendanceStats({ month: monthStr, group: group as TskGroupKey });
+    const sessionDays = stats.days.filter((d) => d.dayType === "session").length;
+    const chartPng = sessionDays >= 2 ? await renderGroupChartPng(group as TskGroupKey, monthStr) : null;
+
     const html = `
       <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
       <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
       <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt)} and ${fmtTime(window._max.updatedAt)}</p>
+      ${chartPng ? `<img src="cid:trend-chart" alt="${groupLabel} attendance trend" width="480" style="display:block;margin:10px 0;" />` : ""}
       ${renderSection("Present", present.length, null, present)}
       ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive days", absentUpTo3, missedCounts)}
       ${renderSection("Alert", alertOver3.length, "> 3 consecutive days", alertOver3, missedCounts)}
@@ -127,6 +139,7 @@ export async function POST(req: Request) {
         to: await getRecipients(group as EmailRecipientCategory),
         subject: `✅ TSK Attendance for the ${groupLabel}`,
         html,
+        ...(chartPng ? { attachments: [{ filename: "trend.png", content: chartPng, contentId: "trend-chart" }] } : {}),
       });
       sent.push(group);
     } catch (err) {

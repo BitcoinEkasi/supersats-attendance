@@ -21,6 +21,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Headless Chromium for server-side chart screenshots (used by TSK Attendance
+# emails). Alpine's own package is musl-native, unlike the glibc binary
+# Puppeteer's installer downloads by default — puppeteer-core is used instead,
+# pointed at this binary via PUPPETEER_EXECUTABLE_PATH.
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 

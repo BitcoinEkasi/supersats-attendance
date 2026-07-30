@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ComposedChart,
   Bar,
@@ -262,13 +262,27 @@ type SlimParticipant = {
 
 const MONTHS = getLastNMonths(12);
 
-export default function AttendanceChart() {
+export default function AttendanceChart({
+  initialGroup,
+  initialMonth,
+  initialData,
+}: {
+  /** Pre-seeds the group/month filters — used by the chart-snapshot route to render
+   *  one group's chart without the interactive dashboard's own filter UI ever changing
+   *  it. Dashboard usage (no props) is unaffected. */
+  initialGroup?: string;
+  initialMonth?: string;
+  /** When provided, skips the initial client-side fetch — the chart-snapshot route
+   *  pre-fetches server-side via Prisma directly, since a headless-browser screenshot
+   *  session has no session cookie for the client fetch to authenticate with. */
+  initialData?: StatsData;
+}) {
   const [viewMode, setViewMode] = useState<"pulse" | "trajectory">("pulse");
-  const [month, setMonth] = useState(MONTHS[0].value);
-  const [group, setGroup] = useState("");
+  const [month, setMonth] = useState(initialMonth ?? MONTHS[0].value);
+  const [group, setGroup] = useState(initialGroup ?? "");
   const [participantId, setParticipantId] = useState("");
   const [participants, setParticipants] = useState<SlimParticipant[]>([]);
-  const [data, setData] = useState<StatsData | null>(null);
+  const [data, setData] = useState<StatsData | null>(initialData ?? null);
   const [trajectoryData, setTrajectoryData] = useState<TrajectoryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [modalDay, setModalDay] = useState<DayEntry | null>(null);
@@ -281,14 +295,22 @@ export default function AttendanceChart() {
       return;
     }
     fetch(`/api/participants?group=${group}&status=ACTIVE&slim=true`)
-      .then((r) => r.json())
-      .then((p: SlimParticipant[]) => setParticipants(p))
+      .then((r) => (r.ok ? r.json() : []))
+      .then((p: SlimParticipant[]) => setParticipants(Array.isArray(p) ? p : []))
       .catch(() => setParticipants([]));
     setParticipantId("");
   }, [group]);
 
+  const skippedInitialFetch = useRef(false);
   useEffect(() => {
     if (viewMode !== "pulse") return;
+    // The chart-snapshot route pre-fetches server-side and has no session cookie for
+    // this client fetch to authenticate with — skip only the very first run so the
+    // seeded initialData isn't immediately clobbered by a failed unauthenticated fetch.
+    if (initialData && !skippedInitialFetch.current) {
+      skippedInitialFetch.current = true;
+      return;
+    }
     setLoading(true);
     const params = new URLSearchParams({ month });
     if (group) params.set("group", group);
@@ -438,7 +460,7 @@ export default function AttendanceChart() {
       )}
 
       {viewMode === "pulse" && !loading && data && data.days.some((d) => d.dayType === "session") && (
-        <div style={{ paddingLeft: "7.5%", paddingRight: "7.5%" }}>
+        <div id="pulse-chart-capture" style={{ paddingLeft: "7.5%", paddingRight: "7.5%", background: "#ffffff" }}>
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
