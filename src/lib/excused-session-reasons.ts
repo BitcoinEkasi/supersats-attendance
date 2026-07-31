@@ -9,8 +9,8 @@ export type ExcuseScope = "group" | "all-groups";
 export type ExcusedSessionReason = { label: string; category: ExcuseCategory; scopes: ExcuseScope[]; color: string };
 
 export const EXCUSED_SESSION_REASONS: ExcusedSessionReason[] = [
-  { label: "Unfavorable weather or ocean conditions", category: "excused", scopes: ["group", "all-groups"], color: "#c026d3" },
-  { label: "Programme closed by management decision / Public holiday", category: "excused", scopes: ["all-groups"], color: "#7dd3fc" },
+  { label: "Unfavorable weather or ocean conditions", category: "excused", scopes: ["group", "all-groups"], color: "#1d4ed8" },
+  { label: "Programme closed by management decision / Public holiday", category: "excused", scopes: ["all-groups"], color: "#000000" },
   { label: "Attendance not taken", category: "flagged", scopes: ["group", "all-groups"], color: "#ef4444" },
   { label: "Technical issue", category: "flagged", scopes: ["group", "all-groups"], color: "#f97316" },
 ];
