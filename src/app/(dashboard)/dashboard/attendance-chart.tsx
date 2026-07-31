@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
-import { getReasonColor } from "@/lib/excused-session-reasons";
+import { getReasonColor, EXCUSED_SESSION_REASONS } from "@/lib/excused-session-reasons";
 import { getLastNMonths } from "@/lib/sast";
 import type { DayEntry, StatsData, TrajectoryData } from "@/lib/types/attendance-stats";
 import ExcuseSessionModal from "./excuse-session-modal";
@@ -453,6 +453,17 @@ export default function AttendanceChart({
               </span>
             )}
           </div>
+
+          {data.days.some((d) => d.excuseReason) && (
+            <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 mt-1">
+              {EXCUSED_SESSION_REASONS.map((r) => (
+                <span key={r.label} className="inline-flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: r.color }} />
+                  {r.label}
+                </span>
+              ))}
+            </div>
+          )}
 
           {data.days.every((d) => d.dayType !== "session") ? (
             <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">

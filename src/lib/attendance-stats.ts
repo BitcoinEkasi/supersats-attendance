@@ -30,7 +30,7 @@ export async function computeAttendanceStats({
     },
     include: participantId
       ? { attendanceRecords: { where: { participantId } } }
-      : { _count: { select: { attendanceRecords: { where: { present: true } } } } },
+      : { attendanceRecords: { select: { present: true } } },
     orderBy: { date: "asc" },
   });
 
@@ -73,21 +73,26 @@ export async function computeAttendanceStats({
     }
   }
 
-  const dayMap = new Map<string, { presentCount: number; sessions: number; categories: Set<string> }>();
+  const dayMap = new Map<string, { presentCount: number; sessions: number; totalRecords: number; categories: Set<string> }>();
   const groupDayMap = new Map<string, Map<string, number>>();
   const groupSessionMap = new Map<string, Map<string, number>>();
   for (const event of events) {
     const dateStr = event.date.toISOString().split("T")[0];
-    const existing = dayMap.get(dateStr) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
+    const existing = dayMap.get(dateStr) ?? { presentCount: 0, sessions: 0, totalRecords: 0, categories: new Set<string>() };
     let presentDelta: number;
+    let totalDelta: number;
     if (participantId) {
       const rec = (event as typeof event & { attendanceRecords: { present: boolean }[] }).attendanceRecords[0];
       presentDelta = rec?.present ? 1 : 0;
+      totalDelta = 0; // not used for zero-capture detection in participant scope — see comment below
     } else {
-      presentDelta = (event as typeof event & { _count: { attendanceRecords: number } })._count.attendanceRecords;
+      const records = (event as typeof event & { attendanceRecords: { present: boolean }[] }).attendanceRecords;
+      presentDelta = records.filter((r) => r.present).length;
+      totalDelta = records.length;
     }
     existing.presentCount += presentDelta;
     existing.sessions += 1;
+    existing.totalRecords += totalDelta;
     existing.categories.add(event.category);
     dayMap.set(dateStr, existing);
 
@@ -117,7 +122,7 @@ export async function computeAttendanceStats({
   }
 
   const baseDays: DayEntry[] = allDates.map((date, i) => {
-    const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, categories: new Set<string>() };
+    const agg = dayMap.get(date) ?? { presentCount: 0, sessions: 0, totalRecords: 0, categories: new Set<string>() };
     const excuse = includeGroupBreakdown ? aggregateExcuseMap.get(date) : excuseMap.get(date);
     const roster = rosterByDay?.[i];
     const registered = participantId
@@ -126,10 +131,20 @@ export async function computeAttendanceStats({
       ? (roster?.groupRegistered[group] ?? 0)
       : (roster?.registered ?? 0);
     const groupRegistered = includeGroupBreakdown ? (roster?.groupRegistered ?? null) : null;
-    const dayType: DayType = agg.sessions > 0
+    // A session that was created (Event exists) but never had its roster submitted
+    // (zero AttendanceRecord rows at all — distinct from "captured, everyone absent")
+    // must not silently count as "held". Gated on date <= todayStr so a pre-created
+    // future session isn't flagged just because it hasn't happened yet; bypasses
+    // isProgrammeDay since the Event's existence is itself proof a session was
+    // scheduled that day, regardless of the usual weekday heuristic.
+    const zeroCapture = !participantId && agg.sessions > 0 && agg.totalRecords === 0 && date <= todayStr;
+    const effectiveExcuse = excuse ?? (zeroCapture ? { reason: "Attendance not taken", reasonOther: null } : undefined);
+    const dayType: DayType = agg.sessions > 0 && !zeroCapture
       ? "session"
       : date > todayStr
       ? "future"
+      : zeroCapture
+      ? (getExcuseCategory(effectiveExcuse!.reason) === "excused" ? "excused" : "gap")
       : excuse && getExcuseCategory(excuse.reason) === "excused"
       ? "excused"
       : isProgrammeDay(date) ? "gap" : "off";
@@ -146,8 +161,8 @@ export async function computeAttendanceStats({
       sessions: agg.sessions,
       dayType,
       trend: null,
-      excuseReason: excuse?.reason ?? null,
-      excuseReasonOther: excuse?.reasonOther ?? null,
+      excuseReason: effectiveExcuse?.reason ?? null,
+      excuseReasonOther: effectiveExcuse?.reasonOther ?? null,
       groupCounts: includeGroupBreakdown
         ? (Object.fromEntries(TSK_GROUPS.map((g) => [g, groupDayMap.get(date)?.get(g) ?? 0])) as Record<TskGroupKey, number>)
         : null,

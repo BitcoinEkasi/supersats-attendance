@@ -34,13 +34,18 @@ export async function POST(req: Request) {
       return Response.json({ error: "That reason isn't available for the All Groups flag" }, { status: 400 });
     }
 
-    // A day with a real session in any group can't also be excused for all groups.
+    // A day with a real captured session in any group can't also be excused for all groups —
+    // but a session that was created and never had its roster submitted (zero attendance
+    // records) has nothing to conflict with, and is exactly the case an admin needs to be
+    // able to override with a real reason (see the auto "Attendance not taken" flag in
+    // computeAttendanceStats).
     const conflicting = await prisma.event.findMany({
       where: { date: dateObj, group: { in: [...TSK_GROUPS] } },
-      select: { group: true },
+      select: { group: true, _count: { select: { attendanceRecords: true } } },
     });
-    if (conflicting.length > 0) {
-      const groups = [...new Set(conflicting.map((e) => e.group))];
+    const captured = conflicting.filter((e) => e._count.attendanceRecords > 0);
+    if (captured.length > 0) {
+      const groups = [...new Set(captured.map((e) => e.group))];
       return Response.json({ error: `A session already exists for this date (${groups.join(", ")})` }, { status: 409 });
     }
 
@@ -60,9 +65,14 @@ export async function POST(req: Request) {
   }
   const tskGroup = group as TskGroupKey;
 
-  // A day with a real session can't also be excused.
-  const existingEvent = await prisma.event.findFirst({ where: { date: dateObj, group: tskGroup } });
-  if (existingEvent) {
+  // A day with a real captured session can't also be excused — but a session that was
+  // created and never had its roster submitted has nothing to conflict with (see comment
+  // in the all-groups branch above).
+  const existingEvent = await prisma.event.findFirst({
+    where: { date: dateObj, group: tskGroup },
+    include: { _count: { select: { attendanceRecords: true } } },
+  });
+  if (existingEvent && existingEvent._count.attendanceRecords > 0) {
     return Response.json({ error: "A session already exists for this date" }, { status: 409 });
   }
 
