@@ -95,6 +95,21 @@ function FlagGlyph(props: {
   );
 }
 
+/** Small static version of FlagGlyph's path, for the legend — same shape, no click/no gray fallback. */
+function LegendFlagIcon({ color }: { color: string }) {
+  return (
+    <svg width={12} height={17} viewBox="-4 -9 11 16" className="shrink-0">
+      <path
+        d="M-3 -8 v14 M-3 -8 h9 l-2 3 2 3 h-9"
+        fill={color}
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function BarLabel(props: {
   x?: string | number; y?: string | number; width?: string | number; value?: React.ReactNode; index?: number;
   days: DayEntry[]; groupSelected: boolean; onFlagClick: (day: DayEntry) => void;
@@ -458,7 +473,7 @@ export default function AttendanceChart({
             <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 mt-1">
               {EXCUSED_SESSION_REASONS.map((r) => (
                 <span key={r.label} className="inline-flex items-center gap-1">
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: r.color }} />
+                  <LegendFlagIcon color={r.color} />
                   {r.label}
                 </span>
               ))}
