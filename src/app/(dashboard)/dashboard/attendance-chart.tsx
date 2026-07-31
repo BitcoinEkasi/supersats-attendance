@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
+import { getReasonColor } from "@/lib/excused-session-reasons";
 import { getLastNMonths } from "@/lib/sast";
 import type { DayEntry, StatsData, TrajectoryData } from "@/lib/types/attendance-stats";
 import ExcuseSessionModal from "./excuse-session-modal";
@@ -65,15 +66,17 @@ function stackedCellFill(entry: DayEntry, groupColor: string): string {
   return groupColor;
 }
 
-/** Shared flag glyph: black fill = excused (genuine), red fill+stroke = flagged gap (controllable), gray-400 outline = unflagged gap. Used by both the single-group and All Groups views. */
+/** Shared flag glyph: color is per-reason (see excused-session-reasons.ts) whenever a reason is
+ *  set — covers both "excused" days and "flagged" gaps (still counted, but with a reason on
+ *  record) alike. A gap with no reason at all (unflagged) stays a neutral gray-400 outline.
+ *  Used by both the single-group and All Groups views. */
 function FlagGlyph(props: {
-  cx: number; cy: number; dayType: DayEntry["dayType"]; excuseReason: string | null; onClick: () => void;
+  cx: number; cy: number; excuseReason: string | null; onClick: () => void;
 }) {
-  const { cx, cy, dayType, excuseReason, onClick } = props;
-  const isExcused = dayType === "excused";
-  const isFlaggedGap = dayType === "gap" && !!excuseReason; // has a reason but still counts as a gap — controllable failure
-  const flagColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "none";
-  const strokeColor = isExcused ? "#000000" : isFlaggedGap ? "#ef4444" : "#9ca3af";
+  const { cx, cy, excuseReason, onClick } = props;
+  const reasonColor = excuseReason ? getReasonColor(excuseReason) : null;
+  const flagColor = reasonColor ?? "none";
+  const strokeColor = reasonColor ?? "#9ca3af";
   return (
     <g
       transform={`translate(${cx},${cy})`}
@@ -108,7 +111,6 @@ function BarLabel(props: {
       <FlagGlyph
         cx={x + width / 2}
         cy={y - 8} // just above the (minPointSize-pinned) bar top
-        dayType={day.dayType}
         excuseReason={day.excuseReason}
         onClick={() => onFlagClick(day)}
       />
@@ -141,7 +143,6 @@ function AllGroupsBarLabel(props: {
       <FlagGlyph
         cx={x + width / 2}
         cy={y - 8}
-        dayType={day.dayType}
         excuseReason={day.excuseReason}
         onClick={() => onFlagClick(day)}
       />
