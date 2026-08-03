@@ -55,12 +55,17 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
   return "#14b8a6"; // teal-500 — every other potential session: held (group view) or still upcoming
 }
 
-/** Stacked (All Groups) view: off/gap/excused days render as a single solid gray/red bar, same as the per-group view — group color only applies on days sessions actually happened. */
+/** Stacked (All Groups) view: mirrors cellFill's scheme — flagged days take their flag's
+ *  color, Sun/Mon stays gray, and a future/potential day renders the same uniform teal
+ *  across all 5 stacked bars (no per-group breakdown exists yet, so there's nothing a
+ *  distinct group color would actually convey). Group color is reserved for a day a
+ *  session genuinely happened, where it's the whole point of the stack. */
 function stackedCellFill(entry: DayEntry, groupColor: string): string {
-  if (entry.dayType === "off") return "#e5e7eb";
+  if (entry.excuseReason) return getReasonColor(entry.excuseReason);
   if (entry.dayType === "gap") return "#ef4444";
-  if (entry.dayType === "excused") return "#e5e7eb";
-  return groupColor;
+  if (!entry.isPotentialSession) return "#e5e7eb";
+  if (entry.dayType === "session") return groupColor;
+  return "#14b8a6";
 }
 
 /** Shared flag glyph: color is per-reason (see excused-session-reasons.ts) whenever a reason is
