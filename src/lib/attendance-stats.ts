@@ -131,6 +131,15 @@ export async function computeAttendanceStats({
       ? (roster?.groupRegistered[group] ?? 0)
       : (roster?.registered ?? 0);
     const groupRegistered = includeGroupBreakdown ? (roster?.groupRegistered ?? null) : null;
+    // Whether the whole month's programme-day target should count this day, independent of
+    // whether it's already elapsed — a future Tue-Sat is still a "potential session" for the
+    // month's total, it just hasn't happened yet (see dayType's separate "future" bucket
+    // below). Only a real excuse (weather, public holiday, ...) removes a day from the
+    // target, past or already-scheduled-ahead; the synthetic zero-capture "Attendance not
+    // taken" default below is a "flagged" reason, not "excused", and only ever applies to
+    // elapsed days anyway, so it must never reduce this count.
+    const isExcused = excuse ? getExcuseCategory(excuse.reason) === "excused" : false;
+    const isPotentialSession = isProgrammeDay(date) && !isExcused;
     // Two ways a day ends up with no real attendance on record, both treated the same —
     // a marshal who never opens the session is exactly as much a gap as one who opens it
     // and never submits the roster: (1) a session was created (Event exists) but never
@@ -168,6 +177,7 @@ export async function computeAttendanceStats({
       presentCount: agg.presentCount,
       sessions: agg.sessions,
       dayType,
+      isPotentialSession,
       trend: null,
       excuseReason: effectiveExcuse?.reason ?? null,
       excuseReasonOther: effectiveExcuse?.reasonOther ?? null,
@@ -287,7 +297,7 @@ export async function computeAttendanceTrajectory({
     const sessionDays = stats.days.filter((d) => d.dayType === "session");
     const n = sessionDays.length;
     const held = sessionDays.length;
-    const potential = stats.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length;
+    const potential = stats.days.filter((d) => d.isPotentialSession).length;
     const gaps = stats.days.filter((d) => d.dayType === "gap").length;
 
     let average: number;

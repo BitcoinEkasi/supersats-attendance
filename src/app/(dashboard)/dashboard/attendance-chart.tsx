@@ -429,7 +429,7 @@ export default function AttendanceChart({
           <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600">
             <span>
               <span className="font-medium text-gray-900">
-                {data.days.filter((d) => d.dayType !== "off" && d.dayType !== "excused" && d.dayType !== "future").length}
+                {data.days.filter((d) => d.isPotentialSession).length}
               </span> potential sessions
             </span>
             <span>

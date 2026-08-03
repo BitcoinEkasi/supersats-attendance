@@ -10,6 +10,10 @@ export type DayEntry = {
   presentCount: number;
   sessions: number;
   dayType: DayType;
+  /** Whether this day counts toward the month's fixed "potential sessions" target — a
+   *  programme day (Tue-Sat) not already known to be excused, independent of whether it's
+   *  elapsed yet. A future Tue-Sat still counts; dayType still separately buckets it "future". */
+  isPotentialSession: boolean;
   trend: number | null;
   excuseReason: string | null;
   excuseReasonOther: string | null;
