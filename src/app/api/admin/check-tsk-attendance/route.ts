@@ -8,7 +8,6 @@ import { getDivisionLabel } from "@/lib/sa-id";
 import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 import { getConsecutiveMissedCounts } from "@/lib/consecutive-missed";
-import { computeAttendanceStats } from "@/lib/attendance-stats";
 import { renderGroupChartPng } from "@/lib/render-chart-screenshot";
 import type { EmailRecipientCategory } from "@prisma/client";
 
@@ -85,6 +84,14 @@ export async function POST(req: Request) {
     const event = eventByGroup.get(group);
     if (!event) continue;
 
+    const groupLabel = TSK_GROUP_LABELS[group];
+    const monthLabel = `${MONTHS[monthNum - 1]} '${String(year).slice(-2)}`;
+
+    // Kicked off early so it runs concurrently with the roster/absentee work below —
+    // always attempted now (no more "only if >= 2 session days" gate: even a single
+    // day, real or zero-capture-flagged, is informative on the chart).
+    const chartPngPromise = renderGroupChartPng(group as TskGroupKey, monthStr);
+
     const [window, presentRecords] = await Promise.all([
       prisma.attendanceRecord.aggregate({
         where: { eventId: event.id },
@@ -93,56 +100,64 @@ export async function POST(req: Request) {
       }),
       prisma.attendanceRecord.findMany({ where: { eventId: event.id, present: true }, select: { participantId: true } }),
     ]);
-    if (!window._min.createdAt || !window._max.updatedAt) continue; // nothing captured for this group today
+    const zeroCaptured = !window._min.createdAt || !window._max.updatedAt;
 
-    const groupFilter = participantWhereForGroup(group as TskGroupKey);
-    const roster = await prisma.participant.findMany({
-      where: {
-        registrationDate: { lte: event.date },
-        OR: [{ status: "ACTIVE" as const }, { status: "RETIRED" as const, retiredAt: { gt: event.date } }],
-        ...groupFilter,
-      },
-      select: { id: true, surname: true, fullNames: true, knownAs: true, dateOfBirth: true, gender: true, tskStatus: true },
-    });
+    let subject: string;
+    let html: string;
 
-    const total = roster.length;
-    const presentIds = new Set(presentRecords.map((r) => r.participantId));
-    const present = roster.filter((p) => presentIds.has(p.id));
-    const absent = roster.filter((p) => !presentIds.has(p.id));
+    if (zeroCaptured) {
+      subject = `⚠️ Zero Attendance flagged for the ${groupLabel}!`;
+      html = `
+        <p style="margin:0;"><strong>Zero Attendance flagged for the ${groupLabel}!</strong> Please provide a reason.</p>
+        <p style="margin:0;">Session created for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}, but no attendance was captured.</p>
+      `;
+    } else {
+      const groupFilter = participantWhereForGroup(group as TskGroupKey);
+      const roster = await prisma.participant.findMany({
+        where: {
+          registrationDate: { lte: event.date },
+          OR: [{ status: "ACTIVE" as const }, { status: "RETIRED" as const, retiredAt: { gt: event.date } }],
+          ...groupFilter,
+        },
+        select: { id: true, surname: true, fullNames: true, knownAs: true, dateOfBirth: true, gender: true, tskStatus: true },
+      });
 
-    const historicalCounts = await getConsecutiveMissedCounts(absent.map((p) => p.id), todayStart);
-    const missedCounts = new Map(absent.map((p) => [p.id, 1 + (historicalCounts.get(p.id) ?? 0)]));
-    const byMissedDesc = (a: RosterRow, b: RosterRow) => missedCounts.get(b.id)! - missedCounts.get(a.id)!;
-    const absentUpTo3 = absent.filter((p) => missedCounts.get(p.id)! <= 3).sort(byMissedDesc);
-    const alertOver3 = absent.filter((p) => missedCounts.get(p.id)! > 3).sort(byMissedDesc);
+      const total = roster.length;
+      const presentIds = new Set(presentRecords.map((r) => r.participantId));
+      const present = roster.filter((p) => presentIds.has(p.id));
+      const absent = roster.filter((p) => !presentIds.has(p.id));
 
-    const groupLabel = TSK_GROUP_LABELS[group];
-    const pct = total > 0 ? (present.length / total) * 100 : 0;
+      const historicalCounts = await getConsecutiveMissedCounts(absent.map((p) => p.id), todayStart);
+      const missedCounts = new Map(absent.map((p) => [p.id, 1 + (historicalCounts.get(p.id) ?? 0)]));
+      const byMissedDesc = (a: RosterRow, b: RosterRow) => missedCounts.get(b.id)! - missedCounts.get(a.id)!;
+      const absentUpTo3 = absent.filter((p) => missedCounts.get(p.id)! <= 3).sort(byMissedDesc);
+      const alertOver3 = absent.filter((p) => missedCounts.get(p.id)! > 3).sort(byMissedDesc);
 
-    // A one-point "trend" chart is meaningless — only attempt a screenshot once the
-    // group has at least 2 session days logged this month.
-    const stats = await computeAttendanceStats({ month: monthStr, group: group as TskGroupKey });
-    const sessionDays = stats.days.filter((d) => d.dayType === "session").length;
-    const chartPng = sessionDays >= 2 ? await renderGroupChartPng(group as TskGroupKey, monthStr) : null;
+      const pct = total > 0 ? (present.length / total) * 100 : 0;
 
-    const monthLabel = `${MONTHS[monthNum - 1]} '${String(year).slice(-2)}`;
-    const html = `
-      <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
-      <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
-      <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt)} and ${fmtTime(window._max.updatedAt)}</p>
-      ${renderSection("Present", present.length, null, present)}
-      ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive days", absentUpTo3, missedCounts)}
-      ${renderSection("Alert", alertOver3.length, "> 3 consecutive days", alertOver3, missedCounts)}
-      ${chartPng ? `
+      subject = `✅ TSK Attendance for the ${groupLabel}`;
+      html = `
+        <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
+        <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
+        <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt!)} and ${fmtTime(window._max.updatedAt!)}</p>
+        ${renderSection("Present", present.length, null, present)}
+        ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive days", absentUpTo3, missedCounts)}
+        ${renderSection("Alert", alertOver3.length, "> 3 consecutive days", alertOver3, missedCounts)}
+      `;
+    }
+
+    const chartPng = await chartPngPromise;
+    if (chartPng) {
+      html += `
         <h3 style="margin:16px 0 6px;">${groupLabel} Attendance for ${monthLabel} (Month to Date)</h3>
         <img src="cid:trend-chart" alt="${groupLabel} attendance trend" width="480" style="display:block;" />
-      ` : ""}
-    `;
+      `;
+    }
 
     try {
       await sendEmail({
         to: await getRecipients(group as EmailRecipientCategory),
-        subject: `✅ TSK Attendance for the ${groupLabel}`,
+        subject,
         html,
         ...(chartPng ? { attachments: [{ filename: "trend.png", content: chartPng, contentId: "trend-chart" }] } : {}),
       });

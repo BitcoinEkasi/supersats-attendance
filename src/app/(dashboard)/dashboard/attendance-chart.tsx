@@ -480,7 +480,7 @@ export default function AttendanceChart({
             </div>
           )}
 
-          {data.days.every((d) => d.dayType !== "session") ? (
+          {data.days.every((d) => d.dayType === "off" || d.dayType === "future") ? (
             <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">
               No sessions recorded for this period
             </div>
