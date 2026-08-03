@@ -46,8 +46,12 @@ function cellFill(entry: DayEntry, isParticipantView: boolean): string {
   if (entry.dayType === "session" && isParticipantView) {
     return entry.presentCount > 0 ? "#22c55e" : "#ef4444"; // this participant's own present/absent outcome
   }
-  if (entry.dayType === "off") return "#e5e7eb"; // gray-200 — Sun/Mon only, now that flagged days are handled above
   if (entry.dayType === "gap") return "#ef4444"; // red-500 — unflagged gap (participant-view-only case; group-level gaps always carry a reason now)
+  // dayType "off" only ever applies to a Sun/Mon that's already elapsed — a *future* Sun/Mon
+  // is bucketed under dayType "future" (assigned to any date past today regardless of
+  // weekday), so isPotentialSession (which checks isProgrammeDay directly) is what actually
+  // distinguishes "grey off day" from "turquoise potential day" correctly for both.
+  if (!entry.isPotentialSession) return "#e5e7eb"; // gray-200 — Sun/Mon, past or future
   return "#14b8a6"; // teal-500 — every other potential session: held (group view) or still upcoming
 }
 
