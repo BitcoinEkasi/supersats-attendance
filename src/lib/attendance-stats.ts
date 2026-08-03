@@ -131,15 +131,23 @@ export async function computeAttendanceStats({
       ? (roster?.groupRegistered[group] ?? 0)
       : (roster?.registered ?? 0);
     const groupRegistered = includeGroupBreakdown ? (roster?.groupRegistered ?? null) : null;
-    // A session that was created (Event exists) but never had its roster submitted
-    // (zero AttendanceRecord rows at all — distinct from "captured, everyone absent")
-    // must not silently count as "held". Gated on date <= todayStr so a pre-created
-    // future session isn't flagged just because it hasn't happened yet; bypasses
-    // isProgrammeDay since the Event's existence is itself proof a session was
-    // scheduled that day, regardless of the usual weekday heuristic.
-    const zeroCapture = !participantId && agg.sessions > 0 && agg.totalRecords === 0 && date <= todayStr;
+    // Two ways a day ends up with no real attendance on record, both treated the same —
+    // a marshal who never opens the session is exactly as much a gap as one who opens it
+    // and never submits the roster: (1) a session was created (Event exists) but never
+    // had its roster submitted (zero AttendanceRecord rows at all — distinct from
+    // "captured, everyone absent"); (2) no session was created at all on a day one should
+    // have happened (isProgrammeDay). Both gated on date <= todayStr so a pre-created
+    // future session, or a day that just hasn't happened yet, isn't flagged early. Case
+    // (1) bypasses isProgrammeDay since the Event's existence is itself proof a session
+    // was scheduled that day, regardless of the usual weekday heuristic; case (2) is
+    // exactly the isProgrammeDay check that already drove the plain "gap" fallback below,
+    // now additionally carrying a reason instead of rendering unflagged.
+    const hasEvent = agg.sessions > 0;
+    const zeroCapture = !participantId && date <= todayStr && (
+      (hasEvent && agg.totalRecords === 0) || (!hasEvent && isProgrammeDay(date))
+    );
     const effectiveExcuse = excuse ?? (zeroCapture ? { reason: "Attendance not taken", reasonOther: null } : undefined);
-    const dayType: DayType = agg.sessions > 0 && !zeroCapture
+    const dayType: DayType = hasEvent && !zeroCapture
       ? "session"
       : date > todayStr
       ? "future"

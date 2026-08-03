@@ -81,8 +81,14 @@ export async function POST(req: Request) {
 
   for (const group of TSK_GROUPS) {
     if (excusedGroups.has(group)) continue;
+    // No event created at all is treated the same as "session created but nothing
+    // captured" — a marshal who never opens the session is exactly as much a zero-
+    // attendance case as one who opens it and never submits the roster. Every group
+    // is expected to have a session on every valid programme day (confirmed against
+    // real usage — no group has a "doesn't meet this day" pattern), so this can't
+    // fire spuriously; the only other reason a day has no event is that it was
+    // already excused, which is filtered out by the check above.
     const event = eventByGroup.get(group);
-    if (!event) continue;
 
     const groupLabel = TSK_GROUP_LABELS[group];
     const monthLabel = `${MONTHS[monthNum - 1]} '${String(year).slice(-2)}`;
@@ -92,31 +98,43 @@ export async function POST(req: Request) {
     // day, real or zero-capture-flagged, is informative on the chart).
     const chartPngPromise = renderGroupChartPng(group as TskGroupKey, monthStr);
 
-    const [window, presentRecords] = await Promise.all([
-      prisma.attendanceRecord.aggregate({
-        where: { eventId: event.id },
-        _min: { createdAt: true },
-        _max: { updatedAt: true },
-      }),
-      prisma.attendanceRecord.findMany({ where: { eventId: event.id, present: true }, select: { participantId: true } }),
-    ]);
-    const zeroCaptured = !window._min.createdAt || !window._max.updatedAt;
+    let zeroCaptured: boolean;
+    let window: { _min: { createdAt: Date | null }; _max: { updatedAt: Date | null } } = { _min: { createdAt: null }, _max: { updatedAt: null } };
+    let presentRecords: { participantId: string }[] = [];
+
+    if (!event) {
+      zeroCaptured = true;
+    } else {
+      [window, presentRecords] = await Promise.all([
+        prisma.attendanceRecord.aggregate({
+          where: { eventId: event.id },
+          _min: { createdAt: true },
+          _max: { updatedAt: true },
+        }),
+        prisma.attendanceRecord.findMany({ where: { eventId: event.id, present: true }, select: { participantId: true } }),
+      ]);
+      zeroCaptured = !window._min.createdAt || !window._max.updatedAt;
+    }
 
     let subject: string;
     let html: string;
 
     if (zeroCaptured) {
+      const displayDate = event?.date ?? todayDate;
       subject = `⚠️ Zero Attendance flagged for the ${groupLabel}!`;
       html = `
         <p style="margin:0;"><strong>Zero Attendance flagged for the ${groupLabel}!</strong> Please provide a reason.</p>
-        <p style="margin:0;">Session created for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}, but no attendance was captured.</p>
+        <p style="margin:0;">${event
+          ? `Session created for ${fmtWeekdayShort(displayDate)}, ${fmtDate(displayDate)}, but no attendance was captured.`
+          : `No session was created for ${fmtWeekdayShort(displayDate)}, ${fmtDate(displayDate)}.`}</p>
       `;
     } else {
+      const nonNullEvent = event!; // zeroCaptured is only false when event was set above
       const groupFilter = participantWhereForGroup(group as TskGroupKey);
       const roster = await prisma.participant.findMany({
         where: {
-          registrationDate: { lte: event.date },
-          OR: [{ status: "ACTIVE" as const }, { status: "RETIRED" as const, retiredAt: { gt: event.date } }],
+          registrationDate: { lte: nonNullEvent.date },
+          OR: [{ status: "ACTIVE" as const }, { status: "RETIRED" as const, retiredAt: { gt: nonNullEvent.date } }],
           ...groupFilter,
         },
         select: { id: true, surname: true, fullNames: true, knownAs: true, dateOfBirth: true, gender: true, tskStatus: true },
@@ -137,7 +155,7 @@ export async function POST(req: Request) {
 
       subject = `✅ TSK Attendance for the ${groupLabel}`;
       html = `
-        <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(event.date)}, ${fmtDate(event.date)}</p>
+        <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(nonNullEvent.date)}, ${fmtDate(nonNullEvent.date)}</p>
         <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
         <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt!)} and ${fmtTime(window._max.updatedAt!)}</p>
         ${renderSection("Present", present.length, null, present)}
