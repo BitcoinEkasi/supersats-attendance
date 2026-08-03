@@ -42,20 +42,13 @@ function DayAxisTick(props: { x?: string | number; y?: string | number; payload?
 }
 
 function cellFill(entry: DayEntry, isParticipantView: boolean): string {
-  switch (entry.dayType) {
-    case "off":
-      return "#e5e7eb"; // gray-200, muted — not a signal
-    case "excused":
-      return "#e5e7eb"; // same as "off" — the flag icon, not bar color, communicates "deliberate decision"
-    case "gap":
-      return "#ef4444"; // red-500 — sessions missed
-    case "future":
-      return "#e5e7eb"; // gray-200, same as off/excused — hasn't happened yet
-    case "session":
-      return isParticipantView
-        ? entry.presentCount > 0 ? "#22c55e" : "#ef4444"
-        : "#14b8a6"; // teal-500 — sessions held
+  if (entry.excuseReason) return getReasonColor(entry.excuseReason); // any flagged gap or excused day — bar matches its flag
+  if (entry.dayType === "session" && isParticipantView) {
+    return entry.presentCount > 0 ? "#22c55e" : "#ef4444"; // this participant's own present/absent outcome
   }
+  if (entry.dayType === "off") return "#e5e7eb"; // gray-200 — Sun/Mon only, now that flagged days are handled above
+  if (entry.dayType === "gap") return "#ef4444"; // red-500 — unflagged gap (participant-view-only case; group-level gaps always carry a reason now)
+  return "#14b8a6"; // teal-500 — every other potential session: held (group view) or still upcoming
 }
 
 /** Stacked (All Groups) view: off/gap/excused days render as a single solid gray/red bar, same as the per-group view — group color only applies on days sessions actually happened. */
