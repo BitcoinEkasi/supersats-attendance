@@ -469,16 +469,14 @@ export default function AttendanceChart({
             )}
           </div>
 
-          {data.days.some((d) => d.excuseReason) && (
-            <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 mt-1">
-              {EXCUSED_SESSION_REASONS.map((r) => (
-                <span key={r.label} className="inline-flex items-center gap-1">
-                  <LegendFlagIcon color={r.color} />
-                  {r.label}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 mt-1">
+            {EXCUSED_SESSION_REASONS.map((r) => (
+              <span key={r.label} className="inline-flex items-center gap-1">
+                <LegendFlagIcon color={r.color} />
+                {r.label}
+              </span>
+            ))}
+          </div>
 
           {data.days.every((d) => d.dayType === "off" || d.dayType === "future") ? (
             <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 text-sm text-gray-400">
