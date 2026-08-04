@@ -270,14 +270,6 @@ function PulseTooltipContent({ active, payload, group }: TooltipContentProps & {
   );
 }
 
-type SlimParticipant = {
-  id: string;
-  tskId: string;
-  surname: string;
-  fullNames: string;
-  knownAs: string | null;
-};
-
 const MONTHS = getLastNMonths(12);
 
 export default function AttendanceChart({
@@ -298,26 +290,11 @@ export default function AttendanceChart({
   const [viewMode, setViewMode] = useState<"pulse" | "trajectory">("pulse");
   const [month, setMonth] = useState(initialMonth ?? MONTHS[0].value);
   const [group, setGroup] = useState(initialGroup ?? "");
-  const [participantId, setParticipantId] = useState("");
-  const [participants, setParticipants] = useState<SlimParticipant[]>([]);
   const [data, setData] = useState<StatsData | null>(initialData ?? null);
   const [trajectoryData, setTrajectoryData] = useState<TrajectoryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [modalDay, setModalDay] = useState<DayEntry | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
-
-  useEffect(() => {
-    if (!group) {
-      setParticipants([]);
-      setParticipantId("");
-      return;
-    }
-    fetch(`/api/participants?group=${group}&status=ACTIVE&slim=true`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((p: SlimParticipant[]) => setParticipants(Array.isArray(p) ? p : []))
-      .catch(() => setParticipants([]));
-    setParticipantId("");
-  }, [group]);
 
   const skippedInitialFetch = useRef(false);
   useEffect(() => {
@@ -332,28 +309,24 @@ export default function AttendanceChart({
     setLoading(true);
     const params = new URLSearchParams({ month });
     if (group) params.set("group", group);
-    if (participantId) params.set("participantId", participantId);
     fetch(`/api/attendance/stats?${params}`)
       .then((r) => r.json())
       .then((d: StatsData) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [viewMode, month, group, participantId, refreshTick]);
+  }, [viewMode, month, group, refreshTick]);
 
   useEffect(() => {
     if (viewMode !== "trajectory") return;
     setLoading(true);
     const params = new URLSearchParams();
     if (group) params.set("group", group);
-    if (participantId) params.set("participantId", participantId);
     fetch(`/api/attendance/trajectory?${params}`)
       .then((r) => r.json())
       .then((d: TrajectoryData) => setTrajectoryData(d))
       .catch(() => setTrajectoryData(null))
       .finally(() => setLoading(false));
-  }, [viewMode, group, participantId, refreshTick]);
-
-  const selectedParticipant = participants.find((p) => p.id === participantId);
+  }, [viewMode, group, refreshTick]);
 
   function handleFlagClick(day: DayEntry) {
     setModalDay(day);
@@ -399,21 +372,6 @@ export default function AttendanceChart({
             <option key={g} value={g}>{TSK_GROUP_LABELS[g]}</option>
           ))}
         </select>
-
-        {group && (
-          <select
-            value={participantId}
-            onChange={(e) => setParticipantId(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
-          >
-            <option value="">All Participants</option>
-            {participants.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.knownAs ?? p.fullNames} {p.surname} ({p.tskId})
-              </option>
-            ))}
-          </select>
-        )}
       </div>
 
       {loading && (
@@ -464,11 +422,6 @@ export default function AttendanceChart({
               <span className="font-medium text-blue-600">{data.totalParticipants}</span>{" "}
               {data.isParticipantView ? "participant" : "registered"}
             </span>
-            {selectedParticipant && (
-              <span className="font-medium text-orange-600">
-                {selectedParticipant.knownAs ?? selectedParticipant.fullNames} {selectedParticipant.surname}
-              </span>
-            )}
           </div>
 
           <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-500 mt-1">
@@ -490,7 +443,7 @@ export default function AttendanceChart({
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
-              <YAxis hide domain={[0, Math.max(...data.days.map((d) => Math.max(d.presentCount, d.registered))) + 2]} />
+              <YAxis hide domain={group ? [0, 35] : [0, Math.max(...data.days.map((d) => Math.max(d.presentCount, d.registered))) + 2]} />
               <Tooltip
                 content={data.isParticipantView ? undefined : (props) => <PulseTooltipContent {...props} group={group} />}
                 itemSorter={(item) => {
