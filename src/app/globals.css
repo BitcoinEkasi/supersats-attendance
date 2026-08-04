@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+.rotate-hint-banner {
+  display: none;
+}
+@media (max-width: 640px) and (orientation: portrait) {
+  .rotate-hint-banner {
+    display: flex;
+  }
+}
