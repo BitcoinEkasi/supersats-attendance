@@ -73,7 +73,7 @@ function stackedCellFill(entry: DayEntry, groupColor: string): string {
  *  record) alike. A gap with no reason at all (unflagged) stays a neutral gray-400 outline.
  *  Used by both the single-group and All Groups views. */
 function FlagGlyph(props: {
-  cx: number; cy: number; excuseReason: string | null; onClick: () => void;
+  cx: number; cy: number; excuseReason: string | null; onClick?: () => void;
 }) {
   const { cx, cy, excuseReason, onClick } = props;
   const reasonColor = excuseReason ? getReasonColor(excuseReason) : null;
@@ -82,8 +82,8 @@ function FlagGlyph(props: {
   return (
     <g
       transform={`translate(${cx},${cy})`}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      style={{ cursor: "pointer" }}
+      onClick={onClick ? (e) => { e.stopPropagation(); onClick(); } : undefined}
+      style={{ cursor: onClick ? "pointer" : "default" }}
     >
       <rect x={-10} y={-12} width={20} height={20} fill="transparent" />
       <path
@@ -114,7 +114,7 @@ function LegendFlagIcon({ color }: { color: string }) {
 
 function BarLabel(props: {
   x?: string | number; y?: string | number; width?: string | number; value?: React.ReactNode; index?: number;
-  days: DayEntry[]; groupSelected: boolean; onFlagClick: (day: DayEntry) => void;
+  days: DayEntry[]; groupSelected: boolean; onFlagClick?: (day: DayEntry) => void;
 }) {
   const { value, index = 0, days, groupSelected, onFlagClick } = props;
   const x = Number(props.x ?? 0);
@@ -129,7 +129,7 @@ function BarLabel(props: {
         cx={x + width / 2}
         cy={y - 8} // just above the (minPointSize-pinned) bar top
         excuseReason={day.excuseReason}
-        onClick={() => onFlagClick(day)}
+        onClick={onFlagClick ? () => onFlagClick(day) : undefined}
       />
     );
   }
@@ -146,7 +146,7 @@ function BarLabel(props: {
 /** All Groups view: last stacked bar's label slot. Session days show the day's total across all groups; gap/excused days show the cross-group flag (see FlagGlyph). */
 function AllGroupsBarLabel(props: {
   x?: string | number; y?: string | number; width?: string | number; index?: number;
-  days: DayEntry[]; onFlagClick: (day: DayEntry) => void;
+  days: DayEntry[]; onFlagClick?: (day: DayEntry) => void;
 }) {
   const { index = 0, days, onFlagClick } = props;
   const x = Number(props.x ?? 0);
@@ -161,7 +161,7 @@ function AllGroupsBarLabel(props: {
         cx={x + width / 2}
         cy={y - 8}
         excuseReason={day.excuseReason}
-        onClick={() => onFlagClick(day)}
+        onClick={onFlagClick ? () => onFlagClick(day) : undefined}
       />
     );
   }
@@ -276,6 +276,7 @@ export default function AttendanceChart({
   initialGroup,
   initialMonth,
   initialData,
+  publicMode = false,
 }: {
   /** Pre-seeds the group/month filters — used by the chart-snapshot route to render
    *  one group's chart without the interactive dashboard's own filter UI ever changing
@@ -286,6 +287,10 @@ export default function AttendanceChart({
    *  pre-fetches server-side via Prisma directly, since a headless-browser screenshot
    *  session has no session cookie for the client fetch to authenticate with. */
   initialData?: StatsData;
+  /** Used by the public /analytics viewer: fetches from the unauthenticated public API
+   *  routes instead of the admin-gated ones, and disables flag-click-to-edit (flags still
+   *  render, informationally, via FlagGlyph's optional onClick — just no modal wired up). */
+  publicMode?: boolean;
 }) {
   const [viewMode, setViewMode] = useState<"pulse" | "trajectory">("pulse");
   const [month, setMonth] = useState(initialMonth ?? MONTHS[0].value);
@@ -309,24 +314,24 @@ export default function AttendanceChart({
     setLoading(true);
     const params = new URLSearchParams({ month });
     if (group) params.set("group", group);
-    fetch(`/api/attendance/stats?${params}`)
+    fetch(`${publicMode ? "/api/public" : "/api"}/attendance/stats?${params}`)
       .then((r) => r.json())
       .then((d: StatsData) => setData(d))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [viewMode, month, group, refreshTick]);
+  }, [viewMode, month, group, refreshTick, publicMode]);
 
   useEffect(() => {
     if (viewMode !== "trajectory") return;
     setLoading(true);
     const params = new URLSearchParams();
     if (group) params.set("group", group);
-    fetch(`/api/attendance/trajectory?${params}`)
+    fetch(`${publicMode ? "/api/public" : "/api"}/attendance/trajectory?${params}`)
       .then((r) => r.json())
       .then((d: TrajectoryData) => setTrajectoryData(d))
       .catch(() => setTrajectoryData(null))
       .finally(() => setLoading(false));
-  }, [viewMode, group, refreshTick]);
+  }, [viewMode, group, refreshTick, publicMode]);
 
   function handleFlagClick(day: DayEntry) {
     setModalDay(day);
@@ -492,7 +497,7 @@ export default function AttendanceChart({
                   radius={[3, 3, 0, 0]}
                   minPointSize={4}
                   label={(props) => (
-                    <BarLabel {...props} days={data.days} groupSelected={!!group} onFlagClick={handleFlagClick} />
+                    <BarLabel {...props} days={data.days} groupSelected={!!group} onFlagClick={publicMode ? undefined : handleFlagClick} />
                   )}
                 >
                   {data.days.map((entry, index) => (
@@ -510,7 +515,7 @@ export default function AttendanceChart({
                       fill={GROUP_COLORS[g]}
                       minPointSize={2}
                       radius={i === TSK_GROUPS.length - 1 ? [3, 3, 0, 0] : undefined}
-                      label={i === TSK_GROUPS.length - 1 ? (props) => <AllGroupsBarLabel {...props} days={data.days} onFlagClick={handleFlagClick} /> : undefined}
+                      label={i === TSK_GROUPS.length - 1 ? (props) => <AllGroupsBarLabel {...props} days={data.days} onFlagClick={publicMode ? undefined : handleFlagClick} /> : undefined}
                     >
                       {data.days.map((entry, index) => (
                         <Cell key={index} fill={stackedCellFill(entry, GROUP_COLORS[g])} />

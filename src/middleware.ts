@@ -7,11 +7,13 @@ export default auth((request) => {
   const isLoginPage = pathname === "/login";
   const isMarshallPage = pathname.startsWith("/marshal");
   const isChartSnapshot = pathname.startsWith("/chart-snapshot");
+  const isAnalyticsPage = pathname.startsWith("/analytics");
 
   // /marshal is always accessible — handles its own auth.
   // /chart-snapshot is internal-only (headless-browser screenshot target for the TSK
   // Attendance email) — no session exists to check here, it gates on a bearer secret itself.
-  if (isMarshallPage || isChartSnapshot) return NextResponse.next();
+  // /analytics is a public, unauthenticated viewer — no auth at all.
+  if (isMarshallPage || isChartSnapshot || isAnalyticsPage) return NextResponse.next();
 
   if (!session && isLoginPage) return NextResponse.next();
 
