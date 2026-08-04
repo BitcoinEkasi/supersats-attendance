@@ -140,7 +140,11 @@ export default function TrajectoryChart({ data, group }: { data: TrajectoryData;
         <ComposedChart data={data.months} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
           <XAxis dataKey="month" tick={(props) => <MonthAxisTick {...props} />} interval={0} height={28} />
-          <YAxis hide domain={group ? [0, 35] : [0, Math.max(...data.months.map((m) => Math.max(m.average, m.registered))) + 2]} />
+          <YAxis
+            hide
+            scale={group ? "sqrt" : "linear"}
+            domain={group ? [0, 35] : [0, Math.max(...data.months.map((m) => Math.max(m.average, m.registered))) + 2]}
+          />
           <Tooltip
             content={(props) => <TrajectoryTooltipContent {...props} group={group} isParticipantView={data.isParticipantView} />}
             itemSorter={(item) => {

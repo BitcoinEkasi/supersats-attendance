@@ -443,7 +443,11 @@ export default function AttendanceChart({
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
-              <YAxis hide domain={group ? [0, 35] : [0, Math.max(...data.days.map((d) => Math.max(d.presentCount, d.registered))) + 2]} />
+              <YAxis
+                hide
+                scale={group ? "sqrt" : "linear"}
+                domain={group ? [0, 35] : [0, Math.max(...data.days.map((d) => Math.max(d.presentCount, d.registered))) + 2]}
+              />
               <Tooltip
                 content={data.isParticipantView ? undefined : (props) => <PulseTooltipContent {...props} group={group} />}
                 itemSorter={(item) => {
