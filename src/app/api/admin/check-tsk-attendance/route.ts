@@ -169,6 +169,7 @@ export async function POST(req: Request) {
       html += `
         <h3 style="margin:16px 0 6px;">${groupLabel} Attendance for ${monthLabel} (Month to Date)</h3>
         <img src="cid:trend-chart" alt="${groupLabel} attendance trend" width="480" style="display:block;" />
+        <p style="margin:8px 0 0;"><a href="https://tsk.bitcoinekasi.xyz/analytics?group=${group}&month=${monthStr}" style="color:#2563eb;">View live analytics →</a></p>
       `;
     }
 
