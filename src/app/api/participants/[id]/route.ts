@@ -132,6 +132,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const newIsAc = requestedAc && isAcEligible(newTskStatus);
   const wasAc = existing?.isAssistantCoach ?? false;
   const acChanged = newIsAc !== wasAc;
+  // Removal is immediate (not deferred); promotion stays a deferred, next-month-effective event.
+  const isAcRevocation = wasAc && !newIsAc;
   const newSince: Date | null = newIsAc
     ? (wasAc && existing?.assistantCoachSince ? existing.assistantCoachSince : now)
     : null;
@@ -150,8 +152,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   // Determine effective level/AC values for the immediate update
   const appliedTskStatus  = (applyNow || !tskStatusChanged) ? newTskStatus  : existing?.tskStatus ?? null;
-  const appliedIsAc       = (applyNow || !acChanged)        ? newIsAc       : wasAc;
-  const appliedSince      = (applyNow || !acChanged)        ? newSince      : existing?.assistantCoachSince ?? null;
+  const appliedIsAc       = (applyNow || !acChanged || isAcRevocation) ? newIsAc  : wasAc;
+  const appliedSince      = (applyNow || !acChanged || isAcRevocation) ? newSince : existing?.assistantCoachSince ?? null;
 
   try {
     await prisma.participant.update({
@@ -230,13 +232,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         });
       }
 
-      if (acChanged) {
+      if (acChanged && !isAcRevocation) {
+        // Promotion — stays a deferred, next-month-effective event
         await prisma.pendingParticipantChange.upsert({
           where: { participantId_field: { participantId: id, field: "isAssistantCoach" } },
           create: { id: randomUUID(), participantId: id, field: "isAssistantCoach", oldValue: String(wasAc), newValue: String(newIsAc), effectiveFrom, createdBy: user.id },
           update: { oldValue: String(wasAc), newValue: String(newIsAc), effectiveFrom, createdBy: user.id, appliedAt: null },
         });
       } else {
+        // Revocation was already applied immediately above, or there's no AC change at
+        // all — either way, clear any stale queued change (also self-heals a pending
+        // revocation left over from before this immediate-effect fix existed).
         await prisma.pendingParticipantChange.deleteMany({
           where: { participantId: id, field: "isAssistantCoach", appliedAt: null },
         });
@@ -249,7 +255,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (group) await upsertMonthlyReport(currentMonthStr(), user.id, group);
     }
 
-    const pendingQueued = !applyNow && (tskStatusChanged || acChanged);
+    if (isAcRevocation) {
+      const group = getGroupForStatus(appliedTskStatus);
+      if (group) await upsertMonthlyReport(currentMonthStr(), user.id, group);
+    }
+
+    const pendingQueued = !applyNow && (tskStatusChanged || (acChanged && !isAcRevocation));
 
     // Sync to Bolt (use applied values)
     if (existing?.boltUserId) {

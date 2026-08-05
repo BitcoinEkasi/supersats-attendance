@@ -663,7 +663,7 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
                 ) : (
                   <>
                     {!isAcEligible(tskStatus) ? (
-                      <p className="text-xs text-gray-400 italic">Assistant Coach only available at Dolphin L5, Dolphin L6, or Free Surfer</p>
+                      <p className="text-xs text-gray-400 italic">Assistant Coach only available at Free Surfer</p>
                     ) : (
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
