@@ -128,10 +128,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const applyNow = isFirstOfMonth();
   const effectiveFrom = nextMonthFirst();
 
-  // Retirement immediately ends any active AC period too — same as an explicit uncheck.
-  const isBeingRetired = body.status === "RETIRED" && existing?.status !== "RETIRED";
+  // A retired participant is never AC — enforced on every save (not just the transition
+  // into retirement), so it self-heals any already-retired record still carrying a stale
+  // AC flag (e.g. one retired before this rule existed) the next time anyone saves it,
+  // even a no-op save. The edit form also has no AC checkbox once retired, so this is the
+  // only path that can ever flip it off for such a participant.
+  const isRetiredNow = body.status === "RETIRED";
   const requestedAc = body.isAssistantCoach === "on" || body.isAssistantCoach === true;
-  const newIsAc = isBeingRetired ? false : (requestedAc && isAcEligible(newTskStatus));
+  const newIsAc = isRetiredNow ? false : (requestedAc && isAcEligible(newTskStatus));
   const wasAc = existing?.isAssistantCoach ?? false;
   const acChanged = newIsAc !== wasAc;
   // Removal is immediate (not deferred); promotion stays a deferred, next-month-effective event.

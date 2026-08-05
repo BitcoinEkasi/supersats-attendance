@@ -646,20 +646,28 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
               <div />
               <div className="flex flex-col gap-2 pb-2">
                 {(participant as any).retiredAt ? (
-                  // Retired: AC role has ended. Show read-only history (flag preserved for reward multipliers).
-                  isAssistantCoach && (participant as any).assistantCoachSince ? (() => {
-                    const since = new Date((participant as any).assistantCoachSince);
-                    const retired = new Date((participant as any).retiredAt);
-                    const elapsed = (retired.getFullYear() - since.getUTCFullYear()) * 12 + (retired.getMonth() - since.getUTCMonth());
+                  // Retired: AC role has ended immediately, on every save (see route.ts) — so
+                  // the live isAssistantCoach flag is always false here. Read-only history
+                  // comes from the real AssistantCoachPeriod record instead.
+                  (() => {
+                    const periods = ((participant as any).assistantCoachPeriods ?? []) as
+                      { startedAt: string | Date; endedAt: string | Date | null }[];
+                    const lastPeriod = periods
+                      .filter((p) => p.endedAt)
+                      .sort((a, b) => new Date(b.endedAt!).getTime() - new Date(a.endedAt!).getTime())[0];
+                    if (!lastPeriod) return null;
+                    const since = new Date(lastPeriod.startedAt);
+                    const ended = new Date(lastPeriod.endedAt!);
+                    const elapsed = (ended.getFullYear() - since.getUTCFullYear()) * 12 + (ended.getMonth() - since.getUTCMonth());
                     return (
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium text-gray-500">Was Assistant Coach</span>
                         <span className="text-xs text-gray-500">
-                          AC {fmtDate(since)} → {fmtDate(retired)} ({elapsed} month{elapsed !== 1 ? "s" : ""})
+                          AC {fmtDate(since)} → {fmtDate(ended)} ({elapsed} month{elapsed !== 1 ? "s" : ""})
                         </span>
                       </div>
                     );
-                  })() : null
+                  })()
                 ) : (
                   <>
                     {!isAcEligible(tskStatus) ? (
