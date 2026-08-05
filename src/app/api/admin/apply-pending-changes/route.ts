@@ -5,6 +5,7 @@ import { getGroupForStatus } from "@/lib/tsk-groups";
 // requireAuth used for non-cron requests; CRON_SECRET used for scheduled calls
 import { updateBoltUserMeta } from "@/lib/bolt";
 import { getDivisionLabel } from "@/lib/sa-id";
+import { randomUUID } from "crypto";
 
 export async function POST(req: Request) {
   // Allow session auth (admin UI) or bearer token (cron)
@@ -73,6 +74,13 @@ export async function POST(req: Request) {
             where: { id: p.id },
             data: { isAssistantCoach: actualNewIsAc, assistantCoachSince: newSince },
           });
+          // This path only ever grants now (revocations apply immediately via the
+          // participant PATCH route, never queued here) — open a new period.
+          if (actualNewIsAc) {
+            await prisma.assistantCoachPeriod.create({
+              data: { id: randomUUID(), participantId: p.id, startedAt: change.effectiveFrom, createdBy: change.createdBy },
+            });
+          }
         }
 
         await prisma.pendingParticipantChange.update({

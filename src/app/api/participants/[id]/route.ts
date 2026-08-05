@@ -128,8 +128,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const applyNow = isFirstOfMonth();
   const effectiveFrom = nextMonthFirst();
 
+  // Retirement immediately ends any active AC period too — same as an explicit uncheck.
+  const isBeingRetired = body.status === "RETIRED" && existing?.status !== "RETIRED";
   const requestedAc = body.isAssistantCoach === "on" || body.isAssistantCoach === true;
-  const newIsAc = requestedAc && isAcEligible(newTskStatus);
+  const newIsAc = isBeingRetired ? false : (requestedAc && isAcEligible(newTskStatus));
   const wasAc = existing?.isAssistantCoach ?? false;
   const acChanged = newIsAc !== wasAc;
   // Removal is immediate (not deferred); promotion stays a deferred, next-month-effective event.
@@ -256,8 +258,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     if (isAcRevocation) {
+      await prisma.assistantCoachPeriod.updateMany({
+        where: { participantId: id, endedAt: null },
+        data: { endedAt: now },
+      });
       const group = getGroupForStatus(appliedTskStatus);
       if (group) await upsertMonthlyReport(currentMonthStr(), user.id, group);
+    }
+
+    if (applyNow && acChanged && newIsAc) {
+      // Promotion applied directly (edited on the 1st) — open a new period.
+      await prisma.assistantCoachPeriod.create({
+        data: { id: randomUUID(), participantId: id, startedAt: newSince ?? now, createdBy: user.id },
+      });
     }
 
     const pendingQueued = !applyNow && (tskStatusChanged || (acChanged && !isAcRevocation));

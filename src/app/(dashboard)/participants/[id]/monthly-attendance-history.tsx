@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { getAcMultiplier } from "@/lib/tsk-levels";
 import { fmtPct } from "@/lib/rewards";
 
 type Entry = {
@@ -13,6 +12,9 @@ type Entry = {
   rewardSats: number;
   payoutStatus: string;
   reportStatus: string;
+  /** Resolved server-side from AC history for this specific month — reflects what was
+   *  true at the time, independent of the participant's current live AC status. */
+  acMultiplier: number | null;
 };
 
 type Session = {
@@ -33,13 +35,9 @@ const categoryLabels: Record<string, string> = {
 export default function MonthlyAttendanceHistory({
   entries,
   sessionsByMonth,
-  isAssistantCoach,
-  assistantCoachSince,
 }: {
   entries: Entry[];
   sessionsByMonth: Record<string, Session[]>;
-  isAssistantCoach: boolean;
-  assistantCoachSince: Date | string | null;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -71,9 +69,9 @@ export default function MonthlyAttendanceHistory({
                   <td className="py-2 font-medium">{entry.reportMonth}</td>
                   <td className="py-2">{entry.attended}/{entry.totalEvents} ({fmtPct(entry.percentage)})</td>
                   <td className="py-2">
-                    {isAssistantCoach && assistantCoachSince && (
+                    {entry.acMultiplier !== null && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        AC{getAcMultiplier(assistantCoachSince, entry.reportMonth)}
+                        AC{entry.acMultiplier}
                       </span>
                     )}
                     {entry.rewardSats === 0 ? (

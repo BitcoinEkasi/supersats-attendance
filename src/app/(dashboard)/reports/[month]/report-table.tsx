@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { REWARD_TIERS, fmtPct, type buildTiers } from "@/lib/rewards";
 import { calculateAge, getDivisionLabel } from "@/lib/sa-id";
-import { getAcMultiplier } from "@/lib/tsk-levels";
 import { fmtDate } from "@/lib/format-date";
 
 type Entry = {
@@ -16,6 +15,9 @@ type Entry = {
   rewardSats: number;
   payoutStatus: string;
   cardId?: string | null;
+  /** Resolved server-side from AssistantCoachPeriod history for this report's month —
+   *  reflects what was true at the time, independent of the participant's live AC status. */
+  acMultiplier: number | null;
   participant: {
     tskId: string;
     surname: string;
@@ -23,8 +25,6 @@ type Entry = {
     knownAs: string | null;
     dateOfBirth: Date | null;
     gender: "MALE" | "FEMALE" | null;
-    isAssistantCoach: boolean;
-    assistantCoachSince: Date | string | null;
     retiredAt: Date | null;
   };
 };
@@ -123,9 +123,9 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                     <span className={tier?.color || ""}>{fmtPct(pct)}</span>
                   </td>
                   <td className="px-4 py-3 font-medium">
-                    {p.isAssistantCoach && p.assistantCoachSince && (
+                    {entry.acMultiplier !== null && (
                       <span className="mr-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        AC{getAcMultiplier(p.assistantCoachSince, reportMonth)}
+                        AC{entry.acMultiplier}
                       </span>
                     )}
                     {entry.rewardSats > 0 ? (

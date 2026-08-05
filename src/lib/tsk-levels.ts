@@ -31,3 +31,21 @@ export function getAcMultiplier(assistantCoachSince: Date | string, reportMonth:
   if (elapsed <= 29) return 18;
   return 21;
 }
+
+/** Was there an open AssistantCoachPeriod covering reportMonth? Used instead of the live
+ *  isAssistantCoach flag so historical months keep reflecting what was true at the time,
+ *  independent of whether the participant has since been revoked/retired. */
+export function acMultiplierForMonth(
+  periods: { startedAt: Date | string; endedAt: Date | string | null }[],
+  reportMonth: string,
+): number | null {
+  const [y, m] = reportMonth.split("-").map(Number);
+  const monthStart = new Date(Date.UTC(y, m - 1, 1));
+  const monthEnd = new Date(Date.UTC(y, m, 1)); // exclusive
+  const covering = periods.find((p) => {
+    const start = p.startedAt instanceof Date ? p.startedAt : new Date(p.startedAt);
+    const end = p.endedAt ? (p.endedAt instanceof Date ? p.endedAt : new Date(p.endedAt)) : null;
+    return start < monthEnd && (!end || end >= monthStart);
+  });
+  return covering ? getAcMultiplier(covering.startedAt, reportMonth) : null;
+}

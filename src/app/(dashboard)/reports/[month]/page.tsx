@@ -11,6 +11,7 @@ import ReportTable from "./report-table";
 import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
 import { TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
+import { acMultiplierForMonth } from "@/lib/tsk-levels";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { isParticipantActiveOn } from "@/lib/roster-history";
@@ -51,6 +52,7 @@ export default async function ReportDetailPage({
                 dateOfBirth: true, gender: true, isAssistantCoach: true, assistantCoachSince: true,
                 boltUserId: true, paymentMethod: true,
                 registrationDate: true, retiredAt: true, status: true,
+                assistantCoachPeriods: { select: { startedAt: true, endedAt: true } },
               },
             },
           },
@@ -357,6 +359,7 @@ export default async function ReportDetailPage({
           ...e,
           percentage: e.percentage.toString(),
           cardId: cardIdMap[e.participantId] ?? null,
+          acMultiplier: acMultiplierForMonth(e.participant.assistantCoachPeriods, report.month),
           participant: {
             tskId: e.participant.tskId,
             surname: e.participant.surname,
@@ -364,8 +367,6 @@ export default async function ReportDetailPage({
             knownAs: e.participant.knownAs,
             dateOfBirth: e.participant.dateOfBirth,
             gender: e.participant.gender,
-            isAssistantCoach: e.participant.isAssistantCoach,
-            assistantCoachSince: e.participant.assistantCoachSince,
             retiredAt: e.participant.retiredAt,
           },
         }))}

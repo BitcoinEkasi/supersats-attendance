@@ -121,9 +121,23 @@ model Participant {
   specialPayoutEntries  SpecialPayoutEntry[]
   pendingChanges        PendingParticipantChange[]
   absenceFlag           AbsenceFlag?
+  assistantCoachPeriods AssistantCoachPeriod[]
 
   @@index([idNumber])
   @@map("participants")
+}
+
+model AssistantCoachPeriod {
+  id            String      @id @default(uuid())
+  participantId String      @map("participant_id")
+  participant   Participant @relation(fields: [participantId], references: [id])
+  startedAt     DateTime    @map("started_at")
+  endedAt       DateTime?   @map("ended_at")
+  createdBy     String      @map("created_by")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@index([participantId])
+  @@map("assistant_coach_periods")
 }
 
 model ParticipantChangeRequest {

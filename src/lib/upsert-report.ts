@@ -3,7 +3,7 @@ import { buildCalculateRewardSats } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, participantWhereForGroup, getGroupForStatus } from "@/lib/tsk-groups";
-import { getAcMultiplier } from "@/lib/tsk-levels";
+import { acMultiplierForMonth } from "@/lib/tsk-levels";
 import { isParticipantActiveOn } from "@/lib/roster-history";
 
 export async function upsertMonthlyReport(
@@ -48,7 +48,10 @@ export async function upsertMonthlyReport(
         ],
         ...(group ? participantWhereForGroup(group) : {}),
       },
-      select: { id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true, status: true, tskStatus: true },
+      select: {
+        id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true, status: true, tskStatus: true,
+        assistantCoachPeriods: { select: { startedAt: true, endedAt: true } },
+      },
     }),
     prisma.attendanceRecord.findMany({
       where: { eventId: { in: eventIds } },
@@ -107,10 +110,8 @@ export async function upsertMonthlyReport(
 
       const percentage = totalEvents > 0 ? (attended / totalEvents) * 100 : 0;
       const baseReward = calculateRewardSats(percentage);
-      const rewardSats =
-        participant.isAssistantCoach && participant.assistantCoachSince
-          ? Math.round(baseReward * getAcMultiplier(participant.assistantCoachSince, month))
-          : baseReward;
+      const acMultiplier = acMultiplierForMonth(participant.assistantCoachPeriods, month);
+      const rewardSats = acMultiplier !== null ? Math.round(baseReward * acMultiplier) : baseReward;
 
       await tx.monthlyReportEntry.create({
         data: {

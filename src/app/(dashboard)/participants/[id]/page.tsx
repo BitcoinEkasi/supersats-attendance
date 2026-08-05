@@ -15,7 +15,7 @@ import MonthlyAttendanceHistory from "./monthly-attendance-history";
 import NotesSection from "./notes-section";
 import TskReviewsSection from "./tsk-reviews-section";
 import Image from "next/image";
-import { getAcMultiplier } from "@/lib/tsk-levels";
+import { getAcMultiplier, acMultiplierForMonth } from "@/lib/tsk-levels";
 
 export default async function ParticipantDetailPage({
   params,
@@ -39,6 +39,7 @@ export default async function ParticipantDetailPage({
       schoolReports: { orderBy: { year: "desc" } },
       tskReviews: { orderBy: { reviewDate: "desc" } },
       tskLevelHistory: { orderBy: { changedAt: "asc" } },
+      assistantCoachPeriods: { select: { startedAt: true, endedAt: true } },
     },
   });
 
@@ -80,6 +81,9 @@ export default async function ParticipantDetailPage({
     rewardSats: entry.rewardSats,
     payoutStatus: entry.payoutStatus,
     reportStatus: entry.report.status,
+    // Resolved per-month from AC history, not the live flag — a past month keeps its
+    // badge even after later revocation, since it reflects what was true at the time.
+    acMultiplier: acMultiplierForMonth(participant.assistantCoachPeriods, entry.report.month),
   }));
 
   const [boltUser, pendingChanges] = await Promise.all([
@@ -389,8 +393,6 @@ export default async function ParticipantDetailPage({
           <MonthlyAttendanceHistory
             entries={historyEntries}
             sessionsByMonth={sessionsByMonth}
-            isAssistantCoach={(participant as any).isAssistantCoach ?? false}
-            assistantCoachSince={(participant as any).assistantCoachSince ?? null}
           />
 
           {role === "ADMINISTRATOR" && (
