@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { TSK_GROUP_LABELS } from "@/lib/tsk-groups";
 import { fmtPct, weightedAvgPercentage } from "@/lib/rewards";
+import { getSASTNow } from "@/lib/sast";
 import { DeleteReportButton } from "./delete-report-button";
 
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -51,7 +52,13 @@ export function ReportsTableClient({
   role: string | undefined | null;
   zarPerSat: number | null;
 }) {
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Only the current month starts expanded — every other month (including ones with no
+  // report for the current month yet) starts collapsed.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
+    const { year, month } = getSASTNow();
+    const currentMonth = `${year}-${String(month).padStart(2, "0")}`;
+    return new Set(monthKeys.filter((m) => m !== currentMonth));
+  });
 
   const toggle = (month: string) =>
     setCollapsed((prev) => {
