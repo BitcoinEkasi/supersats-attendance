@@ -32,20 +32,28 @@ export function getAcMultiplier(assistantCoachSince: Date | string, reportMonth:
   return 21;
 }
 
-/** Was there an open AssistantCoachPeriod covering reportMonth? Used instead of the live
+function monthIndex(d: Date | string): number {
+  const date = d instanceof Date ? d : new Date(d);
+  return date.getUTCFullYear() * 12 + (date.getUTCMonth() + 1);
+}
+
+/** Was there an AssistantCoachPeriod covering reportMonth? Used instead of the live
  *  isAssistantCoach flag so historical months keep reflecting what was true at the time,
- *  independent of whether the participant has since been revoked/retired. */
+ *  independent of whether the participant has since been revoked/retired. The month a
+ *  period *ends* in is deliberately excluded (not just months after it) — revocation is
+ *  immediate effect, so the whole current month reverts to the normal reward structure
+ *  the moment it happens, not just from the following month onward. */
 export function acMultiplierForMonth(
   periods: { startedAt: Date | string; endedAt: Date | string | null }[],
   reportMonth: string,
 ): number | null {
-  const [y, m] = reportMonth.split("-").map(Number);
-  const monthStart = new Date(Date.UTC(y, m - 1, 1));
-  const monthEnd = new Date(Date.UTC(y, m, 1)); // exclusive
+  const [ry, rm] = reportMonth.split("-").map(Number);
+  const reportIndex = ry * 12 + rm;
   const covering = periods.find((p) => {
-    const start = p.startedAt instanceof Date ? p.startedAt : new Date(p.startedAt);
-    const end = p.endedAt ? (p.endedAt instanceof Date ? p.endedAt : new Date(p.endedAt)) : null;
-    return start < monthEnd && (!end || end >= monthStart);
+    const startIndex = monthIndex(p.startedAt);
+    if (startIndex > reportIndex) return false;
+    if (!p.endedAt) return true;
+    return monthIndex(p.endedAt) > reportIndex;
   });
   return covering ? getAcMultiplier(covering.startedAt, reportMonth) : null;
 }
