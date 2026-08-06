@@ -55,6 +55,12 @@ const allNavItems = [
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
   },
   {
+    href: "/schools",
+    label: "School Details",
+    roles: ["ADMINISTRATOR"] as UserRole[],
+    icon: "M12 14l9-5-9-5-9 5 9 5zm0 0v6m-9-1v-5m18 5v-5",
+  },
+  {
     href: "/email-settings",
     label: "Email Settings",
     roles: ["ADMINISTRATOR"] as UserRole[],

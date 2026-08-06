@@ -71,6 +71,7 @@ model Participant {
   ethnicity        String?
   language         String?
   school           String?
+  schoolNotes      String?           @map("school_notes")
   grade            String?
   guardian         String?
   guardianId       String?           @map("guardian_id")
@@ -470,5 +471,22 @@ model ExcusedSession {
 
   @@unique([date, group])
   @@map("excused_sessions")
+}
+
+model School {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  location          String?
+  principalName     String?  @map("principal_name")
+  principalContact  String?  @map("principal_contact")
+  principalEmail    String?  @map("principal_email")
+  secretaryName     String?  @map("secretary_name")
+  secretaryContact  String?  @map("secretary_contact")
+  secretaryEmail    String?  @map("secretary_email")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdBy         String   @map("created_by")
+
+  @@map("schools")
 }
 

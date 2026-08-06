@@ -29,13 +29,15 @@ function parseSaIdClient(id: string): { dob: string; gender: string } | null {
   };
 }
 
-export default function AddParticipantForm() {
+export default function AddParticipantForm({ schools }: { schools: { id: string; name: string }[] }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [idDerived, setIdDerived] = useState<{ dob: string; gender: string } | null>(null);
   const [idError, setIdError] = useState("");
   const [selectedGrade, setSelectedGrade] = useState("");
+  const [school, setSchool] = useState("");
+  const [schoolNotes, setSchoolNotes] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string>("");
   const [uploading, setUploading] = useState(false);
@@ -353,17 +355,27 @@ export default function AddParticipantForm() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">School</label>
-            <select name="school" className={inputCls}>
+            <select name="school" value={school} onChange={(e) => setSchool(e.target.value)} className={inputCls}>
               <option value="">— select —</option>
               <option value="N/A">N/A</option>
-              <option>Alternative</option>
-              <option>Indwe Secondary</option>
-              <option>TM Ndanda</option>
-              <option>Hillcrest</option>
-              <option>Sao Bras</option>
-              <option>Milkwood</option>
-              <option>Other</option>
+              <option value="Alternative">Alternative</option>
+              {schools.map((s) => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
             </select>
+            {(school === "N/A" || school === "Alternative") && (
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Notes *</label>
+                <input
+                  name="schoolNotes"
+                  required
+                  value={schoolNotes}
+                  onChange={(e) => setSchoolNotes(e.target.value)}
+                  placeholder="Reason for N/A / Alternative…"
+                  className={inputCls}
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Current Grade</label>

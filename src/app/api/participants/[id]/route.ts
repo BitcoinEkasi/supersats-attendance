@@ -105,6 +105,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return Response.json({ error: "A valid TSK level is required" }, { status: 400 });
   }
 
+  const school = body.school?.trim() || null;
+  if ((school === "N/A" || school === "Alternative") && !body.schoolNotes?.trim()) {
+    return Response.json({ error: "Notes is required when School is N/A or Alternative" }, { status: 400 });
+  }
+
   const existing = await prisma.participant.findUnique({
     where: { id },
     select: { status: true, tskStatus: true, weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true, isAssistantCoach: true, assistantCoachSince: true, boltUserId: true, surname: true, fullNames: true, knownAs: true },
@@ -182,7 +187,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         assistantCoachSince: appliedSince,
         ethnicity: body.ethnicity?.trim() || null,
         language: body.language?.trim() || null,
-        school: body.school?.trim() || null,
+        school,
+        schoolNotes: (school === "N/A" || school === "Alternative") ? (body.schoolNotes?.trim() || null) : null,
         grade: body.grade?.trim() || null,
         guardian: body.guardian?.trim() || null,
         guardianId: body.guardianId?.trim() || null,

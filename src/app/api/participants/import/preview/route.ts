@@ -12,6 +12,7 @@ export interface CsvParticipantRow {
   ethnicity: string | null;
   language: string | null;
   school: string | null;
+  schoolNotes: string | null;
   grade: string | null;
   guardian: string | null;
   guardianId: string | null;
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
   const iEthnicity    = col("ethnicity");
   const iLanguage     = col("language");
   const iSchool       = col("school");
+  const iSchoolNotes  = col("school notes");
   const iGrade        = col("grade");
   const iGuardian     = col("guardian");
   const iGuardianId   = col("guardian id");
@@ -101,6 +103,7 @@ export async function POST(req: Request) {
       ethnicity:            get(iEthnicity) || null,
       language:             get(iLanguage) || null,
       school:               get(iSchool) || null,
+      schoolNotes:          get(iSchoolNotes) || null,
       grade:                get(iGrade) || null,
       guardian:             get(iGuardian) || null,
       guardianId:           get(iGuardianId) || null,

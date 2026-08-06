@@ -40,7 +40,7 @@ type PendingChange = {
   effectiveFrom: string;
 };
 
-export default function EditParticipantForm({ participant, pendingChanges = [] }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] }; pendingChanges?: PendingChange[] }) {
+export default function EditParticipantForm({ participant, schools, pendingChanges = [] }: { participant: Participant & { certifications: Certification[]; performanceEvents: PerformanceEvent[]; tskLevelHistory: TskLevelHistory[] }; schools: { id: string; name: string }[]; pendingChanges?: PendingChange[] }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,6 +79,9 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
   const [participantStatus, setParticipantStatus] = useState<ParticipantStatus>(participant.status);
   const [retiredReason, setRetiredReason] = useState<string>((participant as any).retiredReason || "");
   const [retiredReasonOther, setRetiredReasonOther] = useState<string>((participant as any).retiredReasonOther || "");
+
+  const [school, setSchool] = useState<string>(participant.school || "");
+  const [schoolNotes, setSchoolNotes] = useState<string>((participant as any).schoolNotes || "");
 
   const [stance, setStance] = useState<string>((participant as any).stance || "");
   const [tskStatus, setTskStatus] = useState<string>((participant as any).tskStatus || "");
@@ -429,17 +432,32 @@ export default function EditParticipantForm({ participant, pendingChanges = [] }
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">School</label>
-            <select name="school" defaultValue={participant.school || ""} className={inputCls}>
+            <select
+              name="school"
+              value={school}
+              onChange={(e) => { setSchool(e.target.value); setSaved(false); setIsDirty(true); }}
+              className={inputCls}
+            >
               <option value="">— select —</option>
               <option value="N/A">N/A</option>
-              <option>Alternative</option>
-              <option>Indwe Secondary</option>
-              <option>TM Ndanda</option>
-              <option>Hillcrest</option>
-              <option>Sao Bras</option>
-              <option>Milkwood</option>
-              <option>Other</option>
+              <option value="Alternative">Alternative</option>
+              {schools.map((s) => (
+                <option key={s.id} value={s.name}>{s.name}</option>
+              ))}
             </select>
+            {(school === "N/A" || school === "Alternative") && (
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700">Notes *</label>
+                <input
+                  name="schoolNotes"
+                  required
+                  value={schoolNotes}
+                  onChange={(e) => { setSchoolNotes(e.target.value); setSaved(false); setIsDirty(true); }}
+                  placeholder="Reason for N/A / Alternative…"
+                  className={inputCls}
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Current Grade</label>

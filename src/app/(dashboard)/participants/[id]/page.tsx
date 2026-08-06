@@ -45,7 +45,7 @@ export default async function ParticipantDetailPage({
 
   if (!participant) notFound();
 
-  const [monthlyReportEntries, allAttendanceRecords] = await Promise.all([
+  const [monthlyReportEntries, allAttendanceRecords, schools] = await Promise.all([
     prisma.monthlyReportEntry.findMany({
       where: { participantId: id },
       include: { report: { select: { id: true, month: true, status: true } } },
@@ -57,6 +57,7 @@ export default async function ParticipantDetailPage({
       include: { event: { select: { date: true, category: true } } },
       orderBy: { event: { date: "asc" } },
     }),
+    prisma.school.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
 
   // Group sessions by YYYY-MM for the MonthlyAttendanceHistory component
@@ -210,6 +211,7 @@ export default async function ParticipantDetailPage({
         {role === "ADMINISTRATOR" ? (
           <EditParticipantForm
             participant={participant}
+            schools={schools}
             pendingChanges={pendingChanges.map((c) => ({
               id: c.id,
               field: c.field,
@@ -265,6 +267,12 @@ export default async function ParticipantDetailPage({
                 <div className="flex justify-between">
                   <dt className="text-gray-500">School</dt>
                   <dd className="font-medium">{participant.school}</dd>
+                </div>
+              )}
+              {participant.schoolNotes && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">School Notes</dt>
+                  <dd className="font-medium">{participant.schoolNotes}</dd>
                 </div>
               )}
               {participant.grade && (

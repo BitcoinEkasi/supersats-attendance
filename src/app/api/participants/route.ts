@@ -67,6 +67,11 @@ export async function POST(req: Request) {
     return Response.json({ error: parsed.error }, { status: 400 });
   }
 
+  const school = body.school?.trim() || null;
+  if ((school === "N/A" || school === "Alternative") && !body.schoolNotes?.trim()) {
+    return Response.json({ error: "Notes is required when School is N/A or Alternative" }, { status: 400 });
+  }
+
   const activeDuplicate = await prisma.participant.findFirst({
     where: { idNumber, status: "ACTIVE" },
     select: { id: true },
@@ -94,7 +99,8 @@ export async function POST(req: Request) {
           registrationDate,
           ethnicity: body.ethnicity?.trim() || null,
           language: body.language?.trim() || null,
-          school: body.school?.trim() || null,
+          school,
+          schoolNotes: (school === "N/A" || school === "Alternative") ? (body.schoolNotes?.trim() || null) : null,
           grade: body.grade?.trim() || null,
           guardian: body.guardian?.trim() || null,
           guardianId: body.guardianId?.trim() || null,

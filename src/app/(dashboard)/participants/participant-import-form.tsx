@@ -13,6 +13,7 @@ interface CsvParticipantRow {
   ethnicity: string | null;
   language: string | null;
   school: string | null;
+  schoolNotes: string | null;
   grade: string | null;
   guardian: string | null;
   guardianId: string | null;
@@ -121,7 +122,7 @@ export default function ParticipantImportForm() {
       <div className="mt-2 flex flex-wrap gap-1">
         {[
           "Card number", "Full Names", "Surname", "Known as", "SA ID Number",
-          "Gender", "Ethnicity", "Language", "Date from", "School", "Grade",
+          "Gender", "Ethnicity", "Language", "Date from", "School", "School Notes", "Grade",
           "Guardian", "Guardian ID", "Relationship", "Address",
           "1st Contact", "2nd Contact", "Housing Type", "Portfolio Link",
         ].map((col) => (

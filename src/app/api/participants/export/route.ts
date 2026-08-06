@@ -12,7 +12,7 @@ export async function GET() {
   const headers = [
     "TSK ID", "Surname", "Full Names", "Known As", "Gender", "Date of Birth",
     "Status", "Assistant Coach", "AC Since", "Registration Date",
-    "Ethnicity", "Language", "School", "Grade",
+    "Ethnicity", "Language", "School", "School Notes", "Grade",
     "Guardian", "Guardian ID", "Relationship",
     "Address", "Contact 1", "Contact 2", "Housing Type",
     "Bolt Card",
@@ -43,6 +43,7 @@ export async function GET() {
     esc(p.ethnicity),
     esc(p.language),
     esc(p.school),
+    esc(p.schoolNotes),
     esc(p.grade),
     esc(p.guardian),
     esc(p.guardianId),
