@@ -24,6 +24,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   });
   if (!report) return Response.json({ error: "Report not found" }, { status: 404 });
   if (report.status === "APPROVED") return Response.json({ error: "Report is already approved" }, { status: 400 });
+  if (report.payoutStatus !== "unpaid") return Response.json({ error: "This report has already been paid out" }, { status: 400 });
 
   const { year, month } = getSASTNow();
   const currentYM = `${year}-${String(month).padStart(2, "0")}`;

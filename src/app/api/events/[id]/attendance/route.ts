@@ -9,6 +9,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id: eventId } = await params;
   const records = (await req.json()) as { participantId: string; present: boolean; onTour?: boolean }[];
 
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { date: true, group: true } });
+  if (!event) return Response.json({ error: "Event not found" }, { status: 404 });
+
+  const month = event.date.toISOString().substring(0, 7);
+  const report = await prisma.monthlyReport.findFirst({
+    where: { month, group: (event.group as any) ?? null },
+    select: { status: true },
+  });
+  if (report?.status === "APPROVED") {
+    return Response.json(
+      { error: "This month has already been approved and is locked — attendance can no longer be edited." },
+      { status: 409 },
+    );
+  }
+
   try {
     await prisma.$transaction(
       records.map((r) =>
@@ -20,11 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       ),
     );
 
-    const event = await prisma.event.findUnique({ where: { id: eventId }, select: { date: true, group: true } });
-    if (event) {
-      const month = event.date.toISOString().substring(0, 7);
-      await upsertMonthlyReport(month, user.id, (event.group as any) ?? null);
-    }
+    await upsertMonthlyReport(month, user.id, (event.group as any) ?? null);
 
     return Response.json({ success: true });
   } catch {

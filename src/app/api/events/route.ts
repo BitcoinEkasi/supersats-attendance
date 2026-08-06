@@ -44,6 +44,18 @@ export async function POST(req: Request) {
   const dateStr = date === "today" ? getSASTDateString() : date;
   const tskGroup = group as TskGroupKey;
 
+  const month = dateStr.substring(0, 7);
+  const report = await prisma.monthlyReport.findFirst({
+    where: { month, group: tskGroup },
+    select: { status: true },
+  });
+  if (report?.status === "APPROVED") {
+    return Response.json(
+      { error: "This month has already been approved and is locked — no new sessions can be added." },
+      { status: 409 },
+    );
+  }
+
   // One session per (day, group)
   const existing = await prisma.event.findFirst({
     where: { date: new Date(dateStr + "T12:00:00.000Z"), group: tskGroup },
@@ -69,7 +81,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    const month = dateStr.substring(0, 7);
     await upsertMonthlyReport(month, user.id, tskGroup);
   } catch (err) {
     console.error("[events POST] failed to upsert monthly report:", err);

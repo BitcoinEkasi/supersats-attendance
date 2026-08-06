@@ -74,16 +74,19 @@ export async function upsertMonthlyReport(
       where: { month, group: group ?? null },
     });
 
+    // An approved report is locked — it must never be silently un-approved or have its
+    // entries wiped/recalculated by a later attendance/event/participant edit. Every
+    // caller of this function is expected to check this first and reject the underlying
+    // action with a clear error instead of reaching here, but this is the one place that
+    // actually enforces it, since relying on every call site to remember is exactly how
+    // an approved, already-paid report previously got silently reset to PENDING.
+    if (existing?.status === "APPROVED") return;
+
     let reportId: string;
     if (existing) {
       await tx.monthlyReport.update({
         where: { id: existing.id },
-        data: {
-          generatedAt: new Date(),
-          ...(existing.status === "APPROVED"
-            ? { status: "PENDING", approvedAt: null, approvedBy: null }
-            : {}),
-        },
+        data: { generatedAt: new Date() },
       });
       reportId = existing.id;
     } else {
