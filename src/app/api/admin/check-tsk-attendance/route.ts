@@ -9,6 +9,7 @@ import { shouldSendNow, markSent } from "@/lib/email-schedule";
 import { TSK_GROUPS, TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 import { getConsecutiveMissedCounts } from "@/lib/consecutive-missed";
 import { renderGroupChartPng } from "@/lib/render-chart-screenshot";
+import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import type { EmailRecipientCategory } from "@prisma/client";
 
 type RosterRow = {
@@ -71,10 +72,14 @@ export async function POST(req: Request) {
       where: { date: { gte: todayStart, lte: todayEnd }, group: { not: null } },
       select: { id: true, group: true, date: true, category: true },
     }),
-    prisma.excusedSession.findMany({ where: { date: todayDate }, select: { group: true } }),
+    prisma.excusedSession.findMany({ where: { date: todayDate }, select: { group: true, reason: true } }),
   ]);
 
-  const excusedGroups = new Set(excusedToday.map((e) => e.group));
+  const excusedGroups = new Map(
+    excusedToday
+      .filter((e) => getExcuseCategory(e.reason) === "excused")
+      .map((e) => [e.group as string, e.reason]),
+  );
   const eventByGroup = new Map(events.map((e) => [e.group as string, e]));
   const { year, month: monthNum } = getSASTNow();
   const monthStr = `${year}-${String(monthNum).padStart(2, "0")}`;
@@ -87,14 +92,13 @@ export async function POST(req: Request) {
   const sent: string[] = [];
 
   for (const group of TSK_GROUPS) {
-    if (excusedGroups.has(group)) continue;
+    const excuseReason = excusedGroups.get(group);
     // No event created at all is treated the same as "session created but nothing
     // captured" — a marshal who never opens the session is exactly as much a zero-
     // attendance case as one who opens it and never submits the roster. Every group
     // is expected to have a session on every valid programme day (confirmed against
     // real usage — no group has a "doesn't meet this day" pattern), so this can't
-    // fire spuriously; the only other reason a day has no event is that it was
-    // already excused, which is filtered out by the check above.
+    // fire spuriously.
     const event = eventByGroup.get(group);
 
     const groupLabel = TSK_GROUP_LABELS[group];
@@ -126,7 +130,13 @@ export async function POST(req: Request) {
     let subject: string;
     let html: string;
 
-    if (zeroCaptured) {
+    if (excuseReason) {
+      subject = `✅ TSK Attendance for the ${groupLabel} (Session Flagged)`;
+      html = `
+        <p style="margin:0;"><strong>${groupLabel}</strong> — No session for ${fmtWeekdayShort(todayDate)}, ${fmtDate(todayDate)}.</p>
+        <p style="margin:0;">Reason: ${excuseReason}</p>
+      `;
+    } else if (zeroCaptured) {
       const displayDate = event?.date ?? todayDate;
       subject = `⚠️ Zero Attendance flagged for the ${groupLabel}!`;
       html = `

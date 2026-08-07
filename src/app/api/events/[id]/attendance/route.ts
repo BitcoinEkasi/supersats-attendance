@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
+import { getExcuseCategory } from "@/lib/excused-session-reasons";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR", "MARSHAL"]);
@@ -22,6 +23,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       { error: "This month has already been approved and is locked — attendance can no longer be edited." },
       { status: 409 },
     );
+  }
+
+  const excuse = await prisma.excusedSession.findFirst({
+    where: { date: event.date, group: (event.group as any) ?? null },
+    select: { reason: true },
+  });
+  if (excuse && getExcuseCategory(excuse.reason) === "excused") {
+    return Response.json({ error: `No session today — ${excuse.reason}` }, { status: 409 });
   }
 
   try {

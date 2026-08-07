@@ -4,9 +4,10 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CreateEventForm from "./create-event-form";
 import SessionsTable from "./sessions-table";
-import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
+import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, groupSortIndex, isValidGroup, type TskGroupKey } from "@/lib/tsk-groups";
+import { getExcuseCategory } from "@/lib/excused-session-reasons";
 
 export default async function AttendancePage() {
   const session = await auth();
@@ -18,6 +19,22 @@ export default async function AttendancePage() {
   const todayEnd = getEndOfSASTToday();
 
   if (isMobile) {
+    if (userGroup && isValidGroup(userGroup)) {
+      const todayDate = new Date(`${getSASTDateString()}T12:00:00.000Z`);
+      const excuse = await prisma.excusedSession.findFirst({
+        where: { date: todayDate, group: userGroup as TskGroupKey },
+        select: { reason: true },
+      });
+      if (excuse && getExcuseCategory(excuse.reason) === "excused") {
+        return (
+          <div className="flex min-h-dvh flex-col justify-center px-6 py-12 text-center">
+            <h1 className="text-2xl font-bold text-gray-900">No Session Today</h1>
+            <p className="mt-3 text-base text-gray-600">{excuse.reason}</p>
+          </div>
+        );
+      }
+    }
+
     // For group Marshals: only look at sessions for their group
     const groupFilter = userGroup && isValidGroup(userGroup) ? { group: userGroup as TskGroupKey } : {};
     const todayEvents = await prisma.event.findMany({

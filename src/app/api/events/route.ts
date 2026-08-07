@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { getSASTDateString, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, isValidGroup } from "@/lib/tsk-groups";
+import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import type { EventCategory } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -54,6 +55,14 @@ export async function POST(req: Request) {
       { error: "This month has already been approved and is locked — no new sessions can be added." },
       { status: 409 },
     );
+  }
+
+  const excuse = await prisma.excusedSession.findFirst({
+    where: { date: new Date(dateStr + "T12:00:00.000Z"), group: tskGroup },
+    select: { reason: true },
+  });
+  if (excuse && getExcuseCategory(excuse.reason) === "excused") {
+    return Response.json({ error: `No session today — ${excuse.reason}` }, { status: 409 });
   }
 
   // One session per (day, group)
