@@ -38,6 +38,9 @@ export async function POST(req: Request) {
   if (!date || !category) {
     return Response.json({ error: "Date and category are required" }, { status: 400 });
   }
+  if (category === "OTHER" && !note?.trim()) {
+    return Response.json({ error: "A note is required when Other is selected as the session activity." }, { status: 400 });
+  }
   if (!group || !isValidGroup(group)) {
     return Response.json({ error: "A valid group is required" }, { status: 400 });
   }

@@ -49,6 +49,10 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
 
   async function handleMobileCreate() {
     if (!selected || !group) return;
+    if (selected === "OTHER" && !note.trim()) {
+      setError("A note is required when Other is selected.");
+      return;
+    }
     setLoading(true);
     setError("");
     const res = await fetch("/api/events", {
@@ -131,12 +135,12 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Add a note (optional)"
+                  placeholder={selected === "OTHER" ? "Describe the activity (required)" : "Add a note (optional)"}
                   className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base focus:border-orange-400 focus:outline-none"
                 />
                 <button
                   onClick={handleMobileCreate}
-                  disabled={loading}
+                  disabled={loading || (selected === "OTHER" && !note.trim())}
                   className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white disabled:opacity-50 active:bg-orange-700"
                 >
                   {loading ? "Starting…" : "Start Session"}
@@ -153,6 +157,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
   const [desktopLoading, setDesktopLoading] = useState(false);
   const [desktopError, setDesktopError] = useState("");
   const [desktopGroup, setDesktopGroup] = useState<string>("");
+  const [desktopCategory, setDesktopCategory] = useState<string>("");
   const inputCls = "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
 
   async function handleDesktopSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -203,7 +208,13 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Activity *</label>
-          <select name="category" required className={inputCls}>
+          <select
+            name="category"
+            required
+            className={inputCls}
+            value={desktopCategory}
+            onChange={(e) => setDesktopCategory(e.target.value)}
+          >
             <option value="">Select activity...</option>
             {visibleCategories(desktopGroup).map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
@@ -211,8 +222,16 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Note</label>
-          <textarea name="note" rows={2} className={inputCls} placeholder="Optional note about this session" />
+          <label className="block text-sm font-medium text-gray-700">
+            Note{desktopCategory === "OTHER" ? " *" : ""}
+          </label>
+          <textarea
+            name="note"
+            rows={2}
+            required={desktopCategory === "OTHER"}
+            className={inputCls}
+            placeholder={desktopCategory === "OTHER" ? "Describe the activity (required)" : "Optional note about this session"}
+          />
         </div>
         <button
           type="submit"
