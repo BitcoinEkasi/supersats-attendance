@@ -22,19 +22,6 @@ enum Gender {
   FEMALE
 }
 
-enum EventCategory {
-  SURFING
-  FITNESS
-  SKATING
-  BEACH_CLEAN_UP
-  BEACH_ACTIVITIES
-  SIMULATED_HEATS
-  VIDEO_ANALYSIS
-  MENTAL_TRAINING
-  SCORING_REVIEW
-  OTHER
-}
-
 enum ReportStatus {
   PENDING
   APPROVED
@@ -197,7 +184,7 @@ model Certification {
 model Event {
   id          String        @id @default(uuid())
   date        DateTime
-  category    EventCategory
+  category    String
   group       TskGroup?
   note        String?
   createdBy   String        @map("created_by")
@@ -488,5 +475,16 @@ model School {
   createdBy         String   @map("created_by")
 
   @@map("schools")
+}
+
+model SessionActivity {
+  id                String    @id @default(uuid())
+  name              String    @unique
+  restrictedToGroup TskGroup? @map("restricted_to_group")
+  requiresNote      Boolean   @default(false) @map("requires_note")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  createdBy         String    @map("created_by")
+
+  @@map("session_activities")
 }
 

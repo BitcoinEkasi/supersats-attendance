@@ -2,33 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { EventCategory } from "@prisma/client";
 import { getSASTDateString } from "@/lib/sast";
 import { TSK_GROUPS, TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
 
-const categories: { value: EventCategory; label: string }[] = [
-  { value: "SURFING", label: "Surfing" },
-  { value: "FITNESS", label: "Fitness" },
-  { value: "SKATING", label: "Skating" },
-  { value: "BEACH_CLEAN_UP", label: "Beach Clean Up" },
-  { value: "BEACH_ACTIVITIES", label: "Beach Activities" },
-  { value: "SIMULATED_HEATS", label: "Simulated Heats" },
-  { value: "VIDEO_ANALYSIS", label: "Video Analysis" },
-  { value: "MENTAL_TRAINING", label: "Mental Training" },
-  { value: "SCORING_REVIEW", label: "Scoring Review" },
-  { value: "OTHER", label: "Other" },
-];
+type SessionActivityOption = { id: string; name: string; restrictedToGroup: string | null; requiresNote: boolean };
 
-const SHARKS_ONLY: Set<EventCategory> = new Set(["SIMULATED_HEATS", "VIDEO_ANALYSIS", "MENTAL_TRAINING", "SCORING_REVIEW"]);
-
-function visibleCategories(group: string | null) {
-  return categories.filter((c) => !SHARKS_ONLY.has(c.value) || group === "SHARKS");
+function visibleActivities(activities: SessionActivityOption[], group: string | null) {
+  return activities.filter((a) => !a.restrictedToGroup || a.restrictedToGroup === group);
 }
 
-export default function CreateEventForm({ mobile = false, fixedGroup = null }: { mobile?: boolean; fixedGroup?: TskGroupKey | null }) {
+export default function CreateEventForm({
+  mobile = false,
+  fixedGroup = null,
+  activities,
+}: {
+  mobile?: boolean;
+  fixedGroup?: TskGroupKey | null;
+  activities: SessionActivityOption[];
+}) {
   const router = useRouter();
   const [group, setGroup] = useState<TskGroupKey | null>(fixedGroup);
-  const [selected, setSelected] = useState<EventCategory | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,10 +41,12 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
     return () => clearTimeout(timer);
   }, [mobile, router]);
 
+  const selectedActivity = activities.find((a) => a.name === selected);
+
   async function handleMobileCreate() {
     if (!selected || !group) return;
-    if (selected === "OTHER" && !note.trim()) {
-      setError("A note is required when Other is selected.");
+    if (selectedActivity?.requiresNote && !note.trim()) {
+      setError(`A note is required when ${selected} is selected.`);
       return;
     }
     setLoading(true);
@@ -114,17 +110,17 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
             </p>
 
             <div className="mt-8 space-y-3">
-              {visibleCategories(group).map((c) => (
+              {visibleActivities(activities, group).map((a) => (
                 <button
-                  key={c.value}
-                  onClick={() => setSelected(c.value)}
+                  key={a.id}
+                  onClick={() => setSelected(a.name)}
                   className={`w-full rounded-2xl border-2 px-5 py-5 text-left text-lg font-semibold transition-all active:scale-98 ${
-                    selected === c.value
+                    selected === a.name
                       ? "border-orange-500 bg-orange-50 text-orange-700"
                       : "border-gray-200 bg-white text-gray-700"
                   }`}
                 >
-                  {c.label}
+                  {a.name}
                 </button>
               ))}
             </div>
@@ -135,12 +131,12 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder={selected === "OTHER" ? "Describe the activity (required)" : "Add a note (optional)"}
+                  placeholder={selectedActivity?.requiresNote ? "Describe the activity (required)" : "Add a note (optional)"}
                   className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-base focus:border-orange-400 focus:outline-none"
                 />
                 <button
                   onClick={handleMobileCreate}
-                  disabled={loading || (selected === "OTHER" && !note.trim())}
+                  disabled={loading || (!!selectedActivity?.requiresNote && !note.trim())}
                   className="w-full rounded-2xl bg-orange-600 py-5 text-lg font-bold text-white disabled:opacity-50 active:bg-orange-700"
                 >
                   {loading ? "Starting…" : "Start Session"}
@@ -159,6 +155,7 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
   const [desktopGroup, setDesktopGroup] = useState<string>("");
   const [desktopCategory, setDesktopCategory] = useState<string>("");
   const inputCls = "mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none";
+  const desktopSelectedActivity = activities.find((a) => a.name === desktopCategory);
 
   async function handleDesktopSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -216,21 +213,21 @@ export default function CreateEventForm({ mobile = false, fixedGroup = null }: {
             onChange={(e) => setDesktopCategory(e.target.value)}
           >
             <option value="">Select activity...</option>
-            {visibleCategories(desktopGroup).map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+            {visibleActivities(activities, desktopGroup).map((a) => (
+              <option key={a.id} value={a.name}>{a.name}</option>
             ))}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Note{desktopCategory === "OTHER" ? " *" : ""}
+            Note{desktopSelectedActivity?.requiresNote ? " *" : ""}
           </label>
           <textarea
             name="note"
             rows={2}
-            required={desktopCategory === "OTHER"}
+            required={!!desktopSelectedActivity?.requiresNote}
             className={inputCls}
-            placeholder={desktopCategory === "OTHER" ? "Describe the activity (required)" : "Optional note about this session"}
+            placeholder={desktopSelectedActivity?.requiresNote ? "Describe the activity (required)" : "Optional note about this session"}
           />
         </div>
         <button

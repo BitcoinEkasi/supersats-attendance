@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
-import type { EventCategory, TskGroup } from "@prisma/client";
+import type { TskGroup } from "@prisma/client";
 import type { TskGroupKey } from "@/lib/tsk-groups";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -80,10 +80,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const body = await req.json();
 
+  const event = await prisma.event.findUnique({ where: { id }, select: { date: true, group: true } });
+  if (!event) return Response.json({ error: "Not found" }, { status: 404 });
+
+  const month = `${event.date.getUTCFullYear()}-${String(event.date.getUTCMonth() + 1).padStart(2, "0")}`;
+  const report = await prisma.monthlyReport.findFirst({
+    where: { month, group: (event.group as TskGroup | null) ?? null },
+    select: { status: true },
+  });
+  if (report?.status === "APPROVED") {
+    return Response.json(
+      { error: "This month has already been approved and is locked — session details can no longer be edited." },
+      { status: 409 },
+    );
+  }
+
   try {
-    const data: { note?: string | null; category?: EventCategory } = {};
+    const data: { note?: string | null; category?: string } = {};
     if ("note" in body) data.note = body.note?.trim() || null;
-    if ("category" in body) data.category = body.category as EventCategory;
+    if ("category" in body) data.category = body.category as string;
 
     await prisma.event.update({ where: { id }, data });
     return Response.json({ success: true });

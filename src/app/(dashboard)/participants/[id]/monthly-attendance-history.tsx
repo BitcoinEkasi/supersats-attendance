@@ -23,15 +23,6 @@ type Session = {
   present: boolean;
 };
 
-const categoryLabels: Record<string, string> = {
-  SURFING: "Surfing",
-  FITNESS: "Fitness",
-  SKATING: "Skating",
-  BEACH_CLEAN_UP: "Beach Clean Up",
-  BEACH_ACTIVITIES: "Beach Activities",
-  OTHER: "Other",
-};
-
 export default function MonthlyAttendanceHistory({
   entries,
   sessionsByMonth,
@@ -114,7 +105,7 @@ export default function MonthlyAttendanceHistory({
                             {sessions.map((s, i) => (
                               <tr key={i} className="border-t border-gray-100">
                                 <td className="py-1 pl-2 text-gray-600">{s.date}</td>
-                                <td className="py-1 text-gray-600">{categoryLabels[s.category] || s.category}</td>
+                                <td className="py-1 text-gray-600">{s.category}</td>
                                 <td className="py-1">
                                   {s.present ? (
                                     <span className="inline-flex rounded-full px-2 py-0.5 font-medium bg-green-100 text-green-700">Present</span>

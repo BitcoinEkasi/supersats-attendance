@@ -10,19 +10,6 @@ import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 
-const categoryLabels: Record<string, string> = {
-  SURFING: "Surfing",
-  FITNESS: "Fitness",
-  SKATING: "Skating",
-  BEACH_CLEAN_UP: "Beach Clean Up",
-  BEACH_ACTIVITIES: "Beach Activities",
-  SIMULATED_HEATS: "Simulated Heats",
-  VIDEO_ANALYSIS: "Video Analysis",
-  MENTAL_TRAINING: "Mental Training",
-  SCORING_REVIEW: "Scoring Review",
-  OTHER: "Other",
-};
-
 export default async function EventAttendancePage({
   params,
 }: {
@@ -42,6 +29,8 @@ export default async function EventAttendancePage({
   });
 
   if (!event) notFound();
+
+  const activities = await prisma.sessionActivity.findMany({ orderBy: { createdAt: "asc" } });
 
   // Marshals may only access today's session
   if (isMobile) {
@@ -93,7 +82,7 @@ export default async function EventAttendancePage({
                 </span>
               )}
             </p>
-            <CategorySelect eventId={event.id} category={event.category} group={event.group} />
+            <CategorySelect eventId={event.id} category={event.category} group={event.group} activities={activities} />
             <NoteInput eventId={event.id} note={event.note} />
           </div>
         </div>
@@ -116,7 +105,7 @@ export default async function EventAttendancePage({
         </Link>
         <span className="text-gray-300">/</span>
         <h2 className="text-xl font-bold text-gray-900">
-          {fmtDate(event.date)} — {categoryLabels[event.category] || event.category}
+          {fmtDate(event.date)} — {event.category}
           {groupLabel && (
             <span className="ml-2 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-sm font-medium text-orange-700">
               {groupLabel}

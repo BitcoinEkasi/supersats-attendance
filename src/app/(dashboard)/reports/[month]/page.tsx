@@ -90,12 +90,6 @@ export default async function ReportDetailPage({
   const avgPercentage = weightedAvgPercentage(report.entries);
   const qualifyingParticipants = report.entries.filter((e) => e.rewardSats > 0).length;
 
-  const categoryLabels: Record<string, string> = {
-    SURFING: "Surfing", FITNESS: "Fitness", SKATING: "Skating",
-    BEACH_CLEAN_UP: "Beach Clean Up", BEACH_ACTIVITIES: "Beach Activities",
-    SIMULATED_HEATS: "Simulated Heats", VIDEO_ANALYSIS: "Video Analysis",
-    MENTAL_TRAINING: "Mental Training", SCORING_REVIEW: "Scoring Review", OTHER: "Other",
-  };
   const activityBreakdown = monthEvents.reduce<Record<string, number>>((acc, e) => {
     acc[e.category] = (acc[e.category] ?? 0) + 1;
     return acc;
@@ -276,7 +270,7 @@ export default async function ReportDetailPage({
               <ul className="space-y-0.5">
                 {Object.entries(activityBreakdown).map(([cat, count]) => (
                   <li key={cat} className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{categoryLabels[cat] ?? cat}</span>
+                    <span>{cat}</span>
                     <span className="ml-2 font-medium text-gray-700">{count}</span>
                   </li>
                 ))}

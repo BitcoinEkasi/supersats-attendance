@@ -36,13 +36,6 @@ function renderSection(title: string, count: number, subtext: string | null, row
   return `<h3 style="margin-bottom:0;">${title} (${count})</h3>${subtext ? `<p style="margin:0 0 6px;">${subtext}</p>` : ""}${items}`;
 }
 
-const categoryLabels: Record<string, string> = {
-  SURFING: "Surfing", FITNESS: "Fitness", SKATING: "Skating",
-  BEACH_CLEAN_UP: "Beach Clean Up", BEACH_ACTIVITIES: "Beach Activities",
-  SIMULATED_HEATS: "Simulated Heats", VIDEO_ANALYSIS: "Video Analysis",
-  MENTAL_TRAINING: "Mental Training", SCORING_REVIEW: "Scoring Review", OTHER: "Other",
-};
-
 function fmtTime(d: Date): string {
   return d.toLocaleTimeString("en-ZA", { timeZone: "Africa/Johannesburg", hour: "2-digit", minute: "2-digit" });
 }
@@ -173,7 +166,7 @@ export async function POST(req: Request) {
       subject = `✅ TSK Attendance for the ${groupLabel}`;
       html = `
         <p style="margin:0;"><strong>${groupLabel}</strong>, ${present.length}/${total} (${fmtPct(pct)}) present for ${fmtWeekdayShort(nonNullEvent.date)}, ${fmtDate(nonNullEvent.date)}</p>
-        <p style="margin:0;">Session activity: ${categoryLabels[nonNullEvent.category] ?? nonNullEvent.category}</p>
+        <p style="margin:0;">Session activity: ${nonNullEvent.category}</p>
         <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
         <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt!)} and ${fmtTime(window._max.updatedAt!)}</p>
         ${renderSection("Present", present.length, null, present)}

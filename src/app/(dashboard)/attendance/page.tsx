@@ -71,11 +71,12 @@ export default async function AttendancePage() {
       );
     }
 
-    return <CreateEventForm mobile fixedGroup={userGroup && isValidGroup(userGroup) ? userGroup as TskGroupKey : null} />;
+    const activities = await prisma.sessionActivity.findMany({ orderBy: { createdAt: "asc" } });
+    return <CreateEventForm mobile fixedGroup={userGroup && isValidGroup(userGroup) ? userGroup as TskGroupKey : null} activities={activities} />;
   }
 
   // Desktop layout
-  const [events, todayEvents, approvedReports] = await Promise.all([
+  const [events, todayEvents, approvedReports, activities] = await Promise.all([
     prisma.event.findMany({
       orderBy: { date: "desc" },
       include: {
@@ -88,6 +89,7 @@ export default async function AttendancePage() {
       where: { status: "APPROVED" },
       select: { month: true, group: true },
     }),
+    prisma.sessionActivity.findMany({ orderBy: { createdAt: "asc" } }),
   ]);
 
   const eventRows = events.map((e) => ({
@@ -139,7 +141,7 @@ export default async function AttendancePage() {
               </div>
             </div>
           )}
-          <CreateEventForm />
+          <CreateEventForm activities={activities} />
         </div>
       </div>
     </div>

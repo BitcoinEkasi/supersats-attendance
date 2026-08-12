@@ -5,32 +5,6 @@ import Link from "next/link";
 import DeleteEventButton from "./delete-event-button";
 import { TSK_GROUP_LABELS, groupSortIndex } from "@/lib/tsk-groups";
 
-const categoryLabels: Record<string, string> = {
-  SURFING: "Surfing",
-  FITNESS: "Fitness",
-  SKATING: "Skating",
-  BEACH_CLEAN_UP: "Beach Clean Up",
-  BEACH_ACTIVITIES: "Beach Activities",
-  SIMULATED_HEATS: "Simulated Heats",
-  VIDEO_ANALYSIS: "Video Analysis",
-  MENTAL_TRAINING: "Mental Training",
-  SCORING_REVIEW: "Scoring Review",
-  OTHER: "Other",
-};
-
-const categoryColors: Record<string, string> = {
-  SURFING: "bg-blue-100 text-blue-700",
-  FITNESS: "bg-green-100 text-green-700",
-  SKATING: "bg-purple-100 text-purple-700",
-  BEACH_CLEAN_UP: "bg-yellow-100 text-yellow-700",
-  BEACH_ACTIVITIES: "bg-orange-100 text-orange-700",
-  SIMULATED_HEATS: "bg-red-100 text-red-700",
-  VIDEO_ANALYSIS: "bg-indigo-100 text-indigo-700",
-  MENTAL_TRAINING: "bg-pink-100 text-pink-700",
-  SCORING_REVIEW: "bg-teal-100 text-teal-700",
-  OTHER: "bg-gray-100 text-gray-600",
-};
-
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function fmtMonth(key: string) {
@@ -228,8 +202,8 @@ export default function SessionsTable({
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${categoryColors[event.category] || "bg-gray-100 text-gray-600"}`}>
-                              {categoryLabels[event.category] || event.category}
+                            <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">
+                              {event.category}
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">

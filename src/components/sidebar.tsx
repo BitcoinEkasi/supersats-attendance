@@ -61,6 +61,12 @@ const allNavItems = [
     icon: "M12 14l9-5-9-5-9 5 9 5zm0 0v6m-9-1v-5m18 5v-5",
   },
   {
+    href: "/session-activities",
+    label: "Session Activities",
+    roles: ["ADMINISTRATOR"] as UserRole[],
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 3v4h6V3M9 12h6m-6 4h6",
+  },
+  {
     href: "/email-settings",
     label: "Email Settings",
     roles: ["ADMINISTRATOR"] as UserRole[],

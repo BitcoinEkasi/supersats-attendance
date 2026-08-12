@@ -2,7 +2,6 @@ import { prisma } from "@/lib/db";
 import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getNMonthsFrom, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
 import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
-import { CATEGORY_SHORT_LABELS } from "@/lib/event-categories";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import { computeMonthlyRosterCounts, type MonthlyRoster } from "@/lib/roster-history";
 import { computeParticipantMonthAttendance, sumAttendance } from "@/lib/participant-attendance";
@@ -167,7 +166,7 @@ export async function computeAttendanceStats({
       : isProgrammeDay(date) ? "gap" : "off";
     const d = new Date(`${date}T12:00:00.000Z`);
     const activity = agg.categories.size === 1
-      ? CATEGORY_SHORT_LABELS[[...agg.categories][0]] ?? [...agg.categories][0]
+      ? (([...agg.categories][0].length > 6) ? [...agg.categories][0].slice(0, 5) + "…" : [...agg.categories][0])
       : agg.categories.size > 1 ? "Multi" : "";
     return {
       date,

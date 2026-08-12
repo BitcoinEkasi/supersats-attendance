@@ -4,7 +4,6 @@ import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { getSASTDateString, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey, isValidGroup } from "@/lib/tsk-groups";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
-import type { EventCategory } from "@prisma/client";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { date, category, note, group } = body as {
     date?: string;
-    category?: EventCategory;
+    category?: string;
     note?: string;
     group?: string;
   };
@@ -38,8 +37,9 @@ export async function POST(req: Request) {
   if (!date || !category) {
     return Response.json({ error: "Date and category are required" }, { status: 400 });
   }
-  if (category === "OTHER" && !note?.trim()) {
-    return Response.json({ error: "A note is required when Other is selected as the session activity." }, { status: 400 });
+  const activity = await prisma.sessionActivity.findUnique({ where: { name: category }, select: { requiresNote: true } });
+  if (activity?.requiresNote && !note?.trim()) {
+    return Response.json({ error: `A note is required when ${category} is selected as the session activity.` }, { status: 400 });
   }
   if (!group || !isValidGroup(group)) {
     return Response.json({ error: "A valid group is required" }, { status: 400 });
