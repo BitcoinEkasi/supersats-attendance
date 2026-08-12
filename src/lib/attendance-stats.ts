@@ -166,7 +166,7 @@ export async function computeAttendanceStats({
       : isProgrammeDay(date) ? "gap" : "off";
     const d = new Date(`${date}T12:00:00.000Z`);
     const activity = agg.categories.size === 1
-      ? (([...agg.categories][0].length > 6) ? [...agg.categories][0].slice(0, 5) + "…" : [...agg.categories][0])
+      ? (([...agg.categories][0].length > 10) ? [...agg.categories][0].slice(0, 9) + "…" : [...agg.categories][0])
       : agg.categories.size > 1 ? "Multi" : "";
     return {
       date,

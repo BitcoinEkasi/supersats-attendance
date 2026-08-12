@@ -36,7 +36,9 @@ function DayAxisTick(props: { x?: string | number; y?: string | number; payload?
     <g transform={`translate(${x},${y})`}>
       <text x={0} y={0} dy={11} textAnchor="middle" fontSize={11} fill="#374151">{payload?.value}</text>
       <text x={0} y={0} dy={22} textAnchor="middle" fontSize={9} fill="#9ca3af">{day?.weekday ?? ""}</text>
-      <text x={0} y={0} dy={33} textAnchor="middle" fontSize={8} fill="#9ca3af">{day?.activity ?? ""}</text>
+      <g transform="translate(0,28)">
+        <text x={0} y={0} textAnchor="end" fontSize={8} fill="#9ca3af" transform="rotate(-45)">{day?.activity ?? ""}</text>
+      </g>
     </g>
   );
 }
@@ -447,7 +449,7 @@ export default function AttendanceChart({
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={data.days} margin={{ top: 8, right: 24, left: 60, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={44} />
+              <XAxis dataKey="label" tick={(props) => <DayAxisTick {...props} days={data.days} />} interval={0} height={72} />
               <YAxis
                 hide
                 scale={group ? "sqrt" : "linear"}
