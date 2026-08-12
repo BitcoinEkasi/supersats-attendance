@@ -37,14 +37,18 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
+type SessionActivityOption = { id: string; name: string; restrictedToGroup: string | null };
+
 export default function SessionsTable({
   events,
   approvedMonthGroups,
   isAdmin = false,
+  activities = [],
 }: {
   events: EventRow[];
   approvedMonthGroups: string[];
   isAdmin?: boolean;
+  activities?: SessionActivityOption[];
 }) {
   const approvedSet = new Set(approvedMonthGroups);
 
@@ -76,6 +80,9 @@ export default function SessionsTable({
   const [openDays, setOpenDays] = useState<Record<string, boolean>>(defaultDayOpen);
   const [notes, setNotes] = useState<Record<string, string | null>>(() =>
     Object.fromEntries(events.map((e) => [e.id, e.note]))
+  );
+  const [categories, setCategories] = useState<Record<string, string>>(() =>
+    Object.fromEntries(events.map((e) => [e.id, e.category]))
   );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -202,9 +209,34 @@ export default function SessionsTable({
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">
-                              {event.category}
-                            </span>
+                            {isAdmin && !isApproved ? (
+                              <select
+                                value={categories[event.id]}
+                                onChange={async (e) => {
+                                  const next = e.target.value;
+                                  setCategories((prev) => ({ ...prev, [event.id]: next }));
+                                  await fetch(`/api/events/${event.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ category: next }),
+                                  });
+                                }}
+                                className="rounded-full border-none bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 focus:outline-none focus:ring-1 focus:ring-orange-400 cursor-pointer"
+                              >
+                                {!activities.some((a) => a.name === categories[event.id]) && (
+                                  <option value={categories[event.id]}>{categories[event.id]}</option>
+                                )}
+                                {activities
+                                  .filter((a) => !a.restrictedToGroup || a.restrictedToGroup === event.group)
+                                  .map((a) => (
+                                    <option key={a.id} value={a.name}>{a.name}</option>
+                                  ))}
+                              </select>
+                            ) : (
+                              <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">
+                                {categories[event.id]}
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <span className="font-medium text-green-700">{event.presentCount}</span>

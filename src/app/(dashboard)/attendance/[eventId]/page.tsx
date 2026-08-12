@@ -104,11 +104,10 @@ export default async function EventAttendancePage({
           ← Attendance
         </Link>
         <span className="text-gray-300">/</span>
-        <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-          {fmtDate(event.date)}
-          <CategorySelect eventId={event.id} category={event.category} group={event.group} activities={activities} />
+        <h2 className="text-xl font-bold text-gray-900">
+          {fmtDate(event.date)} — {event.category}
           {groupLabel && (
-            <span className="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-sm font-medium text-orange-700">
+            <span className="ml-2 inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-sm font-medium text-orange-700">
               {groupLabel}
             </span>
           )}

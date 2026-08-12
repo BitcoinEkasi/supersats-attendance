@@ -88,14 +88,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     where: { month, group: (event.group as TskGroup | null) ?? null },
     select: { status: true },
   });
-  const isLocked = report?.status === "APPROVED";
-  // An approved month still lets an administrator correct the session's activity —
-  // it's purely descriptive and never factors into attendance or payout calculations,
-  // unlike the note field or attendance records, which stay fully locked so approved
-  // data can never change (see the incident-fix work earlier this session).
-  const onlyChangingCategory = "category" in body && !("note" in body);
-  const adminActivityOverride = isLocked && user.role === "ADMINISTRATOR" && onlyChangingCategory;
-  if (isLocked && !adminActivityOverride) {
+  if (report?.status === "APPROVED") {
     return Response.json(
       { error: "This month has already been approved and is locked — session details can no longer be edited." },
       { status: 409 },
