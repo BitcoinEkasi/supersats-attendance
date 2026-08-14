@@ -170,8 +170,8 @@ export async function POST(req: Request) {
         <p style="margin:0;">Submitted by ${groupLabel} Marshal</p>
         <p style="margin:0;">Attendance captured between ${fmtTime(window._min.createdAt!)} and ${fmtTime(window._max.updatedAt!)}</p>
         ${renderSection("Present", present.length, null, present)}
-        ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive days", absentUpTo3, missedCounts)}
-        ${renderSection("Alert", alertOver3.length, "> 3 consecutive days", alertOver3, missedCounts)}
+        ${renderSection("Absent", absentUpTo3.length, "≤ 3 consecutive sessions", absentUpTo3, missedCounts)}
+        ${renderSection("Alert", alertOver3.length, "> 3 consecutive sessions", alertOver3, missedCounts)}
       `;
     }
 
