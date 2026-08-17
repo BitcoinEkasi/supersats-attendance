@@ -86,6 +86,54 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  // Measurements-only update (from the Data Sheets spreadsheet — a single cell at a time).
+  // Bypasses the full-form validation below (surname/fullNames/idNumber/tskStatus), which
+  // has nothing to do with a single measurement edit.
+  const MEASUREMENT_KEYS = ["weightKg", "heightCm", "tshirtSize", "shoeSize", "wetsuiteSize"];
+  if (Object.keys(body).length > 0 && Object.keys(body).every((k) => MEASUREMENT_KEYS.includes(k))) {
+    const existing = await prisma.participant.findUnique({
+      where: { id },
+      select: { weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true },
+    });
+    if (!existing) return Response.json({ error: "Not found" }, { status: 404 });
+
+    const newWeightKg = "weightKg" in body ? (body.weightKg ? parseFloat(body.weightKg) || null : null) : existing.weightKg;
+    const newHeightCm = "heightCm" in body ? (body.heightCm ? parseFloat(body.heightCm) || null : null) : existing.heightCm;
+    const newTshirtSize = "tshirtSize" in body ? (body.tshirtSize?.trim() || null) : existing.tshirtSize;
+    const newShoeSize = "shoeSize" in body ? (body.shoeSize?.trim() || null) : existing.shoeSize;
+    const newWetsuiteSize = "wetsuiteSize" in body ? (body.wetsuiteSize?.trim() || null) : existing.wetsuiteSize;
+
+    const weightChanged = existing.weightKg !== newWeightKg;
+    const heightChanged = existing.heightCm !== newHeightCm;
+    const tshirtChanged = existing.tshirtSize !== newTshirtSize;
+    const shoeChanged = existing.shoeSize !== newShoeSize;
+    const wetsuiteChanged = existing.wetsuiteSize !== newWetsuiteSize;
+    const measurementsChanged = weightChanged || heightChanged || tshirtChanged || shoeChanged || wetsuiteChanged;
+
+    try {
+      const now = new Date();
+      await prisma.participant.update({
+        where: { id },
+        data: {
+          weightKg: newWeightKg,
+          ...(weightChanged ? { weightUpdatedAt: now } : {}),
+          heightCm: newHeightCm,
+          ...(heightChanged ? { heightUpdatedAt: now } : {}),
+          tshirtSize: newTshirtSize,
+          ...(tshirtChanged ? { tshirtSizeUpdatedAt: now } : {}),
+          shoeSize: newShoeSize,
+          ...(shoeChanged ? { shoeSizeUpdatedAt: now } : {}),
+          wetsuiteSize: newWetsuiteSize,
+          ...(wetsuiteChanged ? { wetsuiteUpdatedAt: now } : {}),
+          ...(measurementsChanged ? { measurementsUpdatedAt: now } : {}),
+        },
+      });
+      return Response.json({ success: true, measurementsUpdatedAt: measurementsChanged ? now.toISOString() : undefined });
+    } catch {
+      return Response.json({ error: "Failed to update measurements" }, { status: 500 });
+    }
+  }
+
   const surname = body.surname?.trim();
   const fullNames = body.fullNames?.trim();
   const idNumber = body.idNumber?.trim();
@@ -149,11 +197,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     ? (wasAc && existing?.assistantCoachSince ? existing.assistantCoachSince : now)
     : null;
 
-  const newWeightKg = body.weightKg ? parseFloat(body.weightKg) || null : null;
-  const newHeightCm = body.heightCm ? parseFloat(body.heightCm) || null : null;
-  const newTshirtSize = body.tshirtSize?.trim() || null;
-  const newShoeSize = body.shoeSize?.trim() || null;
-  const newWetsuiteSize = body.wetsuiteSize?.trim() || null;
+  // Measurements now live entirely on the Data Sheets spreadsheet (see the measurements-only
+  // branch above) — the full participant form no longer submits these keys at all, so they
+  // must be left untouched here rather than wiped to null on every unrelated profile save.
+  const newWeightKg = "weightKg" in body ? (body.weightKg ? parseFloat(body.weightKg) || null : null) : existing?.weightKg ?? null;
+  const newHeightCm = "heightCm" in body ? (body.heightCm ? parseFloat(body.heightCm) || null : null) : existing?.heightCm ?? null;
+  const newTshirtSize = "tshirtSize" in body ? (body.tshirtSize?.trim() || null) : existing?.tshirtSize ?? null;
+  const newShoeSize = "shoeSize" in body ? (body.shoeSize?.trim() || null) : existing?.shoeSize ?? null;
+  const newWetsuiteSize = "wetsuiteSize" in body ? (body.wetsuiteSize?.trim() || null) : existing?.wetsuiteSize ?? null;
   const weightChanged    = existing && existing.weightKg !== newWeightKg;
   const heightChanged    = existing && existing.heightCm !== newHeightCm;
   const tshirtChanged    = existing && existing.tshirtSize !== newTshirtSize;

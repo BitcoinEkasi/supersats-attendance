@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getExpectedGrade, getDivisionLabel } from "@/lib/sa-id";
 import { fmtDate } from "@/lib/format-date";
 import CertificationsSection from "./certifications-section";
@@ -552,48 +553,25 @@ export default function EditParticipantForm({ participant, schools, pendingChang
           <div className="mt-4 space-y-4">
 
         <div className="border-t pt-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Weight (kg)</label>
-                <input name="weightKg" type="number" step="0.1" min="0" defaultValue={participant.weightKg ?? ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 65.5" />
-                {(participant as any).weightUpdatedAt && (
-                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).weightUpdatedAt))}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Height (cm)</label>
-                <input name="heightCm" type="number" step="0.1" min="0" defaultValue={participant.heightCm ?? ""} className={`${inputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder="e.g. 170" />
-                {(participant as any).heightUpdatedAt && (
-                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).heightUpdatedAt))}</p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">T-Shirt Size</label>
-                <input name="tshirtSize" defaultValue={participant.tshirtSize || ""} className={inputCls} placeholder="e.g. M, L, 32" />
-                {(participant as any).tshirtSizeUpdatedAt && (
-                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).tshirtSizeUpdatedAt))}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Shoe Size (UK)</label>
-                <input name="shoeSize" defaultValue={participant.shoeSize || ""} className={inputCls} placeholder="e.g. 8" />
-                {(participant as any).shoeSizeUpdatedAt && (
-                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).shoeSizeUpdatedAt))}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Wetsuit Size</label>
-                <input name="wetsuiteSize" defaultValue={participant.wetsuiteSize || ""} className={inputCls} placeholder="e.g. M, L, 32" />
-                {(participant as any).wetsuiteUpdatedAt && (
-                  <p className="mt-1 text-xs text-gray-400">Updated {fmtDate(new Date((participant as any).wetsuiteUpdatedAt))}</p>
-                )}
-              </div>
-            </div>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
+            <Link href="/data-sheets" className="text-xs text-orange-600 hover:underline">Edit from Data Sheets →</Link>
           </div>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+            {([
+              ["Weight (kg)", participant.weightKg, (participant as any).weightUpdatedAt],
+              ["Height (cm)", participant.heightCm, (participant as any).heightUpdatedAt],
+              ["T-Shirt Size", participant.tshirtSize, (participant as any).tshirtSizeUpdatedAt],
+              ["Shoe Size (UK)", participant.shoeSize, (participant as any).shoeSizeUpdatedAt],
+              ["Wetsuit Size", participant.wetsuiteSize, (participant as any).wetsuiteUpdatedAt],
+            ] as [string, string | number | null, Date | string | null][]).map(([label, value, updatedAt]) => (
+              <div key={label}>
+                <dt className="text-xs font-medium text-gray-500">{label}</dt>
+                <dd className="font-medium text-gray-900">{value ?? <span className="text-gray-400">Not recorded</span>}</dd>
+                {updatedAt && <p className="mt-0.5 text-xs text-gray-400">Updated {fmtDate(new Date(updatedAt))}</p>}
+              </div>
+            ))}
+          </dl>
         </div>
 
         <div className="border-t pt-4">

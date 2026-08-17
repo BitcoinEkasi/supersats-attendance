@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TSK_GROUPS, TSK_GROUP_LABELS, getGroupForStatus, type TskGroupKey } from "@/lib/tsk-groups";
 import { fmtDate } from "@/lib/format-date";
 
@@ -21,7 +21,10 @@ type Participant = {
 
 type Row = { participantId: string; checked: boolean };
 
-const dash = (v: string | number | null) => (v === null || v === "" ? <span className="text-gray-300">—</span> : v);
+type MeasurementField = "weightKg" | "heightCm" | "tshirtSize" | "shoeSize" | "wetsuiteSize";
+type Measurements = Pick<Participant, MeasurementField>;
+
+const NUMERIC_FIELDS: Set<MeasurementField> = new Set(["weightKg", "heightCm"]);
 
 export default function BodyMeasurementsTable({ participants }: { participants: Participant[] }) {
   const [groupFilter, setGroupFilter] = useState<"all" | TskGroupKey>("all");
@@ -29,6 +32,20 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
   const [rows, setRows] = useState<Row[]>(participants.map((p) => ({ participantId: p.id, checked: true })));
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
   const [error, setError] = useState("");
+
+  const [measurements, setMeasurements] = useState<Record<string, Measurements>>(() =>
+    Object.fromEntries(participants.map((p) => [p.id, {
+      weightKg: p.weightKg, heightCm: p.heightCm, tshirtSize: p.tshirtSize, shoeSize: p.shoeSize, wetsuiteSize: p.wetsuiteSize,
+    }]))
+  );
+  const [updatedAt, setUpdatedAt] = useState<Record<string, Date | null>>(() =>
+    Object.fromEntries(participants.map((p) => [p.id, p.measurementsUpdatedAt]))
+  );
+  const lastSaved = useRef<Record<string, Measurements>>(
+    Object.fromEntries(participants.map((p) => [p.id, {
+      weightKg: p.weightKg, heightCm: p.heightCm, tshirtSize: p.tshirtSize, shoeSize: p.shoeSize, wetsuiteSize: p.wetsuiteSize,
+    }]))
+  );
 
   const participantMap = Object.fromEntries(participants.map((p) => [p.id, p]));
 
@@ -51,6 +68,29 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
 
   function toggleRow(participantId: string, checked: boolean) {
     setRows((prev) => prev.map((r) => (r.participantId === participantId ? { ...r, checked } : r)));
+  }
+
+  function updateField(participantId: string, field: MeasurementField, raw: string) {
+    const value: string | number | null = raw === "" ? null : NUMERIC_FIELDS.has(field) ? Number(raw) : raw;
+    setMeasurements((prev) => ({ ...prev, [participantId]: { ...prev[participantId], [field]: value } }));
+  }
+
+  async function saveField(participantId: string, field: MeasurementField) {
+    const value = measurements[participantId][field];
+    if (value === lastSaved.current[participantId][field]) return;
+
+    const res = await fetch(`/api/participants/${participantId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [field]: value === null ? "" : String(value) }),
+    });
+    if (!res.ok) return;
+
+    lastSaved.current[participantId] = { ...lastSaved.current[participantId], [field]: value };
+    const data = await res.json();
+    if (data.measurementsUpdatedAt) {
+      setUpdatedAt((prev) => ({ ...prev, [participantId]: new Date(data.measurementsUpdatedAt) }));
+    }
   }
 
   const selectedCount = rows.filter((r) => {
@@ -87,6 +127,11 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
   }
 
   const inputCls = "rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none";
+  const cellInputCls = "w-full rounded border border-transparent bg-transparent px-1.5 py-1 text-sm hover:border-gray-200 focus:border-orange-400 focus:bg-white focus:outline-none";
+
+  function onEnterBlur(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") e.currentTarget.blur();
+  }
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
@@ -163,6 +208,7 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
                 const row = rows.find((r) => r.participantId === p.id)!;
                 const name = `${p.surname}, ${p.fullNames}${p.knownAs ? ` (${p.knownAs})` : ""}`;
                 const group = getGroupForStatus(p.tskStatus);
+                const m = measurements[p.id];
                 return (
                   <tr key={p.id} className={`border-b last:border-0 ${!row.checked ? "opacity-50" : ""}`}>
                     <td className="px-3 py-2 text-center">
@@ -186,13 +232,62 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
                         <span className="text-xs text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-2">{dash(p.weightKg)}</td>
-                    <td className="px-4 py-2">{dash(p.heightCm)}</td>
-                    <td className="px-4 py-2">{dash(p.tshirtSize)}</td>
-                    <td className="px-4 py-2">{dash(p.shoeSize)}</td>
-                    <td className="px-4 py-2">{dash(p.wetsuiteSize)}</td>
+                    <td className="px-2 py-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={m.weightKg ?? ""}
+                        onChange={(e) => updateField(p.id, "weightKg", e.target.value)}
+                        onBlur={() => saveField(p.id, "weightKg")}
+                        onKeyDown={onEnterBlur}
+                        className={`${cellInputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={m.heightCm ?? ""}
+                        onChange={(e) => updateField(p.id, "heightCm", e.target.value)}
+                        onBlur={() => saveField(p.id, "heightCm")}
+                        onKeyDown={onEnterBlur}
+                        className={`${cellInputCls} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <input
+                        type="text"
+                        value={m.tshirtSize ?? ""}
+                        onChange={(e) => updateField(p.id, "tshirtSize", e.target.value)}
+                        onBlur={() => saveField(p.id, "tshirtSize")}
+                        onKeyDown={onEnterBlur}
+                        className={cellInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <input
+                        type="text"
+                        value={m.shoeSize ?? ""}
+                        onChange={(e) => updateField(p.id, "shoeSize", e.target.value)}
+                        onBlur={() => saveField(p.id, "shoeSize")}
+                        onKeyDown={onEnterBlur}
+                        className={cellInputCls}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <input
+                        type="text"
+                        value={m.wetsuiteSize ?? ""}
+                        onChange={(e) => updateField(p.id, "wetsuiteSize", e.target.value)}
+                        onBlur={() => saveField(p.id, "wetsuiteSize")}
+                        onKeyDown={onEnterBlur}
+                        className={cellInputCls}
+                      />
+                    </td>
                     <td className="px-4 py-2 text-xs text-gray-500">
-                      {p.measurementsUpdatedAt ? fmtDate(p.measurementsUpdatedAt) : <span className="text-gray-300">—</span>}
+                      {updatedAt[p.id] ? fmtDate(updatedAt[p.id]!) : <span className="text-gray-300">—</span>}
                     </td>
                   </tr>
                 );

@@ -323,6 +323,36 @@ export default async function ParticipantDetailPage({
                   <dd className="font-medium">{participant.housingType}</dd>
                 </div>
               )}
+              {participant.weightKg && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Weight (kg)</dt>
+                  <dd className="font-medium">{participant.weightKg}</dd>
+                </div>
+              )}
+              {participant.heightCm && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Height (cm)</dt>
+                  <dd className="font-medium">{participant.heightCm}</dd>
+                </div>
+              )}
+              {participant.tshirtSize && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">T-Shirt Size</dt>
+                  <dd className="font-medium">{participant.tshirtSize}</dd>
+                </div>
+              )}
+              {participant.shoeSize && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Shoe Size (UK)</dt>
+                  <dd className="font-medium">{participant.shoeSize}</dd>
+                </div>
+              )}
+              {participant.wetsuiteSize && (
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">Wetsuit Size</dt>
+                  <dd className="font-medium">{participant.wetsuiteSize}</dd>
+                </div>
+              )}
               {(participant as any).paymentMethod === "LIGHTNING_ADDRESS" ? (
                 (participant as any).lightningAddress && (
                   <div className="flex justify-between">
