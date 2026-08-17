@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { sendEmail, getRecipients } from "@/lib/email";
 import { getStartOfSASTToday, getEndOfSASTToday, getSASTDateString, getSASTNow } from "@/lib/sast";
-import { fmtDate, fmtWeekdayShort, MONTHS } from "@/lib/format-date";
+import { fmtDate, fmtWeekdayShort, fmtTime, MONTHS } from "@/lib/format-date";
 import { fmtPct } from "@/lib/rewards";
 import { getDivisionLabel } from "@/lib/sa-id";
 import { shouldSendNow, markSent } from "@/lib/email-schedule";
@@ -34,10 +34,6 @@ function renderSection(title: string, count: number, subtext: string | null, row
     ? `<ul>${rows.map((p) => `<li>${formatRow(p, missedCounts?.get(p.id))}</li>`).join("")}</ul>`
     : "<p>None.</p>";
   return `<h3 style="margin-bottom:0;">${title} (${count})</h3>${subtext ? `<p style="margin:0 0 6px;">${subtext}</p>` : ""}${items}`;
-}
-
-function fmtTime(d: Date): string {
-  return d.toLocaleTimeString("en-ZA", { timeZone: "Africa/Johannesburg", hour: "2-digit", minute: "2-digit" });
 }
 
 export async function POST(req: Request) {

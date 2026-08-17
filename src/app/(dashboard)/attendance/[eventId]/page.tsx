@@ -7,7 +7,7 @@ import CategorySelect from "./category-select";
 import NoteInput from "./note-input";
 import MidnightRedirect from "./midnight-redirect";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
-import { fmtDate } from "@/lib/format-date";
+import { fmtDate, fmtTime } from "@/lib/format-date";
 import { TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
 
 export default async function EventAttendancePage({
@@ -30,7 +30,14 @@ export default async function EventAttendancePage({
 
   if (!event) notFound();
 
-  const activities = await prisma.sessionActivity.findMany({ orderBy: { createdAt: "asc" } });
+  const [activities, captureWindow] = await Promise.all([
+    prisma.sessionActivity.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.attendanceRecord.aggregate({
+      where: { eventId },
+      _min: { createdAt: true },
+      _max: { updatedAt: true },
+    }),
+  ]);
 
   // Marshals may only access today's session
   if (isMobile) {
@@ -113,6 +120,15 @@ export default async function EventAttendancePage({
           )}
         </h2>
       </div>
+
+      {groupLabel && (
+        <p className="text-sm text-gray-500">Submitted by {groupLabel} Marshal</p>
+      )}
+      {captureWindow._min.createdAt && captureWindow._max.updatedAt && (
+        <p className="mb-4 text-sm text-gray-500">
+          Attendance captured between {fmtTime(captureWindow._min.createdAt)} and {fmtTime(captureWindow._max.updatedAt)}
+        </p>
+      )}
 
       {event.note && (
         <p className="mb-4 rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-700">{event.note}</p>

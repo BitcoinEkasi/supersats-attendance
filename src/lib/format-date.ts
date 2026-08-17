@@ -19,3 +19,8 @@ export function fmtDayNumber(date: Date): string {
 export function fmtWeekdayShort(date: Date): string {
   return WEEKDAYS_SHORT[date.getUTCDay()];
 }
+
+/** Wall-clock time, e.g. "15:12". Uses Africa/Johannesburg since this is for real capture timestamps, not noon-anchored calendar dates. */
+export function fmtTime(date: Date): string {
+  return date.toLocaleTimeString("en-ZA", { timeZone: "Africa/Johannesburg", hour: "2-digit", minute: "2-digit" });
+}
