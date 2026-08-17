@@ -67,6 +67,12 @@ const allNavItems = [
     icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 3v4h6V3M9 12h6m-6 4h6",
   },
   {
+    href: "/data-sheets",
+    label: "Data Sheets",
+    roles: ["ADMINISTRATOR"] as UserRole[],
+    icon: "M9 17V7a2 2 0 012-2h6a2 2 0 012 2v10a2 2 0 01-2 2H9m0-14H7a2 2 0 00-2 2v10a2 2 0 002 2h2m0-14v14m4-10h2m-2 4h2",
+  },
+  {
     href: "/email-settings",
     label: "Email Settings",
     roles: ["ADMINISTRATOR"] as UserRole[],
