@@ -138,19 +138,19 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
         {error && <p className="text-xs text-red-500">{error}</p>}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-[70vh]">
         <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50">
+          <thead>
             <tr>
-              <th className="px-3 py-3 w-8"></th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Participant</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Group</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Weight (kg)</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Height (cm)</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">T-Shirt Size</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Shoe Size (UK)</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Wetsuit Size</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Last Updated</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-3 py-3 w-8 border-b"></th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Participant</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Group</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Weight (kg)</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Height (cm)</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">T-Shirt Size</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Shoe Size (UK)</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Wetsuit Size</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Last Updated</th>
             </tr>
           </thead>
           <tbody>
