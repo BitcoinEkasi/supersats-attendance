@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { fmtDate } from "@/lib/format-date";
+import { calculateAge } from "@/lib/sa-id";
 import { TSK_GROUP_LABELS, getGroupForStatus } from "@/lib/tsk-groups";
 import { BodyMeasurementsPdfDocument, type BodyMeasurementsPdfEntry } from "@/lib/data-sheet-pdf";
 import React from "react";
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     orderBy: [{ surname: "asc" }, { fullNames: "asc" }],
     select: {
       tskId: true, surname: true, fullNames: true, knownAs: true, tskStatus: true,
+      dateOfBirth: true, gender: true,
       weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true,
       measurementsUpdatedAt: true,
     },
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
 
   if (format === "csv") {
     const headers = [
-      "TSK ID", "Surname", "Full Names", "Known As", "Group",
+      "TSK ID", "Surname", "Full Names", "Known As", "Age", "Gender", "Group",
       "Weight (kg)", "Height (cm)", "T-Shirt Size", "Shoe Size (UK)", "Wetsuit Size", "Last Updated",
     ];
     const rows = participants.map((p) => {
@@ -46,6 +48,8 @@ export async function POST(req: Request) {
         esc(p.surname),
         esc(p.fullNames),
         esc(p.knownAs),
+        esc(calculateAge(p.dateOfBirth)),
+        esc(p.gender === "MALE" ? "Boy" : "Girl"),
         esc(group ? TSK_GROUP_LABELS[group] : ""),
         esc(p.weightKg),
         esc(p.heightCm),
@@ -70,6 +74,8 @@ export async function POST(req: Request) {
     return {
       tskId: p.tskId,
       name,
+      age: calculateAge(p.dateOfBirth),
+      gender: p.gender === "MALE" ? "Boy" : "Girl",
       group: group ? TSK_GROUP_LABELS[group] : null,
       weightKg: p.weightKg,
       heightCm: p.heightCm,

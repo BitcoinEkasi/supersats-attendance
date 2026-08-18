@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { TSK_GROUPS, TSK_GROUP_LABELS, getGroupForStatus, type TskGroupKey } from "@/lib/tsk-groups";
 import { fmtDate } from "@/lib/format-date";
+import { calculateAge } from "@/lib/sa-id";
+import { SHOE_SIZES } from "@/lib/shoe-sizes";
 
 type Participant = {
   id: string;
@@ -11,6 +13,8 @@ type Participant = {
   fullNames: string;
   knownAs: string | null;
   tskStatus: string | null;
+  dateOfBirth: Date;
+  gender: "MALE" | "FEMALE";
   weightKg: number | null;
   heightCm: number | null;
   tshirtSize: string | null;
@@ -75,8 +79,8 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
     setMeasurements((prev) => ({ ...prev, [participantId]: { ...prev[participantId], [field]: value } }));
   }
 
-  async function saveField(participantId: string, field: MeasurementField) {
-    const value = measurements[participantId][field];
+  async function saveField(participantId: string, field: MeasurementField, overrideValue?: string | number | null) {
+    const value = overrideValue !== undefined ? overrideValue : measurements[participantId][field];
     if (value === lastSaved.current[participantId][field]) return;
 
     const res = await fetch(`/api/participants/${participantId}`, {
@@ -91,6 +95,12 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
     if (data.measurementsUpdatedAt) {
       setUpdatedAt((prev) => ({ ...prev, [participantId]: new Date(data.measurementsUpdatedAt) }));
     }
+  }
+
+  function handleShoeSizeChange(participantId: string, raw: string) {
+    const value = raw === "" ? null : raw;
+    updateField(participantId, "shoeSize", raw);
+    saveField(participantId, "shoeSize", value);
   }
 
   const selectedCount = rows.filter((r) => {
@@ -189,6 +199,8 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
             <tr>
               <th className="sticky top-0 z-10 bg-gray-50 px-3 py-3 w-8 border-b"></th>
               <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Participant</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Age</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Gender</th>
               <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Group</th>
               <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Weight (kg)</th>
               <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Height (cm)</th>
@@ -201,7 +213,7 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
           <tbody>
             {visibleParticipants.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">No participants match the current filters.</td>
+                <td colSpan={11} className="px-4 py-8 text-center text-sm text-gray-500">No participants match the current filters.</td>
               </tr>
             ) : (
               visibleParticipants.map((p) => {
@@ -223,6 +235,8 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
                       <div className="font-medium">{name}</div>
                       <div className="text-xs text-gray-400 font-mono">{p.tskId}</div>
                     </td>
+                    <td className="px-4 py-2 text-gray-600">{calculateAge(p.dateOfBirth)}</td>
+                    <td className="px-4 py-2 text-gray-600">{p.gender === "MALE" ? "Boy" : "Girl"}</td>
                     <td className="px-4 py-2">
                       {group ? (
                         <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">
@@ -267,14 +281,19 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
                       />
                     </td>
                     <td className="px-2 py-1">
-                      <input
-                        type="text"
+                      <select
                         value={m.shoeSize ?? ""}
-                        onChange={(e) => updateField(p.id, "shoeSize", e.target.value)}
-                        onBlur={() => saveField(p.id, "shoeSize")}
-                        onKeyDown={onEnterBlur}
+                        onChange={(e) => handleShoeSizeChange(p.id, e.target.value)}
                         className={cellInputCls}
-                      />
+                      >
+                        <option value="">—</option>
+                        {m.shoeSize && !(SHOE_SIZES as readonly string[]).includes(m.shoeSize) && (
+                          <option value={m.shoeSize}>{m.shoeSize}</option>
+                        )}
+                        {SHOE_SIZES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-2 py-1">
                       <input

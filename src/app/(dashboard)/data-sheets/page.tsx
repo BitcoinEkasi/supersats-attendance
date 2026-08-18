@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import BodyMeasurementsTable from "./body-measurements-table";
+import ShoeSizeRollup from "./shoe-size-rollup";
+import { computeShoeRollup } from "@/lib/shoe-rollup";
 
 export default async function DataSheetsPage() {
   const session = await auth();
@@ -12,10 +14,13 @@ export default async function DataSheetsPage() {
     orderBy: [{ surname: "asc" }, { fullNames: "asc" }],
     select: {
       id: true, tskId: true, surname: true, fullNames: true, knownAs: true, tskStatus: true,
+      dateOfBirth: true, gender: true,
       weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true,
       measurementsUpdatedAt: true,
     },
   });
+
+  const shoeRollup = computeShoeRollup(participants);
 
   return (
     <div className="space-y-6">
@@ -29,6 +34,12 @@ export default async function DataSheetsPage() {
         <h3 className="text-lg font-semibold text-gray-900">Body Measurements</h3>
         <div className="mt-3">
           <BodyMeasurementsTable participants={participants} />
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Shoe Size Roll-up</h3>
+        <div className="mt-3">
+          <ShoeSizeRollup rollup={shoeRollup} />
         </div>
       </div>
     </div>
