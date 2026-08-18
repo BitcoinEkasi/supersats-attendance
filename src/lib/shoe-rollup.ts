@@ -45,3 +45,10 @@ export function computeShoeRollup(participants: ShoeRollupParticipant[]): ShoeRo
 
   return { rows, columnTotals, grandTotal };
 }
+
+export function filterRollupByGroup(rollup: ShoeRollup, group: TskGroupKey | "all"): ShoeRollup {
+  if (group === "all") return rollup;
+  const row = rollup.rows.find((r) => r.key === group);
+  if (!row) return { rows: [], columnTotals: Object.fromEntries(ALL_COLUMNS.map((s) => [s, 0])), grandTotal: 0 };
+  return { rows: [row], columnTotals: { ...row.counts }, grandTotal: row.total };
+}

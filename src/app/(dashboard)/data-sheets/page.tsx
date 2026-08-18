@@ -1,9 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import BodyMeasurementsTable from "./body-measurements-table";
-import ShoeSizeRollup from "./shoe-size-rollup";
-import { computeShoeRollup } from "@/lib/shoe-rollup";
+import DataSheetsClient from "./data-sheets-client";
 
 export default async function DataSheetsPage() {
   const session = await auth();
@@ -20,8 +18,6 @@ export default async function DataSheetsPage() {
     },
   });
 
-  const shoeRollup = computeShoeRollup(participants);
-
   return (
     <div className="space-y-6">
       <div>
@@ -30,18 +26,7 @@ export default async function DataSheetsPage() {
           Spreadsheet-style views of the active roster — filter, hand-pick participants, and export.
         </p>
       </div>
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">Body Measurements</h3>
-        <div className="mt-3">
-          <BodyMeasurementsTable participants={participants} />
-        </div>
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">Shoe Size Roll-up</h3>
-        <div className="mt-3">
-          <ShoeSizeRollup rollup={shoeRollup} />
-        </div>
-      </div>
+      <DataSheetsClient participants={participants} />
     </div>
   );
 }

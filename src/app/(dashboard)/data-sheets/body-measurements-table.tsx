@@ -6,7 +6,7 @@ import { fmtDate } from "@/lib/format-date";
 import { calculateAge } from "@/lib/sa-id";
 import { SHOE_SIZES } from "@/lib/shoe-sizes";
 
-type Participant = {
+export type Participant = {
   id: string;
   tskId: string;
   surname: string;
@@ -30,8 +30,15 @@ type Measurements = Pick<Participant, MeasurementField>;
 
 const NUMERIC_FIELDS: Set<MeasurementField> = new Set(["weightKg", "heightCm"]);
 
-export default function BodyMeasurementsTable({ participants }: { participants: Participant[] }) {
-  const [groupFilter, setGroupFilter] = useState<"all" | TskGroupKey>("all");
+export default function BodyMeasurementsTable({
+  participants,
+  groupFilter,
+  onGroupFilterChange,
+}: {
+  participants: Participant[];
+  groupFilter: "all" | TskGroupKey;
+  onGroupFilterChange: (group: "all" | TskGroupKey) => void;
+}) {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Row[]>(participants.map((p) => ({ participantId: p.id, checked: true })));
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
@@ -152,7 +159,7 @@ export default function BodyMeasurementsTable({ participants }: { participants: 
             {(["all", ...TSK_GROUPS] as const).map((g) => (
               <button
                 key={g}
-                onClick={() => setGroupFilter(g)}
+                onClick={() => onGroupFilterChange(g)}
                 className={`rounded-full px-3 py-1 text-xs font-medium ${groupFilter === g ? "bg-orange-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
               >
                 {g === "all" ? "All" : TSK_GROUP_LABELS[g]}

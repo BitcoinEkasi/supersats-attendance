@@ -129,6 +129,7 @@ export type ShoeRollupPdfData = {
   rows: ShoeRollupPdfRow[];
   columnTotals: Record<string, number>;
   grandTotal: number;
+  showTotalRow?: boolean;
 };
 
 const rollupStyles = StyleSheet.create({
@@ -176,13 +177,15 @@ export function ShoeRollupPdfDocument({ generatedAt, data }: { generatedAt: stri
           </View>
         ))}
 
-        <View style={[styles.tableRow, rollupStyles.totalRow]} wrap={false}>
-          <Text style={[styles.tableCellBold, rollupStyles.groupCol]}>Total</Text>
-          {data.columns.map((c) => (
-            <Text key={c} style={[styles.tableCellBold, rollupStyles.countCol, { textAlign: "right" }]}>{countCell(data.columnTotals[c] ?? 0)}</Text>
-          ))}
-          <Text style={[styles.tableCellBold, rollupStyles.countCol, { textAlign: "right" }]}>{data.grandTotal}</Text>
-        </View>
+        {data.showTotalRow !== false && (
+          <View style={[styles.tableRow, rollupStyles.totalRow]} wrap={false}>
+            <Text style={[styles.tableCellBold, rollupStyles.groupCol]}>Total</Text>
+            {data.columns.map((c) => (
+              <Text key={c} style={[styles.tableCellBold, rollupStyles.countCol, { textAlign: "right" }]}>{countCell(data.columnTotals[c] ?? 0)}</Text>
+            ))}
+            <Text style={[styles.tableCellBold, rollupStyles.countCol, { textAlign: "right" }]}>{data.grandTotal}</Text>
+          </View>
+        )}
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>The Surfer Kids · tsk.bitcoinekasi.xyz</Text>

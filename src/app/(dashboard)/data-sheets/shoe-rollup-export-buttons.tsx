@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import type { TskGroupKey } from "@/lib/tsk-groups";
 
-export default function ShoeRollupExportButtons() {
+export default function ShoeRollupExportButtons({ groupFilter }: { groupFilter: "all" | TskGroupKey }) {
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
 
   async function handleExport(format: "csv" | "pdf") {
     setExporting(format);
-    const res = await fetch(`/api/data-sheets/shoe-rollup/export?format=${format}`);
+    const groupParam = groupFilter === "all" ? "" : `&group=${groupFilter}`;
+    const res = await fetch(`/api/data-sheets/shoe-rollup/export?format=${format}${groupParam}`);
     if (!res.ok) {
       setExporting(null);
       return;

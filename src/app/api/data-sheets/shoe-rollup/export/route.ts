@@ -2,8 +2,9 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { fmtDate } from "@/lib/format-date";
-import { computeShoeRollup, NOT_RECORDED } from "@/lib/shoe-rollup";
+import { computeShoeRollup, filterRollupByGroup, NOT_RECORDED } from "@/lib/shoe-rollup";
 import { SHOE_SIZES } from "@/lib/shoe-sizes";
+import { isValidGroup } from "@/lib/tsk-groups";
 import { ShoeRollupPdfDocument, type ShoeRollupPdfData } from "@/lib/data-sheet-pdf";
 import React from "react";
 
@@ -18,26 +19,32 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") === "pdf" ? "pdf" : "csv";
+  const groupParam = searchParams.get("group");
+  const group = isValidGroup(groupParam) ? groupParam : "all";
 
   const participants = await prisma.participant.findMany({
     where: { status: "ACTIVE" },
     select: { tskStatus: true, shoeSize: true },
   });
 
-  const rollup = computeShoeRollup(participants);
+  const rollup = filterRollupByGroup(computeShoeRollup(participants), group);
   const columns = [...SHOE_SIZES, NOT_RECORDED];
+  const filenameSuffix = group === "all" ? "" : `-${group.toLowerCase().replace(/_/g, "-")}`;
 
   if (format === "csv") {
     const headers = ["Group", ...columns, "Total"];
     const rows = rollup.rows.map((row) =>
       [esc(row.label), ...columns.map((c) => esc(row.counts[c] ?? 0)), esc(row.total)].join(",")
     );
-    const totalRow = ["Total", ...columns.map((c) => esc(rollup.columnTotals[c] ?? 0)), esc(rollup.grandTotal)].join(",");
-    const csv = [headers.join(","), ...rows, totalRow].join("\n");
+    const lines = [headers.join(","), ...rows];
+    if (group === "all") {
+      lines.push(["Total", ...columns.map((c) => esc(rollup.columnTotals[c] ?? 0)), esc(rollup.grandTotal)].join(","));
+    }
+    const csv = lines.join("\n");
     return new Response(csv, {
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="tsk-shoe-size-rollup-${new Date().toISOString().split("T")[0]}.csv"`,
+        "Content-Disposition": `attachment; filename="tsk-shoe-size-rollup${filenameSuffix}-${new Date().toISOString().split("T")[0]}.csv"`,
       },
     });
   }
@@ -47,6 +54,7 @@ export async function GET(req: Request) {
     rows: rollup.rows.map((row) => ({ label: row.label, counts: row.counts, total: row.total })),
     columnTotals: rollup.columnTotals,
     grandTotal: rollup.grandTotal,
+    showTotalRow: group === "all",
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +64,7 @@ export async function GET(req: Request) {
   return new Response(new Uint8Array(pdfBuffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="tsk-shoe-size-rollup-${new Date().toISOString().split("T")[0]}.pdf"`,
+      "Content-Disposition": `attachment; filename="tsk-shoe-size-rollup${filenameSuffix}-${new Date().toISOString().split("T")[0]}.pdf"`,
     },
   });
 }
