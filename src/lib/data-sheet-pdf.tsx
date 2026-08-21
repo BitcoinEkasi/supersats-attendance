@@ -1,4 +1,4 @@
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Link, StyleSheet } from "@react-pdf/renderer";
 
 const ORANGE = "#f97316";
 const GRAY_50 = "#f9fafb";
@@ -186,6 +186,99 @@ export function ShoeRollupPdfDocument({ generatedAt, data }: { generatedAt: stri
             <Text style={[styles.tableCellBold, rollupStyles.countCol, { textAlign: "right" }]}>{data.grandTotal}</Text>
           </View>
         )}
+
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>The Surfer Kids · tsk.bitcoinekasi.xyz</Text>
+          <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+        </View>
+      </Page>
+    </Document>
+  );
+}
+
+export type SchoolReportsPdfEntry = {
+  tskId: string;
+  name: string;
+  group: string | null;
+  term1Result: number | null;
+  term1FileUrl: string | null;
+  term2Result: number | null;
+  term2FileUrl: string | null;
+  term3Result: number | null;
+  term3FileUrl: string | null;
+  term4Result: number | null;
+  term4FileUrl: string | null;
+};
+
+const schoolReportsCol = {
+  tskId: 45,
+  name: 110,
+  group: 55,
+  avg: 40,
+  file: 45,
+};
+
+const QUARTER_TERMS = [
+  { result: "term1Result", file: "term1FileUrl", label: "Q1" },
+  { result: "term2Result", file: "term2FileUrl", label: "Q2" },
+  { result: "term3Result", file: "term3FileUrl", label: "Q3" },
+  { result: "term4Result", file: "term4FileUrl", label: "Q4" },
+] as const;
+
+export function SchoolReportsPdfDocument({ generatedAt, year, entries }: { generatedAt: string; year: number; entries: SchoolReportsPdfEntry[] }) {
+  return (
+    <Document>
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <Text style={styles.brand}>THE SURFER KIDS</Text>
+            <Text style={styles.title}>School Reports — {year}</Text>
+          </View>
+          <View style={styles.meta}>
+            <Text style={styles.metaItem}><Text style={styles.metaLabel}>Generated: </Text>{generatedAt}</Text>
+            <Text style={styles.metaItem}><Text style={styles.metaLabel}>Participants: </Text>{entries.length}</Text>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.tskId }]}>TSK ID</Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.name }]}>Name</Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.group }]}>Group</Text>
+          {QUARTER_TERMS.map((q) => (
+            <Text key={q.result} style={[styles.tableHeaderCell, { width: schoolReportsCol.avg + schoolReportsCol.file, textAlign: "center" }]}>{q.label}</Text>
+          ))}
+        </View>
+        <View style={[styles.tableHeader, { backgroundColor: GRAY_50, paddingVertical: 3, marginTop: -2 }]}>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.tskId, color: GRAY_500 }]}></Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.name, color: GRAY_500 }]}></Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.group, color: GRAY_500 }]}></Text>
+          {QUARTER_TERMS.map((q) => (
+            <View key={q.result} style={{ width: schoolReportsCol.avg + schoolReportsCol.file, flexDirection: "row" }}>
+              <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.avg, color: GRAY_500 }]}>Avg. %</Text>
+              <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.file, color: GRAY_500 }]}>File</Text>
+            </View>
+          ))}
+        </View>
+
+        {entries.map((e, i) => (
+          <View key={e.tskId} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]} wrap={false}>
+            <Text style={[styles.tableCell, { width: schoolReportsCol.tskId }]}>{e.tskId}</Text>
+            <Text style={[styles.tableCellBold, { width: schoolReportsCol.name }]}>{e.name}</Text>
+            <Text style={[styles.tableCell, { width: schoolReportsCol.group }]}>{cell(e.group)}</Text>
+            {QUARTER_TERMS.map((q) => (
+              <View key={q.result} style={{ width: schoolReportsCol.avg + schoolReportsCol.file, flexDirection: "row" }}>
+                <Text style={[styles.tableCell, { width: schoolReportsCol.avg }]}>{cell(e[q.result])}</Text>
+                {e[q.file] ? (
+                  <Link src={e[q.file]!} style={[styles.tableCell, { width: schoolReportsCol.file, color: ORANGE }]}>View</Link>
+                ) : (
+                  <Text style={[styles.tableCell, { width: schoolReportsCol.file }]}>—</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        ))}
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>The Surfer Kids · tsk.bitcoinekasi.xyz</Text>

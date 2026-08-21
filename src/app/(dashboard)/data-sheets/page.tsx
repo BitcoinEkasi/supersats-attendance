@@ -15,6 +15,15 @@ export default async function DataSheetsPage() {
       dateOfBirth: true, gender: true,
       weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true,
       measurementsUpdatedAt: true,
+      schoolReports: {
+        select: {
+          year: true,
+          term1Result: true, term1FileUrl: true,
+          term2Result: true, term2FileUrl: true,
+          term3Result: true, term3FileUrl: true,
+          term4Result: true, term4FileUrl: true,
+        },
+      },
     },
   });
 

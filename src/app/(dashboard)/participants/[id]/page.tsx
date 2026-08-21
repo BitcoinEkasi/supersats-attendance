@@ -447,7 +447,6 @@ export default async function ParticipantDetailPage({
       {role === "ADMINISTRATOR" && (
         <div className="mt-6">
           <SchoolReportsSection
-            participantId={participant.id}
             reports={participant.schoolReports}
             grade={participant.grade ?? null}
           />

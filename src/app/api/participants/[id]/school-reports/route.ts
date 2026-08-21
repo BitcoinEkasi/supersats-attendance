@@ -37,14 +37,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       term4FileUrl: body.term4FileUrl ?? null,
     },
     update: {
-      term1Result: body.term1Result ?? null,
-      term1FileUrl: body.term1FileUrl ?? null,
-      term2Result: body.term2Result ?? null,
-      term2FileUrl: body.term2FileUrl ?? null,
-      term3Result: body.term3Result ?? null,
-      term3FileUrl: body.term3FileUrl ?? null,
-      term4Result: body.term4Result ?? null,
-      term4FileUrl: body.term4FileUrl ?? null,
+      ...("term1Result" in body ? { term1Result: body.term1Result ?? null } : {}),
+      ...("term1FileUrl" in body ? { term1FileUrl: body.term1FileUrl ?? null } : {}),
+      ...("term2Result" in body ? { term2Result: body.term2Result ?? null } : {}),
+      ...("term2FileUrl" in body ? { term2FileUrl: body.term2FileUrl ?? null } : {}),
+      ...("term3Result" in body ? { term3Result: body.term3Result ?? null } : {}),
+      ...("term3FileUrl" in body ? { term3FileUrl: body.term3FileUrl ?? null } : {}),
+      ...("term4Result" in body ? { term4Result: body.term4Result ?? null } : {}),
+      ...("term4FileUrl" in body ? { term4FileUrl: body.term4FileUrl ?? null } : {}),
     },
   });
 
