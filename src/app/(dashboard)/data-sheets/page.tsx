@@ -1,41 +1,5 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
-import DataSheetsClient from "./data-sheets-client";
 
-export default async function DataSheetsPage() {
-  const session = await auth();
-  if (session?.user?.role !== "ADMINISTRATOR") redirect("/dashboard");
-
-  const participants = await prisma.participant.findMany({
-    where: { status: "ACTIVE" },
-    orderBy: [{ surname: "asc" }, { fullNames: "asc" }],
-    select: {
-      id: true, tskId: true, surname: true, fullNames: true, knownAs: true, tskStatus: true,
-      dateOfBirth: true, gender: true,
-      weightKg: true, heightCm: true, tshirtSize: true, shoeSize: true, wetsuiteSize: true,
-      measurementsUpdatedAt: true,
-      schoolReports: {
-        select: {
-          year: true,
-          term1Result: true, term1FileUrl: true,
-          term2Result: true, term2FileUrl: true,
-          term3Result: true, term3FileUrl: true,
-          term4Result: true, term4FileUrl: true,
-        },
-      },
-    },
-  });
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Consolidated Data Sheets</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Spreadsheet-style views of the active roster — filter, hand-pick participants, and export.
-        </p>
-      </div>
-      <DataSheetsClient participants={participants} />
-    </div>
-  );
+export default function DataSheetsPage() {
+  redirect("/data-sheets/body-measurements");
 }

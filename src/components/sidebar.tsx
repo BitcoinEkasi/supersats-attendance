@@ -71,6 +71,10 @@ const allNavItems = [
     label: "Data Sheets",
     roles: ["ADMINISTRATOR"] as UserRole[],
     icon: "M9 17V7a2 2 0 012-2h6a2 2 0 012 2v10a2 2 0 01-2 2H9m0-14H7a2 2 0 00-2 2v10a2 2 0 002 2h2m0-14v14m4-10h2m-2 4h2",
+    children: [
+      { href: "/data-sheets/body-measurements", label: "Body Measurements" },
+      { href: "/data-sheets/school-reports", label: "School Reports" },
+    ],
   },
   {
     href: "/email-settings",
@@ -139,29 +143,50 @@ export default function Sidebar({ role }: { role?: UserRole }) {
                   !pathname.startsWith("/participants/import"))
               : pathname.startsWith(item.href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                collapsed ? "justify-center" : "gap-3"
-              } ${
-                isActive
-                  ? "bg-orange-50 text-orange-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <svg
-                className="h-5 w-5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
+            <div key={item.href}>
+              <Link
+                href={item.href}
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  collapsed ? "justify-center" : "gap-3"
+                } ${
+                  isActive
+                    ? "bg-orange-50 text-orange-700"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-              </svg>
-              {!collapsed && item.label}
-            </Link>
+                <svg
+                  className="h-5 w-5 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+                {!collapsed && item.label}
+              </Link>
+              {!collapsed && item.children && (
+                <div className="ml-8 mt-1 space-y-1 border-l border-gray-100 pl-2">
+                  {item.children.map((child) => {
+                    const childActive = pathname.startsWith(child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={`block rounded-md px-3 py-1.5 text-sm transition-colors ${
+                          childActive
+                            ? "bg-orange-50 text-orange-700 font-medium"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
+                      >
+                        {child.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

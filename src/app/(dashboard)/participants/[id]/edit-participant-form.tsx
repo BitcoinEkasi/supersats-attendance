@@ -555,7 +555,7 @@ export default function EditParticipantForm({ participant, schools, pendingChang
         <div className="border-t pt-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Body Measurements</p>
-            <Link href="/data-sheets" className="text-xs text-orange-600 hover:underline">Edit from Data Sheets →</Link>
+            <Link href="/data-sheets/body-measurements" className="text-xs text-orange-600 hover:underline">Edit from Data Sheets →</Link>
           </div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
             {([

@@ -199,6 +199,8 @@ export function ShoeRollupPdfDocument({ generatedAt, data }: { generatedAt: stri
 export type SchoolReportsPdfEntry = {
   tskId: string;
   name: string;
+  age: number;
+  gender: string;
   group: string | null;
   term1Result: number | null;
   term1FileUrl: string | null;
@@ -212,7 +214,9 @@ export type SchoolReportsPdfEntry = {
 
 const schoolReportsCol = {
   tskId: 45,
-  name: 110,
+  name: 95,
+  age: 26,
+  gender: 36,
   group: 55,
   avg: 40,
   file: 45,
@@ -245,6 +249,8 @@ export function SchoolReportsPdfDocument({ generatedAt, year, entries }: { gener
         <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.tskId }]}>TSK ID</Text>
           <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.name }]}>Name</Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.age, textAlign: "right" }]}>Age</Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.gender }]}>Gender</Text>
           <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.group }]}>Group</Text>
           {QUARTER_TERMS.map((q) => (
             <Text key={q.result} style={[styles.tableHeaderCell, { width: schoolReportsCol.avg + schoolReportsCol.file, textAlign: "center" }]}>{q.label}</Text>
@@ -253,6 +259,8 @@ export function SchoolReportsPdfDocument({ generatedAt, year, entries }: { gener
         <View style={[styles.tableHeader, { backgroundColor: GRAY_50, paddingVertical: 3, marginTop: -2 }]}>
           <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.tskId, color: GRAY_500 }]}></Text>
           <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.name, color: GRAY_500 }]}></Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.age, color: GRAY_500 }]}></Text>
+          <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.gender, color: GRAY_500 }]}></Text>
           <Text style={[styles.tableHeaderCell, { width: schoolReportsCol.group, color: GRAY_500 }]}></Text>
           {QUARTER_TERMS.map((q) => (
             <View key={q.result} style={{ width: schoolReportsCol.avg + schoolReportsCol.file, flexDirection: "row" }}>
@@ -266,6 +274,8 @@ export function SchoolReportsPdfDocument({ generatedAt, year, entries }: { gener
           <View key={e.tskId} style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]} wrap={false}>
             <Text style={[styles.tableCell, { width: schoolReportsCol.tskId }]}>{e.tskId}</Text>
             <Text style={[styles.tableCellBold, { width: schoolReportsCol.name }]}>{e.name}</Text>
+            <Text style={[styles.tableCell, { width: schoolReportsCol.age, textAlign: "right" }]}>{e.age}</Text>
+            <Text style={[styles.tableCell, { width: schoolReportsCol.gender }]}>{e.gender}</Text>
             <Text style={[styles.tableCell, { width: schoolReportsCol.group }]}>{cell(e.group)}</Text>
             {QUARTER_TERMS.map((q) => (
               <View key={q.result} style={{ width: schoolReportsCol.avg + schoolReportsCol.file, flexDirection: "row" }}>

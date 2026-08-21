@@ -2,6 +2,7 @@
 
 import { Fragment, useRef, useState } from "react";
 import { TSK_GROUPS, TSK_GROUP_LABELS, getGroupForStatus, type TskGroupKey } from "@/lib/tsk-groups";
+import { calculateAge } from "@/lib/sa-id";
 
 export type SchoolReportEntry = {
   year: number;
@@ -22,6 +23,8 @@ export type Participant = {
   fullNames: string;
   knownAs: string | null;
   tskStatus: string | null;
+  dateOfBirth: Date;
+  gender: "MALE" | "FEMALE";
   schoolReports: SchoolReportEntry[];
 };
 
@@ -263,12 +266,16 @@ export default function SchoolReportsTable({ participants }: { participants: Par
             <tr>
               <th className="sticky top-0 z-10 bg-gray-50 px-3 py-3 w-8 border-b"></th>
               <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Participant</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Age</th>
+              <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Gender</th>
               <th className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b">Group</th>
               {QUARTERS.map((q) => (
                 <th key={q.key} colSpan={2} className="sticky top-0 z-10 bg-gray-50 px-4 py-3 text-left font-medium text-gray-500 border-b border-l">{q.label}</th>
               ))}
             </tr>
             <tr>
+              <th className="sticky top-9 z-10 bg-gray-50 border-b"></th>
+              <th className="sticky top-9 z-10 bg-gray-50 border-b"></th>
               <th className="sticky top-9 z-10 bg-gray-50 border-b"></th>
               <th className="sticky top-9 z-10 bg-gray-50 border-b"></th>
               <th className="sticky top-9 z-10 bg-gray-50 border-b"></th>
@@ -283,7 +290,7 @@ export default function SchoolReportsTable({ participants }: { participants: Par
           <tbody>
             {visibleParticipants.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-8 text-center text-sm text-gray-500">No participants match the current filters.</td>
+                <td colSpan={13} className="px-4 py-8 text-center text-sm text-gray-500">No participants match the current filters.</td>
               </tr>
             ) : (
               visibleParticipants.map((p) => {
@@ -305,6 +312,8 @@ export default function SchoolReportsTable({ participants }: { participants: Par
                       <div className="font-medium">{name}</div>
                       <div className="text-xs text-gray-400 font-mono">{p.tskId}</div>
                     </td>
+                    <td className="px-4 py-2 text-gray-600">{calculateAge(p.dateOfBirth)}</td>
+                    <td className="px-4 py-2 text-gray-600">{p.gender === "MALE" ? "Boy" : "Girl"}</td>
                     <td className="px-4 py-2">
                       {group ? (
                         <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700">

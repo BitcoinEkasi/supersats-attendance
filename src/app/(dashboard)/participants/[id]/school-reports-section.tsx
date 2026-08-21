@@ -61,7 +61,7 @@ export default function SchoolReportsSection({
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">School Reports</h3>
-        <Link href="/data-sheets" className="text-xs text-orange-600 hover:underline">Edit from Data Sheets →</Link>
+        <Link href="/data-sheets/school-reports" className="text-xs text-orange-600 hover:underline">Edit from Data Sheets →</Link>
       </div>
 
       <div className="mt-1 space-y-2">
