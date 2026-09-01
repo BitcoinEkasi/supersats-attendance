@@ -2,9 +2,9 @@ import { prisma } from "@/lib/db";
 import { buildCalculateRewardSats } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
-import { type TskGroupKey, participantWhereForGroup, getGroupForStatus } from "@/lib/tsk-groups";
+import { type TskGroupKey } from "@/lib/tsk-groups";
 import { acMultiplierForMonth } from "@/lib/tsk-levels";
-import { isParticipantActiveOn } from "@/lib/roster-history";
+import { isParticipantActiveOn, groupAsOf, type LevelHistoryRow } from "@/lib/roster-history";
 
 export async function upsertMonthlyReport(
   month: string,
@@ -19,13 +19,6 @@ export async function upsertMonthlyReport(
   const monthStart = getStartOfSASTMonth(month);
   const monthEnd = getEndOfSASTMonth(month);
 
-  // "All Groups" (group: null): each participant is only eligible for their own current
-  // group's events plus any ungrouped event — isParticipantActiveOn alone doesn't know about
-  // groups, so without this every participant's totalEvents would include every other
-  // group's events too, hugely inflating the denominator (and tanking their percentage) for
-  // anyone who correctly never attends another group's sessions.
-  const scopeToOwnGroup = group === null;
-
   const events = await prisma.event.findMany({
     where: {
       date: { gte: monthStart, lte: monthEnd },
@@ -38,7 +31,14 @@ export async function upsertMonthlyReport(
 
   const eventIds = events.map((e) => e.id);
 
-  const [participants, records] = await Promise.all([
+  // Group membership is never filtered in SQL here — Participant.tskStatus is only the
+  // CURRENT status, and by the time a report is generated/refreshed a participant may
+  // already have transitioned groups since `month`. Every participant is fetched
+  // regardless of current group, and group-as-of-monthEnd is reconstructed from
+  // TskLevelHistory below (see groupAsOf) so a participant's group in month M stays
+  // correct even after a later transition — this is what broke TSK00050's August
+  // report the moment his scheduled Dolphins→Sharks move applied on schedule.
+  const [participants, records, levelHistory] = await Promise.all([
     prisma.participant.findMany({
       where: {
         registrationDate: { lte: monthEnd },
@@ -46,7 +46,6 @@ export async function upsertMonthlyReport(
           { status: "ACTIVE" },
           { status: "RETIRED", retiredAt: { gt: monthStart } },
         ],
-        ...(group ? participantWhereForGroup(group) : {}),
       },
       select: {
         id: true, isAssistantCoach: true, assistantCoachSince: true, retiredAt: true, registrationDate: true, status: true, tskStatus: true,
@@ -57,7 +56,18 @@ export async function upsertMonthlyReport(
       where: { eventId: { in: eventIds } },
       select: { participantId: true, eventId: true, present: true },
     }),
+    prisma.tskLevelHistory.findMany({
+      select: { participantId: true, level: true, changedAt: true },
+      orderBy: { changedAt: "asc" },
+    }),
   ]);
+
+  const historyByParticipant = new Map<string, LevelHistoryRow[]>();
+  for (const row of levelHistory) {
+    const arr = historyByParticipant.get(row.participantId);
+    if (arr) arr.push(row);
+    else historyByParticipant.set(row.participantId, [row]);
+  }
 
   const attendedSet = new Map<string, Set<string>>();
   for (const record of records) {
@@ -99,10 +109,15 @@ export async function upsertMonthlyReport(
     await tx.monthlyReportEntry.deleteMany({ where: { reportId } });
 
     for (const participant of participants) {
-      const ownGroup = scopeToOwnGroup ? getGroupForStatus(participant.tskStatus) : null;
+      const ownGroup = groupAsOf(historyByParticipant, participant.id, monthEnd, participant.tskStatus);
+
+      // A group-specific report (e.g. SHARKS) only includes participants who were
+      // actually in that group as of this month — not whoever currently is.
+      if (group !== null && ownGroup !== group) continue;
+
       const attendableEvents = events.filter((e) => {
         if (!isParticipantActiveOn(participant, e.date)) return false;
-        if (!scopeToOwnGroup) return true; // already event-filtered by the query itself
+        if (group !== null) return true; // already event-filtered by the query itself
         return e.group === null || e.group === ownGroup;
       });
 

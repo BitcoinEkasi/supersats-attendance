@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
-import { participantWhereForGroup, getGroupForStatus, type TskGroupKey } from "@/lib/tsk-groups";
-import { isParticipantActiveOn } from "@/lib/roster-history";
+import { type TskGroupKey } from "@/lib/tsk-groups";
+import { isParticipantActiveOn, groupAsOf, type LevelHistoryRow } from "@/lib/roster-history";
 
 export type ParticipantMonthAttendance = {
   participantId: string;
@@ -11,15 +11,16 @@ export type ParticipantMonthAttendance = {
 
 /**
  * Per-participant attendance for a month, scoped the same way a Monthly Report is: events
- * optionally filtered by group, participants optionally filtered by group (current
- * tskStatus-derived) and the broad active-or-retired-after-monthStart candidate net, each
- * participant's own totalEvents/attended bounded by isParticipantActiveOn. Kept independent
- * of upsert-report.ts (which additionally needs AC-multiplier fields and writes reward
- * data) so Attendance Analytics can reuse the same weighting formula without touching the
- * reward-generation path.
+ * optionally filtered by group, participants' group membership resolved as of monthEnd
+ * (via TskLevelHistory, see groupAsOf) rather than their current tskStatus — a participant
+ * who has since transitioned groups must still be scoped by the group they were actually
+ * in during `month`, or their real attendance silently vanishes from one group's numbers
+ * and gets miscounted against the other's. Kept independent of upsert-report.ts (which
+ * additionally needs AC-multiplier fields and writes reward data) so Attendance Analytics
+ * can reuse the same weighting formula without touching the reward-generation path.
  *
  * When neither `group` nor `participantId` is given (the "All Groups" aggregate), each
- * participant is only eligible for their own current group's events, plus any ungrouped
+ * participant is only eligible for their own group-as-of-month's events, plus any ungrouped
  * event — isParticipantActiveOn alone doesn't know about groups, so without this every
  * participant's totalEvents would include every other group's events too, hugely inflating
  * the denominator for anyone who (correctly) never attends another group's sessions.
@@ -39,15 +40,15 @@ export async function computeParticipantMonthAttendance(
   if (events.length === 0) return [];
   const eventIds = events.map((e) => e.id);
 
+  // Group membership is never filtered in SQL here — see the function doc comment.
   const participantWhere = participantId
     ? { id: participantId }
     : {
         registrationDate: { lte: monthEnd },
         OR: [{ status: "ACTIVE" as const }, { status: "RETIRED" as const, retiredAt: { gt: monthStart } }],
-        ...(group ? participantWhereForGroup(group) : {}),
       };
 
-  const [participants, records] = await Promise.all([
+  const [participants, records, levelHistory] = await Promise.all([
     prisma.participant.findMany({
       where: participantWhere,
       select: { id: true, retiredAt: true, registrationDate: true, status: true, tskStatus: true },
@@ -56,7 +57,18 @@ export async function computeParticipantMonthAttendance(
       where: { eventId: { in: eventIds } },
       select: { participantId: true, eventId: true, present: true },
     }),
+    prisma.tskLevelHistory.findMany({
+      select: { participantId: true, level: true, changedAt: true },
+      orderBy: { changedAt: "asc" },
+    }),
   ]);
+
+  const historyByParticipant = new Map<string, LevelHistoryRow[]>();
+  for (const row of levelHistory) {
+    const arr = historyByParticipant.get(row.participantId);
+    if (arr) arr.push(row);
+    else historyByParticipant.set(row.participantId, [row]);
+  }
 
   const attendedSet = new Map<string, Set<string>>();
   for (const record of records) {
@@ -66,17 +78,24 @@ export async function computeParticipantMonthAttendance(
     }
   }
 
-  return participants.map((participant) => {
-    const ownGroup = scopeToOwnGroup ? getGroupForStatus(participant.tskStatus) : null;
-    const attendableEvents = events.filter((e) => {
-      if (!isParticipantActiveOn(participant, e.date)) return false;
-      if (!scopeToOwnGroup) return true; // already event-filtered by the query itself
-      return e.group === null || e.group === ownGroup;
+  return participants
+    .filter((participant) => {
+      if (!group) return true; // "all groups" or single-participant lookup — no group gate
+      return groupAsOf(historyByParticipant, participant.id, monthEnd, participant.tskStatus) === group;
+    })
+    .map((participant) => {
+      const ownGroup = scopeToOwnGroup
+        ? groupAsOf(historyByParticipant, participant.id, monthEnd, participant.tskStatus)
+        : null;
+      const attendableEvents = events.filter((e) => {
+        if (!isParticipantActiveOn(participant, e.date)) return false;
+        if (!scopeToOwnGroup) return true; // already event-filtered by the query itself
+        return e.group === null || e.group === ownGroup;
+      });
+      const totalEvents = attendableEvents.length;
+      const attended = attendableEvents.filter((e) => attendedSet.get(participant.id)?.has(e.id)).length;
+      return { participantId: participant.id, totalEvents, attended };
     });
-    const totalEvents = attendableEvents.length;
-    const attended = attendableEvents.filter((e) => attendedSet.get(participant.id)?.has(e.id)).length;
-    return { participantId: participant.id, totalEvents, attended };
-  });
 }
 
 export function sumAttendance(entries: ParticipantMonthAttendance[]): { attended: number; totalEvents: number } {

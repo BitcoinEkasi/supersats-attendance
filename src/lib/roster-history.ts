@@ -22,6 +22,32 @@ export function isParticipantActiveOn(
   return true;
 }
 
+export type LevelHistoryRow = { participantId: string; level: string; changedAt: Date };
+
+/**
+ * A participant's group as of a given date, reconstructed from their TskLevelHistory
+ * rows (most recent row with changedAt <= asOf wins; rows must be sorted ascending by
+ * changedAt, so this is correct regardless of insertion order, backdated manual
+ * corrections included). `currentTskStatus`, if given, is used as a fallback when no
+ * history row exists at or before `asOf` — e.g. a participant whose history hasn't
+ * been backfilled — so callers that must not silently drop a participant (report/
+ * reward generation) can pass their live `tskStatus`; callers happy to undercount a
+ * chart line for an edge case (the roster-count use case below) can omit it.
+ */
+export function groupAsOf(
+  historyByParticipant: Map<string, LevelHistoryRow[]>,
+  participantId: string,
+  asOf: Date,
+  currentTskStatus: string | null = null,
+): TskGroupKey | null {
+  let level: string | null = null;
+  for (const row of historyByParticipant.get(participantId) ?? []) {
+    if (row.changedAt > asOf) break;
+    level = row.level;
+  }
+  return getGroupForStatus(level ?? currentTskStatus);
+}
+
 /**
  * Reconstructs, for each given as-of date, how many participants were part of the
  * active roster (and which group they were in) as of that moment — from Participant
@@ -40,7 +66,7 @@ export async function computeMonthlyRosterCounts(asOfDates: Date[]): Promise<Mon
     }),
   ]);
 
-  const historyByParticipant = new Map<string, { level: string; changedAt: Date }[]>();
+  const historyByParticipant = new Map<string, LevelHistoryRow[]>();
   for (const row of levelHistory) {
     const arr = historyByParticipant.get(row.participantId);
     if (arr) arr.push(row);
@@ -56,15 +82,7 @@ export async function computeMonthlyRosterCounts(asOfDates: Date[]): Promise<Mon
 
       registered++;
 
-      // Most recent history row with changedAt <= asOf; rows are sorted ascending
-      // by changedAt, so this is correct regardless of insertion order (backdated
-      // manual corrections included).
-      let level: string | null = null;
-      for (const row of historyByParticipant.get(p.id) ?? []) {
-        if (row.changedAt > asOf) break;
-        level = row.level;
-      }
-      const group = getGroupForStatus(level);
+      const group = groupAsOf(historyByParticipant, p.id, asOf);
       if (group) groupRegistered[group]++;
     }
 

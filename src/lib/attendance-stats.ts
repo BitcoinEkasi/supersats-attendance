@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getStartOfSASTMonth, getEndOfSASTMonth, getDaysInSASTMonth, isProgrammeDay, getSASTDateString, getNMonthsFrom, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDayNumber, fmtWeekdayShort } from "@/lib/format-date";
-import { participantWhereForGroup, TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
+import { TSK_GROUPS, type TskGroupKey } from "@/lib/tsk-groups";
 import { getExcuseCategory } from "@/lib/excused-session-reasons";
 import { computeMonthlyRosterCounts, type MonthlyRoster } from "@/lib/roster-history";
 import { computeParticipantMonthAttendance, sumAttendance } from "@/lib/participant-attendance";
@@ -191,14 +191,16 @@ export async function computeAttendanceStats({
     };
   });
 
+  // Point-in-time as of this month's end (or today, for the current month), matching the
+  // day-level `registered` figures above — previously a plain current-status count that
+  // ignored `month` entirely, so a past month's badge always showed today's live headcount
+  // rather than that month's actual registered total.
+  const lastDayRoster = rosterByDay?.[rosterByDay.length - 1];
   const totalParticipants = participantId
     ? 1
-    : await prisma.participant.count({
-        where: {
-          status: "ACTIVE",
-          ...(group ? participantWhereForGroup(group) : {}),
-        },
-      });
+    : group
+    ? (lastDayRoster?.groupRegistered[group] ?? 0)
+    : (lastDayRoster?.registered ?? 0);
 
   const sessionDays = baseDays.filter((d) => d.dayType === "session");
   const average = sessionDays.length > 0
