@@ -8,7 +8,8 @@ import NoteInput from "./note-input";
 import MidnightRedirect from "./midnight-redirect";
 import { getStartOfSASTToday, getEndOfSASTToday } from "@/lib/sast";
 import { fmtDate, fmtTime } from "@/lib/format-date";
-import { TSK_GROUP_LABELS, participantWhereForGroup, type TskGroupKey } from "@/lib/tsk-groups";
+import { TSK_GROUP_LABELS, type TskGroupKey } from "@/lib/tsk-groups";
+import { groupAsOf, type LevelHistoryRow } from "@/lib/roster-history";
 
 export default async function EventAttendancePage({
   params,
@@ -54,24 +55,49 @@ export default async function EventAttendancePage({
   }
 
   const eventDate = event.date;
-  const groupFilter = event.group ? participantWhereForGroup(event.group as TskGroupKey) : {};
 
-  const participants = await prisma.participant.findMany({
-    where: {
-      registrationDate: { lte: eventDate },
-      OR: [
-        { status: "ACTIVE" },
-        { status: "RETIRED", retiredAt: { gt: eventDate } },
-      ],
-      ...groupFilter,
-    },
-    select: {
-      id: true, surname: true, fullNames: true, knownAs: true,
-      profilePicture: true, dateOfBirth: true, gender: true,
-      isAssistantCoach: true, assistantCoachSince: true, tskStatus: true,
-    },
-    orderBy: [{ surname: "asc" }],
-  });
+  // Group membership is resolved as of the event's own date, not the participant's current
+  // tskStatus — otherwise a participant who has since transitioned groups vanishes from
+  // every past session's roster they actually attended (their AttendanceRecord survives,
+  // but nobody can see or correct it through this page). Same point-in-time approach as
+  // report generation (src/lib/upsert-report.ts) — a strict superset of the old filter for
+  // today/future sessions, since asOf = eventDate = "now or later" there.
+  const [candidateParticipants, levelHistory] = await Promise.all([
+    prisma.participant.findMany({
+      where: {
+        registrationDate: { lte: eventDate },
+        OR: [
+          { status: "ACTIVE" },
+          { status: "RETIRED", retiredAt: { gt: eventDate } },
+        ],
+      },
+      select: {
+        id: true, surname: true, fullNames: true, knownAs: true,
+        profilePicture: true, dateOfBirth: true, gender: true,
+        isAssistantCoach: true, assistantCoachSince: true, tskStatus: true,
+      },
+      orderBy: [{ surname: "asc" }],
+    }),
+    event.group
+      ? prisma.tskLevelHistory.findMany({
+          select: { participantId: true, level: true, changedAt: true },
+          orderBy: { changedAt: "asc" },
+        })
+      : Promise.resolve([] as LevelHistoryRow[]),
+  ]);
+
+  const historyByParticipant = new Map<string, LevelHistoryRow[]>();
+  for (const row of levelHistory) {
+    const arr = historyByParticipant.get(row.participantId);
+    if (arr) arr.push(row);
+    else historyByParticipant.set(row.participantId, [row]);
+  }
+
+  const participants = event.group
+    ? candidateParticipants.filter(
+        (p) => groupAsOf(historyByParticipant, p.id, eventDate, p.tskStatus) === (event.group as TskGroupKey)
+      )
+    : candidateParticipants;
 
   const groupLabel = event.group ? (TSK_GROUP_LABELS[event.group] ?? event.group) : null;
 
