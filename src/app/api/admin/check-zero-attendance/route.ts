@@ -29,23 +29,27 @@ export async function POST(req: Request) {
   const [events, excusedToday] = await Promise.all([
     prisma.event.findMany({
       where: { date: { gte: todayStart, lte: todayEnd }, group: { not: null } },
-      select: { id: true, group: true },
+      select: { id: true, group: true, zeroAttendanceConfirmedAt: true },
     }),
     prisma.excusedSession.findMany({ where: { date: todayDate }, select: { group: true } }),
   ]);
 
   const excusedGroups = new Set(excusedToday.map((e) => e.group));
-  const eventByGroup = new Map(events.map((e) => [e.group as string, e.id]));
+  const eventByGroup = new Map(events.map((e) => [e.group as string, e]));
 
   const zeroGroups: string[] = [];
   for (const group of TSK_GROUPS) {
     if (excusedGroups.has(group)) continue;
-    const eventId = eventByGroup.get(group);
-    if (!eventId) {
+    const event = eventByGroup.get(group);
+    if (!event) {
       zeroGroups.push(group);
       continue;
     }
-    const presentCount = await prisma.attendanceRecord.count({ where: { eventId, present: true } });
+    // A marshal who reviewed the roster and explicitly confirmed nobody attended isn't a
+    // data-capture failure — the whole point of the confirmation button is to distinguish
+    // this from "forgot to take attendance," so it shouldn't page an admin either.
+    if (event.zeroAttendanceConfirmedAt) continue;
+    const presentCount = await prisma.attendanceRecord.count({ where: { eventId: event.id, present: true } });
     if (presentCount === 0) zeroGroups.push(group);
   }
 

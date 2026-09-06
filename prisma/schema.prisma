@@ -190,6 +190,9 @@ model Event {
   createdBy   String        @map("created_by")
   createdAt   DateTime      @default(now()) @map("created_at")
 
+  zeroAttendanceConfirmedAt DateTime? @map("zero_attendance_confirmed_at")
+  zeroAttendanceConfirmedBy String?   @map("zero_attendance_confirmed_by")
+
   attendanceRecords AttendanceRecord[]
 
   @@map("events")

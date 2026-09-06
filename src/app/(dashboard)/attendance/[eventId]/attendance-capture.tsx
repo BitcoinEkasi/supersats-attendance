@@ -48,11 +48,13 @@ export default function AttendanceCapture({
   participants,
   existing,
   mobile = false,
+  zeroAttendanceConfirmedAt = null,
 }: {
   eventId: string;
   participants: Participant[];
   existing: ExistingRecord[];
   mobile?: boolean;
+  zeroAttendanceConfirmedAt?: Date | string | null;
 }) {
   const initialState = new Map<string, Mark>();
   for (const p of participants) initialState.set(p.id, null);
@@ -64,6 +66,8 @@ export default function AttendanceCapture({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [confirmedZero, setConfirmedZero] = useState<Date | string | null>(zeroAttendanceConfirmedAt);
+  const [confirmingZero, setConfirmingZero] = useState(false);
 
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRender = useRef(true);
@@ -108,6 +112,47 @@ export default function AttendanceCapture({
     });
   }
 
+  async function handleConfirmZero() {
+    if (!confirm(`Confirm that the session was held and all ${total} participants were absent? This marks everyone on this roster as absent.`)) {
+      return;
+    }
+    setConfirmingZero(true);
+    setError("");
+    try {
+      const records = [...marks.entries()].map(([participantId]) => ({
+        participantId,
+        present: false,
+        onTour: false,
+      }));
+      const attendanceRes = await fetch(`/api/events/${eventId}/attendance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(records),
+      });
+      const attendanceResult = await attendanceRes.json();
+      if (attendanceResult.error) {
+        setError(attendanceResult.error);
+        return;
+      }
+
+      const eventRes = await fetch(`/api/events/${eventId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmZeroAttendance: true }),
+      });
+      const eventResult = await eventRes.json();
+      if (eventResult.error) {
+        setError(eventResult.error);
+        return;
+      }
+
+      setConfirmedZero(new Date().toISOString());
+      setSaveStatus("saved");
+    } finally {
+      setConfirmingZero(false);
+    }
+  }
+
   const sorted = useMemo(() => {
     const q = search.trim().toLowerCase();
     return [...participants]
@@ -125,6 +170,28 @@ export default function AttendanceCapture({
       {saveStatus === "error" && <span className="text-red-500">Save failed</span>}
     </span>
   );
+
+  const zeroAttendanceControl = (mobile: boolean) => {
+    if (confirmedZero) {
+      return (
+        <p className="text-xs font-medium text-orange-600">
+          ✓ Confirmed: session held, no one attended
+        </p>
+      );
+    }
+    if (presentCount === 0) {
+      return (
+        <button
+          onClick={handleConfirmZero}
+          disabled={confirmingZero}
+          className={`text-xs font-medium text-red-600 hover:underline disabled:opacity-50 ${mobile ? "text-left" : ""}`}
+        >
+          {confirmingZero ? "Confirming…" : "No one attended — confirm zero attendance"}
+        </button>
+      );
+    }
+    return null;
+  };
 
   const searchBar = (mobile: boolean) => (
     <div className="relative">
@@ -199,6 +266,7 @@ export default function AttendanceCapture({
             {statusIndicator}
           </div>
           {searchBar(true)}
+          {zeroAttendanceControl(true)}
         </div>
         {error && <div className="mx-4 mt-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>}
         <div className="divide-y divide-gray-100">{sorted.map((p) => participantRow(p, true))}</div>
@@ -216,6 +284,7 @@ export default function AttendanceCapture({
           {statusIndicator}
         </div>
         {searchBar(false)}
+        {zeroAttendanceControl(false)}
       </div>
       {error && <div className="mt-3 rounded border border-red-200 bg-red-50 p-2 text-sm text-red-600">{error}</div>}
       <div className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white overflow-hidden">

@@ -96,9 +96,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   try {
-    const data: { note?: string | null; category?: string } = {};
+    const data: {
+      note?: string | null;
+      category?: string;
+      zeroAttendanceConfirmedAt?: Date;
+      zeroAttendanceConfirmedBy?: string;
+    } = {};
     if ("note" in body) data.note = body.note?.trim() || null;
     if ("category" in body) data.category = body.category as string;
+    if (body.confirmZeroAttendance) {
+      data.zeroAttendanceConfirmedAt = new Date();
+      data.zeroAttendanceConfirmedBy = user.id;
+    }
 
     await prisma.event.update({ where: { id }, data });
     return Response.json({ success: true });
