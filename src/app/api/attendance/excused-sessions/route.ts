@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       select: { group: true, _count: { select: { attendanceRecords: true } } },
     });
     const captured = conflicting.filter((e) => e._count.attendanceRecords > 0);
-    if (captured.length > 0) {
+    if (captured.length > 0 && trimmedReason !== "Zero Attendance") {
       const groups = [...new Set(captured.map((e) => e.group))];
       return Response.json({ error: `A session already exists for this date (${groups.join(", ")})` }, { status: 409 });
     }
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     where: { date: dateObj, group: tskGroup },
     include: { _count: { select: { attendanceRecords: true } } },
   });
-  if (existingEvent && existingEvent._count.attendanceRecords > 0) {
+  if (existingEvent && existingEvent._count.attendanceRecords > 0 && trimmedReason !== "Zero Attendance") {
     return Response.json({ error: "A session already exists for this date" }, { status: 409 });
   }
 

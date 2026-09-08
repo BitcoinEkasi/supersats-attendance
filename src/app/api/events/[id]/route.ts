@@ -110,6 +110,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     await prisma.event.update({ where: { id }, data });
+
+    // Also raise the same "Zero Attendance" flag the admin's excuse-session modal uses,
+    // so this reads on the chart exactly like every other flagged day — audit trail stays
+    // on the Event fields above (which also cover the rare ungrouped-event case ExcusedSession
+    // can't represent, since that model requires a group).
+    if (body.confirmZeroAttendance && event.group) {
+      await prisma.excusedSession.upsert({
+        where: { date_group: { date: event.date, group: event.group } },
+        create: { date: event.date, group: event.group, reason: "Zero Attendance", createdBy: user.id },
+        update: { reason: "Zero Attendance", reasonOther: null, createdBy: user.id },
+      });
+    }
+
     return Response.json({ success: true });
   } catch {
     return Response.json({ error: "Failed to update event" }, { status: 500 });

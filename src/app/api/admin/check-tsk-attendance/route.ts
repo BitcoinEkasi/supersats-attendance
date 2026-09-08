@@ -119,7 +119,12 @@ export async function POST(req: Request) {
     let subject: string;
     let html: string;
 
-    if (excuseReason) {
+    if (excuseReason === "Zero Attendance") {
+      subject = `✅ TSK Attendance for the ${groupLabel} (Zero Attendance Confirmed)`;
+      html = `
+        <p style="margin:0;"><strong>${groupLabel}</strong> — Session held for ${fmtWeekdayShort(todayDate)}, ${fmtDate(todayDate)} — zero attendance confirmed.</p>
+      `;
+    } else if (excuseReason) {
       subject = `✅ TSK Attendance for the ${groupLabel} (Session Flagged)`;
       html = `
         <p style="margin:0;"><strong>${groupLabel}</strong> — No session for ${fmtWeekdayShort(todayDate)}, ${fmtDate(todayDate)}.</p>

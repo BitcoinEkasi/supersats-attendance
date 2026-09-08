@@ -123,7 +123,10 @@ function BarLabel(props: {
   const y = Number(props.y ?? 0);
   const width = Number(props.width ?? 0);
   const day = days[index];
-  const isFlaggable = groupSelected && (day?.dayType === "gap" || day?.dayType === "excused");
+  // A confirmed Zero Attendance day keeps dayType "session" (real records exist — it's not
+  // a data-capture gap), so it needs its own check here alongside the two dayTypes that are
+  // always flaggable.
+  const isFlaggable = groupSelected && (day?.dayType === "gap" || day?.dayType === "excused" || !!day?.excuseReason);
 
   if (isFlaggable) {
     return (
@@ -157,7 +160,7 @@ function AllGroupsBarLabel(props: {
   const day = days[index];
   if (!day) return null;
 
-  if (day.dayType === "gap" || day.dayType === "excused") {
+  if (day.dayType === "gap" || day.dayType === "excused" || day.excuseReason) {
     return (
       <FlagGlyph
         cx={x + width / 2}
@@ -224,6 +227,8 @@ function PulseTooltipContent({ active, payload, group }: TooltipContentProps & {
   } else if (day.dayType === "gap") {
     const reasonText = day.excuseReason === "Other" ? day.excuseReasonOther : day.excuseReason;
     headerText = day.excuseReason ? `${dateStr} — Gap: ${reasonText}` : `${dateStr} — Gap (no session held)`;
+  } else if (day.dayType === "session" && day.excuseReason) {
+    headerText = `${dateStr} — ${day.excuseReason}`;
   }
 
   const rows: { label: string; text: string; color: string; emphasize?: boolean }[] = [];
@@ -487,6 +492,9 @@ export default function AttendanceChart({
                       return `${dateStr} — Gap: ${reasonText}`;
                     }
                     return `${dateStr} — Gap (no session held)`;
+                  }
+                  if (day.dayType === "session" && day.excuseReason) {
+                    return `${dateStr} — ${day.excuseReason}`;
                   }
                   return dateStr;
                 }}

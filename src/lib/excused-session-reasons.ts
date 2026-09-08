@@ -10,9 +10,14 @@ export type ExcusedSessionReason = { label: string; category: ExcuseCategory; sc
 
 export const EXCUSED_SESSION_REASONS: ExcusedSessionReason[] = [
   { label: "Unfavorable weather or ocean conditions", category: "excused", scopes: ["group", "all-groups"], color: "#1d4ed8" },
-  { label: "Programme closed by management decision / Public holiday", category: "excused", scopes: ["all-groups"], color: "#000000" },
+  { label: "Programme closed by management decision / Public holiday", category: "excused", scopes: ["all-groups"], color: "#22c55e" },
   { label: "Attendance not taken", category: "flagged", scopes: ["group", "all-groups"], color: "#ef4444" },
   { label: "Technical issue", category: "flagged", scopes: ["group", "all-groups"], color: "#f97316" },
+  // Unlike every other reason, this one is expected to coexist with real AttendanceRecord
+  // rows — it describes a session that genuinely happened and was captured, just with zero
+  // attendance. "flagged" (not "excused"): the day must still count toward the potential-
+  // sessions target, since a held-but-empty session is not the same as no session at all.
+  { label: "Zero Attendance", category: "flagged", scopes: ["group", "all-groups"], color: "#000000" },
 ];
 
 const FALLBACK_COLOR = "#6b7280"; // neutral gray — any legacy reason string that isn't one of the current labels
