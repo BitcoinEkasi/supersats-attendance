@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { createBoltUser, createBoltCard } from "@/lib/bolt";
+import { createBoltUser, createBoltCard, updateBoltUserMeta } from "@/lib/bolt";
+import { getDivisionLabel } from "@/lib/sa-id";
+import { getGroupForStatus } from "@/lib/tsk-groups";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -41,6 +43,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     where: { id },
     data: { boltUserId: String(boltUserId) },
   });
+
+  try {
+    await updateBoltUserMeta(boltUserId, {
+      division: getDivisionLabel(participant.dateOfBirth, participant.gender),
+      tsk_level: participant.tskStatus,
+      ac: participant.isAssistantCoach,
+      tsk_group: getGroupForStatus(participant.tskStatus),
+    });
+  } catch { /* non-critical */ }
 
   const boltPublicUrl = process.env.NEXT_PUBLIC_BOLT_URL ?? '';
   return Response.json({ boltUserId, setupToken, boltPublicUrl });
