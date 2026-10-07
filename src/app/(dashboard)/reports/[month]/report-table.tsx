@@ -110,7 +110,12 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                 <tr key={entry.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.tskId}</td>
                   <td className="px-4 py-3 font-medium">
-                    {name}
+                    <Link
+                      href={`/participants/${entry.participantId}?month=${reportMonth}`}
+                      className="hover:underline hover:text-orange-600"
+                    >
+                      {name}
+                    </Link>
                     {p.retiredAt && (
                       <div className="mt-0.5 text-xs font-normal text-red-500">Retired on {fmtDate(p.retiredAt)}</div>
                     )}
