@@ -7,6 +7,7 @@ import { getSASTNow, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { fmtDate } from "@/lib/format-date";
 import ExportButton from "./export-button";
 import ApproveButton from "../approve-button";
+import PenaltyButton from "../penalty-button";
 import ReportTable from "./report-table";
 import PayoutInvoicePanel from "../payout-invoice-panel";
 import CreatePayoutButton from "../create-payout-button";
@@ -85,6 +86,7 @@ export default async function ReportDetailPage({
   const monthComplete = report.month < currentYM;
 
   const totalSats = report.entries.reduce((sum, e) => sum + e.rewardSats, 0);
+  const grossTotalSats = report.entries.reduce((sum, e) => sum + e.grossRewardSats, 0);
   const totalParticipants = report.entries.filter((e) => isParticipantActiveOn(e.participant, monthEnd)).length;
   const totalSessions = monthEvents.length;
   const avgPercentage = weightedAvgPercentage(report.entries);
@@ -214,10 +216,27 @@ export default async function ReportDetailPage({
           )}
           <ExportButton reportId={report.id} month={report.month} />
           {role === "ADMINISTRATOR" && report.status === "PENDING" && (
+            <PenaltyButton reportId={report.id} currentPercent={report.penaltyPercent} currentReason={report.penaltyReason} />
+          )}
+          {role === "ADMINISTRATOR" && report.status === "PENDING" && (
             <ApproveButton reportId={report.id} disabled={!monthComplete} missingCards={missingCards} />
           )}
         </div>
       </div>
+
+      {report.penaltyPercent > 0 && (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-semibold text-red-800">
+            −{report.penaltyPercent}% group penalty{report.status === "APPROVED" && " (locked)"}
+          </p>
+          {report.penaltyReason && <p className="mt-1 text-sm text-red-700">{report.penaltyReason}</p>}
+          {report.penaltyBy && (
+            <p className="mt-1 text-xs text-red-500">
+              Applied by {report.penaltyBy}{report.penaltyAt ? ` on ${fmtDate(report.penaltyAt)}` : ""}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
@@ -289,6 +308,9 @@ export default async function ReportDetailPage({
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Rewards</p>
+          {grossTotalSats > totalSats && (
+            <p className="mt-1 text-sm text-gray-400 line-through">🗲 {grossTotalSats.toLocaleString()} sats</p>
+          )}
           <p className="mt-1 text-2xl font-bold text-orange-600">
             🗲 {totalSats.toLocaleString()} sats
           </p>

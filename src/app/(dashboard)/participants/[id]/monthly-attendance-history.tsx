@@ -10,6 +10,9 @@ type Entry = {
   totalEvents: number;
   percentage: number;
   rewardSats: number;
+  grossRewardSats: number;
+  penaltyPercent: number;
+  penaltyReason: string | null;
   payoutStatus: string;
   reportStatus: string;
   /** Resolved server-side from AC history for this specific month — reflects what was
@@ -68,7 +71,20 @@ export default function MonthlyAttendanceHistory({
                     {entry.rewardSats === 0 ? (
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">DNQ</span>
                     ) : (
-                      <span className="text-orange-600 font-medium">⚡ {entry.rewardSats.toLocaleString()} sats</span>
+                      <span className="text-orange-600 font-medium">
+                        {entry.grossRewardSats > entry.rewardSats && (
+                          <s className="mr-1 font-normal text-gray-400">{entry.grossRewardSats.toLocaleString()}</s>
+                        )}
+                        ⚡ {entry.rewardSats.toLocaleString()} sats
+                      </span>
+                    )}
+                    {entry.penaltyPercent > 0 && (
+                      <span
+                        title={entry.penaltyReason ?? undefined}
+                        className="ml-1 inline-flex cursor-help rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"
+                      >
+                        −{entry.penaltyPercent}% group penalty
+                      </span>
                     )}
                   </td>
                   <td className="py-2">

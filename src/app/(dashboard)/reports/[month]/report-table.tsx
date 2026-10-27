@@ -13,6 +13,8 @@ type Entry = {
   attended: number;
   percentage: string | number;
   rewardSats: number;
+  /** Reward before any group penalty — equals rewardSats when no penalty applies. */
+  grossRewardSats: number;
   payoutStatus: string;
   cardId?: string | null;
   /** Resolved server-side from AssistantCoachPeriod history for this report's month —
@@ -135,6 +137,9 @@ export default function ReportTable({ entries, reportMonth, rewardTiers = REWARD
                     )}
                     {entry.rewardSats > 0 ? (
                       <>
+                        {entry.grossRewardSats > entry.rewardSats && (
+                          <s className="mr-1 font-normal text-gray-400">{entry.grossRewardSats.toLocaleString()}</s>
+                        )}
                         🗲 {entry.rewardSats.toLocaleString()}
                         {fmtZar(entry.rewardSats, zarPerSat) && (
                           <span className={`ml-1 text-xs font-normal ${zarLocked ? "text-green-600" : "text-gray-400"}`}>({fmtZar(entry.rewardSats, zarPerSat)})</span>

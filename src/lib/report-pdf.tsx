@@ -80,6 +80,7 @@ export type ReportPdfEntry = {
   attended: number;
   percentage: number;
   rewardSats: number;
+  grossRewardSats: number;
   retiredAt: string | null;
 };
 
@@ -99,6 +100,8 @@ export type ReportPdfProps = {
   qualifyingParticipants: number;
   avgPercentage: number;
   totalSats: number;
+  penaltyPercent: number;
+  penaltyReason: string | null;
   entries: ReportPdfEntry[];
 };
 
@@ -111,7 +114,7 @@ export function ReportPdfDocument({
   month, group, groupLabel, status, generatedBy, approvedBy, approvedAt,
   zarPerSat, recruited, retired, activeParticipants,
   totalSessions, qualifyingParticipants, avgPercentage, totalSats,
-  entries,
+  penaltyPercent, penaltyReason, entries,
 }: ReportPdfProps) {
   const showZar = zarPerSat != null;
   const hasDelta = recruited > 0 || retired > 0;
@@ -189,6 +192,14 @@ export function ReportPdfDocument({
           </View>
         </View>
 
+        {/* Group penalty */}
+        {penaltyPercent > 0 && (
+          <View style={[styles.movementBox, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+            <Text style={[styles.movementTitle, { color: "#991b1b" }]}>-{penaltyPercent}% Group Penalty</Text>
+            {penaltyReason && <Text style={{ fontSize: 8, color: "#b91c1c" }}>{penaltyReason}</Text>}
+          </View>
+        )}
+
         {/* Movement */}
         {hasMovement && (
           <View style={styles.movementBox}>
@@ -221,7 +232,10 @@ export function ReportPdfDocument({
             <Text style={[styles.tableCell, { width: COL.sessions, textAlign: "right" }]}>{e.totalEvents}</Text>
             <Text style={[styles.tableCell, { width: COL.attended, textAlign: "right" }]}>{e.attended}</Text>
             <Text style={[styles.tableCell, { width: COL.pct, textAlign: "right" }]}>{fmtPct(e.percentage)}</Text>
-            <Text style={[styles.tableCell, { width: COL.sats, textAlign: "right" }]}>{e.rewardSats.toLocaleString()}</Text>
+            <Text style={[styles.tableCell, { width: COL.sats, textAlign: "right" }]}>{e.grossRewardSats > e.rewardSats && (
+                <Text style={{ color: GRAY_500, textDecoration: "line-through" }}>{e.grossRewardSats.toLocaleString()} </Text>
+              )}
+              {e.rewardSats.toLocaleString()}</Text>
             {showZar && (
               <Text style={[styles.tableCell, { width: COL.zar, textAlign: "right" }]}>
                 {e.rewardSats > 0 ? satsToZar(e.rewardSats, zarPerSat!) : "—"}

@@ -23,13 +23,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   if (!report) return Response.json({ error: "Not found" }, { status: 404 });
 
-  const lines = ["TSK ID,Name,Total Events,Attended,Percentage,Reward (sats),Payout Status"];
+  const lines = ["TSK ID,Name,Total Events,Attended,Percentage,Gross Reward (sats),Group Penalty %,Reward (sats),Payout Status"];
 
   for (const entry of report.entries) {
     const p = entry.participant;
     const name = p.knownAs ? `${p.knownAs} (${p.surname})` : `${p.surname}, ${p.fullNames}`;
     lines.push(
-      [p.tskId, `"${name}"`, entry.totalEvents, entry.attended, `${entry.percentage}%`, entry.rewardSats, entry.payoutStatus].join(","),
+      [p.tskId, `"${name}"`, entry.totalEvents, entry.attended, `${entry.percentage}%`, entry.grossRewardSats, report.penaltyPercent, entry.rewardSats, entry.payoutStatus].join(","),
     );
   }
 

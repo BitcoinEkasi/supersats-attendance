@@ -56,3 +56,12 @@ export function weightedAvgPercentage(entries: { attended: number; totalEvents: 
   const totalAttendable = entries.reduce((sum, e) => sum + e.totalEvents, 0);
   return totalAttendable > 0 ? (totalAttended / totalAttendable) * 100 : 0;
 }
+
+// Group penalty — an admin-applied slash to every reward in a group's monthly report,
+// stored on MonthlyReport and applied last (after the AC multiplier) in upsertMonthlyReport.
+export const GROUP_PENALTY_OPTIONS = [25, 50, 75] as const;
+export type GroupPenaltyPercent = (typeof GROUP_PENALTY_OPTIONS)[number];
+
+export function applyPenalty(sats: number, penaltyPercent: number): number {
+  return Math.round((sats * (100 - penaltyPercent)) / 100);
+}

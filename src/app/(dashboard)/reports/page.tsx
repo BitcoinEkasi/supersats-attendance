@@ -34,7 +34,7 @@ export default async function ReportsPage() {
 
   // Serialize (convert Prisma Decimal → number) and group by month, sorting groups by canonical order
   const monthKeys: string[] = [];
-  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number; attended: number }[] }[]> = {};
+  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; penaltyPercent: number; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number; attended: number }[] }[]> = {};
   for (const r of reports) {
     if (!byMonth[r.month]) {
       monthKeys.push(r.month);
@@ -51,6 +51,7 @@ export default async function ReportsPage() {
       group: r.group,
       status: r.status,
       zarPerSat: r.zarPerSat ?? null,
+      penaltyPercent: r.penaltyPercent,
       recruited,
       retired,
       activeParticipants,

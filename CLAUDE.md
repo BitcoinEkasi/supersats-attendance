@@ -78,6 +78,8 @@ Invariants:
 
 `src/lib/rewards.ts`: seven tiers (70, 75, 80, 85, 90, 95, 100%) on an exponential curve from `minSats` (70%) to `maxSats` (100%); below 70% → 0. Defaults are 3000 / 10000 sats, and admins can change them via `RewardSettings`. Tier selection uses the raw unrounded percentage; display floors it (`fmtPct`). Junior coaches are excluded from rewards. Assistant coaches get a multiplier.
 
+**Group penalty:** an admin can slash a group's whole monthly report by 25/50/75% (with a required reason) via `/api/reports/[id]/penalty`, only while the report is PENDING. It's stored on `MonthlyReport.penaltyPercent` and applied last in `upsertMonthlyReport`, so `MonthlyReportEntry.rewardSats` is always the final payable amount; `grossRewardSats` holds the pre-penalty figure for display.
+
 ### File Uploads
 
 POST `/api/upload` — accepts JPEG, PNG, WebP, PDF up to 5MB. Files are stored in `/public/uploads/participants/`, and it returns a relative path that is saved to the DB.

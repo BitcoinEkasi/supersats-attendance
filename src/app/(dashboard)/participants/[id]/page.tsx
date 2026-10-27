@@ -48,7 +48,7 @@ export default async function ParticipantDetailPage({
   const [monthlyReportEntries, allAttendanceRecords, schools] = await Promise.all([
     prisma.monthlyReportEntry.findMany({
       where: { participantId: id },
-      include: { report: { select: { id: true, month: true, status: true } } },
+      include: { report: { select: { id: true, month: true, status: true, penaltyPercent: true, penaltyReason: true } } },
       orderBy: { report: { month: "desc" } },
       take: 12,
     }),
@@ -80,6 +80,9 @@ export default async function ParticipantDetailPage({
     totalEvents: entry.totalEvents,
     percentage: Number(entry.percentage),
     rewardSats: entry.rewardSats,
+    grossRewardSats: entry.grossRewardSats,
+    penaltyPercent: entry.report.penaltyPercent,
+    penaltyReason: entry.report.penaltyReason,
     payoutStatus: entry.payoutStatus,
     reportStatus: entry.report.status,
     // Resolved per-month from AC history, not the live flag — a past month keeps its

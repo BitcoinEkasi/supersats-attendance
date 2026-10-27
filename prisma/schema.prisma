@@ -263,6 +263,10 @@ model MonthlyReport {
   totalPayoutSats Int          @default(0) @map("total_payout_sats")
   batchId         Int?         @map("batch_id")
   zarPerSat       Float?       @map("zar_per_sat")
+  penaltyPercent  Int          @default(0) @map("penalty_percent")
+  penaltyReason   String?      @map("penalty_reason")
+  penaltyBy       String?      @map("penalty_by")
+  penaltyAt       DateTime?    @map("penalty_at")
 
   entries MonthlyReportEntry[]
 
@@ -277,7 +281,8 @@ model MonthlyReportEntry {
   totalEvents   Int      @map("total_events")
   attended      Int
   percentage    Float
-  rewardSats    Int      @map("reward_sats")
+  rewardSats      Int      @map("reward_sats")
+  grossRewardSats Int      @default(0) @map("gross_reward_sats")
   payoutStatus  String   @default("pending") @map("payout_status")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { buildCalculateRewardSats } from "@/lib/rewards";
+import { buildCalculateRewardSats, applyPenalty } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { type TskGroupKey } from "@/lib/tsk-groups";
@@ -92,6 +92,9 @@ export async function upsertMonthlyReport(
     // an approved, already-paid report previously got silently reset to PENDING.
     if (existing?.status === "APPROVED") return;
 
+    // A group penalty lives on the report itself so it survives every recalculation.
+    const penaltyPercent = existing?.penaltyPercent ?? 0;
+
     let reportId: string;
     if (existing) {
       await tx.monthlyReport.update({
@@ -129,7 +132,8 @@ export async function upsertMonthlyReport(
       const percentage = totalEvents > 0 ? (attended / totalEvents) * 100 : 0;
       const baseReward = calculateRewardSats(percentage);
       const acMultiplier = acMultiplierForMonth(participant.assistantCoachPeriods, month);
-      const rewardSats = acMultiplier !== null ? Math.round(baseReward * acMultiplier) : baseReward;
+      const grossRewardSats = acMultiplier !== null ? Math.round(baseReward * acMultiplier) : baseReward;
+      const rewardSats = applyPenalty(grossRewardSats, penaltyPercent);
 
       await tx.monthlyReportEntry.create({
         data: {
@@ -139,6 +143,7 @@ export async function upsertMonthlyReport(
           attended,
           percentage: parseFloat(percentage.toFixed(2)),
           rewardSats,
+          grossRewardSats,
         },
       });
     }

@@ -82,6 +82,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       attended: e.attended,
       percentage: Number(e.percentage),
       rewardSats: e.rewardSats,
+      grossRewardSats: e.grossRewardSats,
       retiredAt: p.retiredAt ? fmtDate(p.retiredAt) : null,
     };
   });
@@ -107,6 +108,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     qualifyingParticipants,
     avgPercentage,
     totalSats,
+    penaltyPercent: report.penaltyPercent,
+    penaltyReason: report.penaltyReason,
     entries,
   }) as any;
 

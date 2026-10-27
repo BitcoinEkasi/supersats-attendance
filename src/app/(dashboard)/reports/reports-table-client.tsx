@@ -14,7 +14,7 @@ function fmtMonth(key: string) {
 }
 
 type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number; attended: number };
-type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; recruited: number; retired: number; activeParticipants: number; entries: ReportEntry[] };
+type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; penaltyPercent: number; recruited: number; retired: number; activeParticipants: number; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
   if (!zarPerSat) return null;
@@ -135,7 +135,14 @@ export function ReportsTableClient({
                         {groupLabel}
                       </span>
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={report.status} /></td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={report.status} />
+                      {report.penaltyPercent > 0 && (
+                        <span className="ml-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                          −{report.penaltyPercent}%
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {report.activeParticipants}
                       {(report.recruited > 0 || report.retired > 0) && (
