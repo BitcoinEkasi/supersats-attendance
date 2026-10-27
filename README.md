@@ -64,9 +64,6 @@ npm run dev
 | `ADMIN_NAME` | Display name for the admin account |
 | `ADMIN_USERNAME` | Admin login username |
 | `ADMIN_PASSWORD` | Admin login password |
-| `MARSHAL_NAME` | Display name for the marshal account |
-| `MARSHAL_USERNAME` | Marshal login username |
-| `MARSHAL_PASSWORD` | Marshal login password |
 | `BOLT_API_URL` | Internal URL of the supersats-rewards server |
 | `BOLT_API_KEY` | API key for the supersats-rewards server |
 | `NEXT_PUBLIC_BOLT_URL` | Public URL of the supersats-rewards server |

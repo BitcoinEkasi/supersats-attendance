@@ -13,15 +13,6 @@ const ADMIN_USER = {
   group: null as string | null,
 };
 
-const LEGACY_MARSHAL = {
-  id: "marshal",
-  name: process.env.MARSHAL_NAME || "Marshal",
-  username: process.env.MARSHAL_USERNAME || "marshal",
-  password: process.env.MARSHAL_PASSWORD || "",
-  role: "MARSHAL" as UserRole,
-  group: null as string | null,
-};
-
 // One Marshal account per group — authenticated by group id + passcode (no username)
 const GROUP_MARSHALS = TSK_GROUPS.map((g) => ({
   id: `marshal-${g.toLowerCase()}`,
@@ -32,7 +23,7 @@ const GROUP_MARSHALS = TSK_GROUPS.map((g) => ({
   group: g as string | null,
 }));
 
-const USERS = [ADMIN_USER, LEGACY_MARSHAL, ...GROUP_MARSHALS];
+const USERS = [ADMIN_USER, ...GROUP_MARSHALS];
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
