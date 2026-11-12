@@ -6,10 +6,15 @@ import { ReportsTableClient } from "./reports-table-client";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { isParticipantActiveOn } from "@/lib/roster-history";
+import { resetAllExpiredPayouts } from "@/lib/payout-expiry";
 
 export default async function ReportsPage() {
   const session = await auth();
   const role = session?.user?.role;
+
+  // Return reports whose payout invoice expired unpaid to PENDING first, so they're
+  // picked up by the refresh below and never sit in the list looking approved
+  await resetAllExpiredPayouts();
 
   // Auto-refresh all pending reports from latest attendance data
   const pendingReports = await prisma.monthlyReport.findMany({
@@ -34,7 +39,7 @@ export default async function ReportsPage() {
 
   // Serialize (convert Prisma Decimal → number) and group by month, sorting groups by canonical order
   const monthKeys: string[] = [];
-  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; penaltyPercent: number; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number; attended: number }[] }[]> = {};
+  const byMonth: Record<string, { id: string; month: string; group: string | null; status: string; payoutStatus: string; zarPerSat: number | null; penaltyPercent: number; recruited: number; retired: number; activeParticipants: number; entries: { rewardSats: number; percentage: number; totalEvents: number; attended: number }[] }[]> = {};
   for (const r of reports) {
     if (!byMonth[r.month]) {
       monthKeys.push(r.month);
@@ -50,6 +55,7 @@ export default async function ReportsPage() {
       month: r.month,
       group: r.group,
       status: r.status,
+      payoutStatus: r.payoutStatus,
       zarPerSat: r.zarPerSat ?? null,
       penaltyPercent: r.penaltyPercent,
       recruited,

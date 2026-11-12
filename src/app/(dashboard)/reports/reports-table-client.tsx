@@ -14,7 +14,7 @@ function fmtMonth(key: string) {
 }
 
 type ReportEntry = { rewardSats: number; percentage: number; totalEvents: number; attended: number };
-type ReportRow = { id: string; month: string; group: string | null; status: string; zarPerSat: number | null; penaltyPercent: number; recruited: number; retired: number; activeParticipants: number; entries: ReportEntry[] };
+type ReportRow = { id: string; month: string; group: string | null; status: string; payoutStatus: string; zarPerSat: number | null; penaltyPercent: number; recruited: number; retired: number; activeParticipants: number; entries: ReportEntry[] };
 
 function fmtZar(sats: number, zarPerSat: number | null): string | null {
   if (!zarPerSat) return null;
@@ -35,7 +35,9 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, payoutStatus }: { status: string; payoutStatus: string }) {
+  if (status === "APPROVED" && payoutStatus === "invoiced")
+    return <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Awaiting payment</span>;
   if (status === "APPROVED")
     return <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Approved</span>;
   return <span className="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">Pending</span>;
@@ -136,7 +138,7 @@ export function ReportsTableClient({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={report.status} />
+                      <StatusBadge status={report.status} payoutStatus={report.payoutStatus} />
                       {report.penaltyPercent > 0 && (
                         <span className="ml-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                           −{report.penaltyPercent}%

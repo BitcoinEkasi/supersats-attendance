@@ -16,6 +16,7 @@ import { acMultiplierForMonth } from "@/lib/tsk-levels";
 import { getBoltUser, getZarPerSat, satsToZar } from "@/lib/bolt";
 import { upsertMonthlyReport } from "@/lib/upsert-report";
 import { isParticipantActiveOn } from "@/lib/roster-history";
+import { resetExpiredPayout } from "@/lib/payout-expiry";
 
 export default async function ReportDetailPage({
   params,
@@ -27,9 +28,13 @@ export default async function ReportDetailPage({
   // Auto-refresh: recalculate from latest attendance data on every open (PENDING only)
   const reportMeta = await prisma.monthlyReport.findUnique({
     where: { id: reportId },
-    select: { month: true, group: true, status: true, generatedBy: true },
+    select: { id: true, month: true, group: true, status: true, generatedBy: true, payoutStatus: true, batchId: true },
   });
   if (!reportMeta) notFound();
+  // An approved report whose payout invoice expired unpaid goes back to PENDING
+  if (reportMeta.status === "APPROVED" && (await resetExpiredPayout(reportMeta))) {
+    reportMeta.status = "PENDING";
+  }
   if (reportMeta.status !== "APPROVED") {
     await upsertMonthlyReport(
       reportMeta.month,
@@ -205,7 +210,11 @@ export default async function ReportDetailPage({
           )}
         </div>
         <div className="flex items-center gap-3">
-          {report.status === "APPROVED" ? (
+          {report.status === "APPROVED" && report.payoutStatus === "invoiced" ? (
+            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
+              Awaiting payment
+            </span>
+          ) : report.status === "APPROVED" ? (
             <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
               Approved
             </span>

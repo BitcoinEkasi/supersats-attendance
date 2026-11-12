@@ -92,7 +92,7 @@ export default function CreatePayoutButton({ reportId, createPayoutUrl, checkUrl
   return (
     <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
       <p className="text-sm text-amber-800 mb-3">
-        This report is approved but has no active payout (an earlier invoice that expired unpaid is cleared automatically). Bolt reserves will be checked — if sufficient, rewards are paid instantly with no invoice required.
+        This report is approved but no payout has been created yet. Bolt reserves will be checked — if sufficient, rewards are paid instantly with no invoice required.
       </p>
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <button

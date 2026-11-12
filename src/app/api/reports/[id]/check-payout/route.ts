@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
-import { getPayoutBatchStatus, cancelPayoutBatch } from "@/lib/bolt";
+import { getPayoutBatchStatus } from "@/lib/bolt";
+import { resetExpiredPayout } from "@/lib/payout-expiry";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -22,20 +23,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return Response.json({ payout_status: "paid", batch_status: batchStatus });
   }
 
-  // Invoice expired unpaid — cancel the bolt batch and reset the report so a
-  // fresh payout (reserves or new invoice) can be created via "Pay Rewards".
-  if (report.payoutStatus === "invoiced" && batchStatus?.expired) {
-    try {
-      await cancelPayoutBatch(report.batchId);
-    } catch (err: any) {
-      console.error(`[check-payout] Failed to cancel expired batch #${report.batchId}:`, err.message);
-      return Response.json({ payout_status: report.payoutStatus, batch_status: batchStatus });
-    }
-    await prisma.monthlyReport.update({
-      where: { id },
-      data: { payoutStatus: "unpaid", paymentRequest: null, paymentHash: null, batchId: null, totalPayoutSats: 0 },
-    });
-    console.log(`[check-payout] Report ${report.month} ${report.group ?? "ALL"}: invoice expired, batch #${report.batchId} cancelled, payout reset`);
+  // Invoice expired unpaid — cancel the bolt batch and return the report to PENDING
+  if (await resetExpiredPayout(report, batchStatus)) {
     return Response.json({ payout_status: "unpaid", expired: true, batch_status: batchStatus });
   }
 
