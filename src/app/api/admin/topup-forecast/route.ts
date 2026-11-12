@@ -10,6 +10,6 @@ export async function GET() {
   const settings = await getTopupSettings();
   const { year, month: m } = getSASTNow();
   const month = `${year}-${String(m).padStart(2, "0")}`;
-  const forecast = await computeTopupForecast(month, settings.contingencyPercent);
+  const forecast = await computeTopupForecast(month, settings.contingencyPercent, settings.topupAddress);
   return Response.json({ forecast, subject: buildTopupEmail(forecast).subject });
 }

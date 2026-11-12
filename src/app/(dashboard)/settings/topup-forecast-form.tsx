@@ -35,17 +35,20 @@ export default function TopupForecastForm({
   enabled: initialEnabled,
   remainingSessions: initialRemaining,
   contingencyPercent: initialContingency,
+  topupAddress: initialAddress,
   lastSentMonth,
 }: {
   enabled: boolean;
   remainingSessions: number;
   contingencyPercent: number;
+  topupAddress: string;
   lastSentMonth: string | null;
 }) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initialEnabled);
   const [remaining, setRemaining] = useState(String(initialRemaining));
   const [contingency, setContingency] = useState(String(initialContingency));
+  const [address, setAddress] = useState(initialAddress);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [preview, setPreview] = useState<{ forecast: Forecast; subject: string } | null>(null);
@@ -58,7 +61,7 @@ export default function TopupForecastForm({
     const res = await fetch("/api/admin/topup-forecast-settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled, remainingSessions: Number(remaining), contingencyPercent: Number(contingency) }),
+      body: JSON.stringify({ enabled, remainingSessions: Number(remaining), contingencyPercent: Number(contingency), topupAddress: address }),
     });
     const data = await res.json();
     setSaving(false);
@@ -116,6 +119,10 @@ export default function TopupForecastForm({
         </div>
         <div className="flex items-center gap-2">
           Calc forecast at max with <input type="number" min={0} max={100} value={contingency} onChange={(e) => setContingency(e.target.value)} className={inputCls} />% contingency
+        </div>
+        <div className="flex items-center gap-2">
+          Top up to Lightning address
+          <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="w-56 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500" />
         </div>
         <button
           type="submit"

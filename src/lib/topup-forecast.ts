@@ -82,6 +82,7 @@ export type TopupForecast = {
   groups: GroupForecast[];
   forecastSats: number;
   contingencyPercent: number;
+  topupAddress: string;
   withContingencySats: number;
   reserveSats: number | null; // null if Bolt couldn't be reached
   topupSats: number;
@@ -89,7 +90,7 @@ export type TopupForecast = {
 };
 
 /** Best-case payout for `month`, plus contingency, against the current Bolt reserve. */
-export async function computeTopupForecast(month: string, contingencyPercent: number): Promise<TopupForecast> {
+export async function computeTopupForecast(month: string, contingencyPercent: number, topupAddress: string): Promise<TopupForecast> {
   const { minSats, maxSats } = await getActiveRewardSettings();
   const calc = buildCalculateRewardSats(minSats, maxSats);
   const { remaining, unheldEvents, maxRemaining } = await getRemainingSessions(month);
@@ -161,13 +162,15 @@ export async function computeTopupForecast(month: string, contingencyPercent: nu
 
   return {
     month, generatedAt: new Date().toISOString(), maxRemaining, groups,
-    forecastSats, contingencyPercent, withContingencySats, reserveSats, topupSats, zarPerSat,
+    forecastSats, contingencyPercent, topupAddress, withContingencySats, reserveSats, topupSats, zarPerSat,
   };
 }
 
+/** "2026-11" -> "Nov '26" */
 function monthLabel(month: string): string {
   const [y, m] = month.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, 15)).toLocaleDateString("en-ZA", { month: "short", year: "numeric", timeZone: "UTC" });
+  const mmm = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1];
+  return `${mmm} '${String(y).slice(-2)}`;
 }
 
 export function buildTopupEmail(f: TopupForecast): { subject: string; html: string } {
@@ -176,7 +179,7 @@ export function buildTopupEmail(f: TopupForecast): { subject: string; html: stri
   const label = monthLabel(f.month);
   const needed = f.topupSats > 0;
   const subject = needed
-    ? `TSK top-up request — ${label}: ${sats(f.topupSats)} needed`
+    ? `TSK top-up request — ${label}: ${sats(f.topupSats)} to ${f.topupAddress}`
     : `TSK rewards forecast — ${label}: no top-up needed`;
 
   const td = 'style="padding:4px 10px;border-bottom:1px solid #eee"';
@@ -185,9 +188,10 @@ export function buildTopupEmail(f: TopupForecast): { subject: string; html: stri
     .map((g) => `<tr><td style="padding:4px 10px;border-bottom:1px solid #eee;white-space:nowrap">${g.label}${g.estimated ? " *" : ""}</td><td ${tdr}>${g.participants}</td><td ${tdr}>${g.remainingSessions}</td><td ${tdr}>${g.currentlyQualifying}</td><td ${tdr}>${g.canReach100}</td><td ${tdr}>${g.currentSats.toLocaleString("en-ZA")}</td><td ${tdr}>${g.forecastSats.toLocaleString("en-ZA")}</td></tr>`)
     .join("");
 
+  const addr = `<a href="lightning:${f.topupAddress}">${f.topupAddress}</a>`;
   const headline = needed
-    ? `<h2 style="color:#c2410c">⚡ Please top up the rewards reserve with ${sats(f.topupSats)}${zar(f.topupSats)}</h2>`
-    : `<h2 style="color:#15803d">✓ No top-up needed for ${label}</h2>`;
+    ? `<h2 style="color:#c2410c">⚡ Please top up ${sats(f.topupSats)}${zar(f.topupSats)} to ${addr} to reserve the forecasted payouts for the TSK Rewards for ${label}</h2>`
+    : `<h2 style="color:#15803d">✓ No top-up needed: the current reserve already covers the forecasted payouts for the TSK Rewards for ${label}</h2>`;
 
   const html = `${headline}
 <p>${f.maxRemaining} session${f.maxRemaining === 1 ? "" : "s"} left this month. Topping up now lets the ${label} reports be paid straight from reserves when they're approved.</p>

@@ -504,6 +504,7 @@ model TopupForecastSettings {
   enabled            Boolean  @default(true)
   remainingSessions  Int      @default(5) @map("remaining_sessions")
   contingencyPercent Int      @default(5) @map("contingency_percent")
+  topupAddress       String   @default("skredit@blink.sv") @map("topup_address")
   lastSentMonth      String?  @map("last_sent_month")
   updatedAt          DateTime @updatedAt @map("updated_at")
   updatedBy          String?  @map("updated_by")

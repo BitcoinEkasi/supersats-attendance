@@ -54,6 +54,7 @@ export default async function SettingsPage() {
           enabled={topup.enabled}
           remainingSessions={topup.remainingSessions}
           contingencyPercent={topup.contingencyPercent}
+          topupAddress={topup.topupAddress}
           lastSentMonth={topup.lastSentMonth}
         />
         <div className="mt-6 border-t border-gray-100 pt-4">

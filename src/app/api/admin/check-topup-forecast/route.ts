@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const forecast = await computeTopupForecast(month, settings.contingencyPercent);
+    const forecast = await computeTopupForecast(month, settings.contingencyPercent, settings.topupAddress);
     const { subject, html } = buildTopupEmail(forecast);
     await sendEmail({ to: recipients, subject, html });
     if (force) await prisma.topupForecastSettings.update({ where: { id: "default" }, data: { lastSentMonth: month } });
