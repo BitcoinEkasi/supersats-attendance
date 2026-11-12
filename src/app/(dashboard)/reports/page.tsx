@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { groupSortIndex, type TskGroupKey } from "@/lib/tsk-groups";
@@ -70,8 +71,17 @@ export default async function ReportsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900">Monthly Reports</h2>
-      <p className="mt-1 text-sm text-gray-500">Reports are generated automatically as attendance is recorded.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Monthly Reports</h2>
+          <p className="mt-1 text-sm text-gray-500">Reports are generated automatically as attendance is recorded.</p>
+        </div>
+        {role === "ADMINISTRATOR" && (
+          <Link href="/reports/group-rewards" className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Group rewards &amp; savings →
+          </Link>
+        )}
+      </div>
 
       <div className="mt-6">
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">

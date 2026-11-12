@@ -158,6 +158,35 @@ export interface PayoutBatchStatus {
   expired?: boolean;
 }
 
+export type BoltSpendingRow = { user_id: number; username: string; card_id: string | null; month: string; sats: number; taps: number };
+export type BoltMovementRef = {
+  tx_id?: number; user_id: number; username: string; card_id: string | null; type?: string;
+  amount_sats?: number; description?: string | null; created_at?: number; count?: number; total_sats?: number;
+  reason?: string | null; excluded_by?: string | null;
+};
+export type BoltSpendingReport = {
+  from: string;
+  to: string;
+  spending: BoltSpendingRow[];
+  excluded: BoltMovementRef[];
+  data_quality: {
+    identical_movements: BoltMovementRef[];
+    duplicate_reward_credits: BoltMovementRef[];
+    corrections: BoltMovementRef[];
+    spenders_without_card_id: BoltMovementRef[];
+  };
+};
+
+/** Card-tap spending per Bolt user per SAST month, plus exclusions and data-quality lists. */
+export async function getGroupSpending(from: string, to: string): Promise<BoltSpendingReport> {
+  const res = await boltFetch(`/api/v1/reports/spending?from=${from}&to=${to}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bolt getGroupSpending ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
 export async function getPayoutBatchStatus(batchId: number): Promise<PayoutBatchStatus | null> {
   const res = await boltFetch(`/api/v1/payout/batch/${batchId}`);
   if (res.status === 404) return null;
