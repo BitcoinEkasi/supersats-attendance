@@ -100,6 +100,7 @@ export default function ApproveButton({ reportId, disabled = false, approveUrl, 
           eligibleCount={invoice.eligible_count}
           ineligibleCount={invoice.ineligible_count}
           initialStatus="invoiced"
+          onExpired={() => setInvoice(null)}
           checkUrl={checkUrl}
           paidMessage={
             invoice.full_total_sats

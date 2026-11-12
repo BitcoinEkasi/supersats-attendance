@@ -148,11 +148,30 @@ export async function directPayoutBatch(params: {
   return res.json();
 }
 
-export async function getPayoutBatchStatus(batchId: number): Promise<{ status: string; paid_at: number | null; item_count: number } | null> {
+export interface PayoutBatchStatus {
+  status: string;
+  paid_at: number | null;
+  item_count: number;
+  /** Unix seconds when the batch's invoice expires (null for direct batches; absent on older bolt versions). */
+  expires_at?: number | null;
+  /** True when the batch is still pending but its invoice can no longer be paid. */
+  expired?: boolean;
+}
+
+export async function getPayoutBatchStatus(batchId: number): Promise<PayoutBatchStatus | null> {
   const res = await boltFetch(`/api/v1/payout/batch/${batchId}`);
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
+}
+
+/** Cancels a pending batch whose invoice has expired. Bolt refuses (409) if it hasn't expired. */
+export async function cancelPayoutBatch(batchId: number): Promise<void> {
+  const res = await boltFetch(`/api/v1/payout/batch/${batchId}/cancel`, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Bolt cancelPayoutBatch ${res.status}: ${body}`);
+  }
 }
 
 export async function updateBoltUserDisplayName(boltUserId: number, displayName: string): Promise<void> {

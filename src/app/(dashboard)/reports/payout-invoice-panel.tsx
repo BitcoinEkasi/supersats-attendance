@@ -15,6 +15,14 @@ interface PayoutInvoicePanelProps {
   checkUrl?: string;
   paidMessage?: string;
   topupNote?: string;
+  /** Called when the invoice expired and the server reset the payout to "unpaid". */
+  onExpired?: () => void;
+}
+
+function formatRemaining(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 export default function PayoutInvoicePanel({
@@ -28,6 +36,7 @@ export default function PayoutInvoicePanel({
   checkUrl,
   paidMessage,
   topupNote,
+  onExpired,
 }: PayoutInvoicePanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
@@ -35,6 +44,9 @@ export default function PayoutInvoicePanel({
   const [copied, setCopied] = useState(false);
   const [generatedQr, setGeneratedQr] = useState<string>("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const expiryCheckedRef = useRef(false);
 
   useEffect(() => {
     if (qrBase64 || !paymentRequest) return;
@@ -44,6 +56,20 @@ export default function PayoutInvoicePanel({
       color: { dark: "#000000", light: "#ffffff" },
     }).then((url) => setGeneratedQr(url));
   }, [paymentRequest, qrBase64]);
+
+  // Tick the countdown every second while awaiting payment
+  useEffect(() => {
+    if (status !== "invoiced" || expiresAt === null) return;
+    const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [status, expiresAt]);
+
+  // When the countdown hits zero, check immediately so the server resets the expired invoice
+  useEffect(() => {
+    if (status !== "invoiced" || expiresAt === null || now < expiresAt || expiryCheckedRef.current) return;
+    expiryCheckedRef.current = true;
+    checkStatus();
+  }, [now, expiresAt, status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (initialStatus === "paid") return;
@@ -61,8 +87,19 @@ export default function PayoutInvoicePanel({
       setStatus("paid");
       if (pollRef.current) clearInterval(pollRef.current);
       router.refresh();
+    } else if (data.payout_status === "unpaid" && data.expired) {
+      setStatus("expired");
+      if (pollRef.current) clearInterval(pollRef.current);
+      onExpired?.();
+      router.refresh();
     } else {
       setStatus(data.payout_status);
+      if (typeof data.expires_at === "number") {
+        setExpiresAt(data.expires_at);
+        setNow(Math.floor(Date.now() / 1000));
+        // Allow another zero-check if the server still reports the invoice as open
+        if (data.expires_at > Math.floor(Date.now() / 1000)) expiryCheckedRef.current = false;
+      }
     }
   }
 
@@ -71,6 +108,18 @@ export default function PayoutInvoicePanel({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
+
+  if (status === "expired") {
+    return (
+      <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <p className="text-sm text-gray-700">
+          ⌛ The payout invoice expired before it was paid and has been cleared. Click <strong>⚡ Pay Rewards</strong> to check reserves again and get a new invoice.
+        </p>
+      </div>
+    );
+  }
+
+  const remaining = expiresAt !== null ? Math.max(0, expiresAt - now) : null;
 
   return (
     <div className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-6">
@@ -100,6 +149,24 @@ export default function PayoutInvoicePanel({
               <span className="text-amber-600">{ineligibleCount} participant{ineligibleCount !== 1 ? "s" : ""} without bolt account (excluded)</span>
             )}
           </div>
+          {remaining !== null && (
+            <div
+              className={`mb-4 flex items-center gap-3 rounded-md border px-4 py-3 ${
+                remaining <= 600
+                  ? "border-red-300 bg-red-50 text-red-700"
+                  : "border-amber-300 bg-amber-50 text-amber-800"
+              } ${remaining > 0 && remaining <= 120 ? "animate-pulse" : ""}`}
+            >
+              <span className="text-2xl font-bold tabular-nums">⏱ {formatRemaining(remaining)}</span>
+              <span className="text-sm">
+                {remaining === 0
+                  ? "Invoice expired — clearing…"
+                  : remaining <= 600
+                    ? "Pay now — this invoice expires soon. If it expires, a new one will be needed."
+                    : "until this invoice expires"}
+              </span>
+            </div>
+          )}
           {topupNote && (
             <p className="mb-4 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-3 py-2">
               🏦 {topupNote}
