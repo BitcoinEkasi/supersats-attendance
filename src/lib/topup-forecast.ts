@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { buildCalculateRewardSats, applyPenalty } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
-import { getBoltReserve, getZarPerSat, satsToZar } from "@/lib/bolt";
+import { getBoltReserve, getZarPerSat } from "@/lib/bolt";
 import { getSASTDateString, getDaysInSASTMonth, isProgrammeDay, getStartOfSASTMonth, getEndOfSASTMonth } from "@/lib/sast";
 import { TSK_GROUPS, TSK_GROUP_LABELS, getGroupForStatus, type TskGroupKey } from "@/lib/tsk-groups";
 import { acMultiplierForMonth } from "@/lib/tsk-levels";
@@ -167,6 +167,11 @@ export async function computeTopupForecast(month: string, contingencyPercent: nu
 }
 
 /** "2026-11" -> "Nov '26" */
+/** Whole sats with comma thousands separators: 20306 -> "20,306" */
+export function fmtSats(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
 function monthLabel(month: string): string {
   const [y, m] = month.split("-").map(Number);
   const mmm = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1];
@@ -174,8 +179,10 @@ function monthLabel(month: string): string {
 }
 
 export function buildTopupEmail(f: TopupForecast): { subject: string; html: string } {
-  const sats = (n: number) => `${n.toLocaleString("en-ZA")} sats`;
-  const zar = (n: number) => (f.zarPerSat ? ` (${satsToZar(n, f.zarPerSat)})` : "");
+  // e.g. "⚡20,306 sats (~R355.36)"
+  const sats = (n: number) => `⚡${fmtSats(n)} sats`;
+  const zar = (n: number) =>
+    f.zarPerSat ? ` (~R${(n * f.zarPerSat).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})` : "";
   const label = monthLabel(f.month);
   const needed = f.topupSats > 0;
   const subject = needed
@@ -183,14 +190,14 @@ export function buildTopupEmail(f: TopupForecast): { subject: string; html: stri
     : `TSK rewards forecast — ${label}: no top-up needed`;
 
   const td = 'style="padding:4px 10px;border-bottom:1px solid #eee"';
-  const tdr = 'style="padding:4px 10px;border-bottom:1px solid #eee;text-align:right"';
+  const tdr = 'style="padding:4px 10px;border-bottom:1px solid #eee;text-align:right;white-space:nowrap"';
   const rows = f.groups
-    .map((g) => `<tr><td style="padding:4px 10px;border-bottom:1px solid #eee;white-space:nowrap">${g.label}${g.estimated ? " *" : ""}</td><td ${tdr}>${g.participants}</td><td ${tdr}>${g.remainingSessions}</td><td ${tdr}>${g.currentlyQualifying}</td><td ${tdr}>${g.canReach100}</td><td ${tdr}>${g.currentSats.toLocaleString("en-ZA")}</td><td ${tdr}>${g.forecastSats.toLocaleString("en-ZA")}</td></tr>`)
+    .map((g) => `<tr><td style="padding:4px 10px;border-bottom:1px solid #eee;white-space:nowrap">${g.label}${g.estimated ? " *" : ""}</td><td ${tdr}>${g.participants}</td><td ${tdr}>${g.remainingSessions}</td><td ${tdr}>${g.currentlyQualifying}</td><td ${tdr}>${g.canReach100}</td><td ${tdr}>${sats(g.currentSats)}</td><td ${tdr}>${sats(g.forecastSats)}</td></tr>`)
     .join("");
 
   const addr = `<a href="lightning:${f.topupAddress}">${f.topupAddress}</a>`;
   const headline = needed
-    ? `<h2 style="color:#c2410c">⚡ Please top up ${sats(f.topupSats)}${zar(f.topupSats)} to ${addr} to reserve the forecasted payouts for the TSK Rewards for ${label}</h2>`
+    ? `<h2 style="color:#c2410c">Please top up ${sats(f.topupSats)}${zar(f.topupSats)} to ${addr} to reserve the forecasted payouts for the TSK Rewards for ${label}</h2>`
     : `<h2 style="color:#15803d">✓ No top-up needed: the current reserve already covers the forecasted payouts for the TSK Rewards for ${label}</h2>`;
 
   const html = `${headline}

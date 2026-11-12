@@ -29,7 +29,7 @@ type Forecast = {
 const inputCls =
   "w-16 rounded-md border border-gray-300 px-2 py-1 text-center text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
-const fmt = (n: number) => n.toLocaleString("en-ZA");
+const fmt = (n: number) => `⚡${n.toLocaleString("en-US")}`;
 
 export default function TopupForecastForm({
   enabled: initialEnabled,
@@ -188,8 +188,8 @@ export default function TopupForecastForm({
                   <td className="text-right">{g.remainingSessions}</td>
                   <td className="text-right">{g.currentlyQualifying}</td>
                   <td className="text-right">{g.canReach100}</td>
-                  <td className="text-right">{fmt(g.currentSats)}</td>
-                  <td className="text-right">{fmt(g.forecastSats)}</td>
+                  <td className="text-right whitespace-nowrap">{fmt(g.currentSats)}</td>
+                  <td className="text-right whitespace-nowrap">{fmt(g.forecastSats)}</td>
                 </tr>
               ))}
             </tbody>
