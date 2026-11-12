@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import type { EmailRecipientCategory } from "@prisma/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_CATEGORIES: EmailRecipientCategory[] = ["TURTLES", "SEALS", "DOLPHINS", "SHARKS", "FREE_SURFERS", "ZERO_ATTENDANCE"];
+const VALID_CATEGORIES: EmailRecipientCategory[] = ["TURTLES", "SEALS", "DOLPHINS", "SHARKS", "FREE_SURFERS", "ZERO_ATTENDANCE", "TOPUP_REQUEST"];
 
 export async function GET() {
   const user = await requireAuth(["ADMINISTRATOR"]);

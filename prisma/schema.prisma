@@ -394,6 +394,7 @@ enum EmailRecipientCategory {
   SHARKS
   FREE_SURFERS
   ZERO_ATTENDANCE
+  TOPUP_REQUEST
 }
 
 model EmailRecipient {
@@ -496,3 +497,16 @@ model SessionActivity {
   @@map("session_activities")
 }
 
+// Single-row settings for the monthly reserve top-up request email (id = "default").
+// Recipients live in EmailRecipient under category TOPUP_REQUEST.
+model TopupForecastSettings {
+  id                 String   @id @default("default")
+  enabled            Boolean  @default(true)
+  remainingSessions  Int      @default(5) @map("remaining_sessions")
+  contingencyPercent Int      @default(5) @map("contingency_percent")
+  lastSentMonth      String?  @map("last_sent_month")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  updatedBy          String?  @map("updated_by")
+
+  @@map("topup_forecast_settings")
+}
