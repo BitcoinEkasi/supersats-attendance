@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { getPayoutBatchStatus } from "@/lib/bolt";
+import { resetExpiredPayout } from "@/lib/payout-expiry";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth(["ADMINISTRATOR"]);
@@ -22,5 +23,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return Response.json({ payout_status: "paid", batch_status: batchStatus });
   }
 
-  return Response.json({ payout_status: payout.payoutStatus, batch_status: batchStatus });
+  // Invoice expired unpaid — cancel the bolt batch and return the payout to PENDING
+  if (await resetExpiredPayout("special", payout, batchStatus)) {
+    return Response.json({ payout_status: "unpaid", expired: true, batch_status: batchStatus });
+  }
+
+  return Response.json({
+    payout_status: payout.payoutStatus,
+    expires_at: batchStatus?.expires_at ?? null,
+    batch_status: batchStatus,
+  });
 }

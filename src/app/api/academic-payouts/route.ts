@@ -2,10 +2,14 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api-auth";
 import { buildCalculateRewardSats } from "@/lib/rewards";
 import { getActiveRewardSettings } from "@/lib/get-reward-settings";
+import { resetAllExpiredPayouts } from "@/lib/payout-expiry";
 
 export async function GET() {
   const user = await requireAuth(["ADMINISTRATOR"]);
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Payouts whose invoice expired unpaid go back to PENDING before listing
+  await resetAllExpiredPayouts("academic");
 
   const payouts = await prisma.academicPayout.findMany({
     orderBy: [{ year: "desc" }, { term: "desc" }],

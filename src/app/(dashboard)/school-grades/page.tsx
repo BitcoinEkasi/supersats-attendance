@@ -141,7 +141,9 @@ export default function SchoolGradesPage() {
                     {p.totalPayoutSats > 0 ? `🗲 ${p.totalPayoutSats.toLocaleString()}` : "—"}
                   </td>
                   <td className="px-4 py-3">
-                    {p.status === "APPROVED" ? (
+                    {p.status === "APPROVED" && p.payoutStatus === "invoiced" ? (
+                      <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Awaiting payment</span>
+                    ) : p.status === "APPROVED" ? (
                       <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Approved</span>
                     ) : (
                       <span className="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">Pending</span>

@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   }
 
   // Invoice expired unpaid — cancel the bolt batch and return the report to PENDING
-  if (await resetExpiredPayout(report, batchStatus)) {
+  if (await resetExpiredPayout("monthly", report, batchStatus)) {
     return Response.json({ payout_status: "unpaid", expired: true, batch_status: batchStatus });
   }
 

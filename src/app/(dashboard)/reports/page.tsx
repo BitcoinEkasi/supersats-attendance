@@ -14,7 +14,7 @@ export default async function ReportsPage() {
 
   // Return reports whose payout invoice expired unpaid to PENDING first, so they're
   // picked up by the refresh below and never sit in the list looking approved
-  await resetAllExpiredPayouts();
+  await resetAllExpiredPayouts("monthly");
 
   // Auto-refresh all pending reports from latest attendance data
   const pendingReports = await prisma.monthlyReport.findMany({

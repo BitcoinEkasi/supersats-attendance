@@ -32,7 +32,7 @@ export default async function ReportDetailPage({
   });
   if (!reportMeta) notFound();
   // An approved report whose payout invoice expired unpaid goes back to PENDING
-  if (reportMeta.status === "APPROVED" && (await resetExpiredPayout(reportMeta))) {
+  if (reportMeta.status === "APPROVED" && (await resetExpiredPayout("monthly", reportMeta))) {
     reportMeta.status = "PENDING";
   }
   if (reportMeta.status !== "APPROVED") {

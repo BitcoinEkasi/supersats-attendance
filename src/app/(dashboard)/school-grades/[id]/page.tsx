@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { resetExpiredPayout } from "@/lib/payout-expiry";
 import ApproveButton from "../../reports/approve-button";
 import CreatePayoutButton from "../../reports/create-payout-button";
 import PayoutInvoicePanel from "../../reports/payout-invoice-panel";
@@ -9,6 +10,11 @@ import { REWARD_TIERS } from "@/lib/rewards";
 
 export default async function SchoolGradesDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // A payout whose invoice expired unpaid goes back to PENDING before rendering
+  const meta = await prisma.academicPayout.findUnique({ where: { id }, select: { id: true, payoutStatus: true, batchId: true } });
+  if (meta) await resetExpiredPayout("academic", meta);
+
   const [session, payout] = await Promise.all([
     auth(),
     prisma.academicPayout.findUnique({
@@ -46,7 +52,9 @@ export default async function SchoolGradesDetailPage({ params }: { params: Promi
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {payout.status === "APPROVED" ? (
+          {payout.status === "APPROVED" && payout.payoutStatus === "invoiced" ? (
+            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">Awaiting payment</span>
+          ) : payout.status === "APPROVED" ? (
             <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">Approved</span>
           ) : (
             <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-700">Pending Approval</span>

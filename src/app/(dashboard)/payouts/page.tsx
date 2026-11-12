@@ -3,10 +3,14 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { fmtDate } from "@/lib/format-date";
+import { resetAllExpiredPayouts } from "@/lib/payout-expiry";
 
 export default async function SpecialPayoutsPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMINISTRATOR") redirect("/dashboard");
+
+  // Payouts whose invoice expired unpaid go back to PENDING before listing
+  await resetAllExpiredPayouts("special");
 
   const payouts = await prisma.specialPayout.findMany({
     orderBy: { createdAt: "desc" },
@@ -58,7 +62,9 @@ export default async function SpecialPayoutsPage() {
                     {p.totalPayoutSats > 0 ? `🗲 ${p.totalPayoutSats.toLocaleString()}` : "—"}
                   </td>
                   <td className="px-4 py-3">
-                    {p.status === "APPROVED" ? (
+                    {p.status === "APPROVED" && p.payoutStatus === "invoiced" ? (
+                      <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Awaiting payment</span>
+                    ) : p.status === "APPROVED" ? (
                       <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Approved</span>
                     ) : (
                       <span className="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">Pending</span>

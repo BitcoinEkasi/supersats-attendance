@@ -113,7 +113,7 @@ export default function PayoutInvoicePanel({
     return (
       <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
         <p className="text-sm text-gray-700">
-          ⌛ The invoice expired unpaid. The report is back to <strong>Pending</strong> — approve it again to pay.
+          ⌛ The invoice expired unpaid and this is back to <strong>Pending</strong> — approve it again to pay.
         </p>
       </div>
     );
